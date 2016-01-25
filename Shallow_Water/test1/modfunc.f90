@@ -11,6 +11,8 @@
 			Integer(Kind=4) ns_x,nf_x,ns_y,nf_y
 
 			Real(8), Allocatable :: d(:, :)
+			Real(8), Allocatable :: du(:, :)
+			Real(8), Allocatable :: dv(:, :)
 		CONTAINS
 			Procedure ::   init => func_init
 			Procedure :: deinit => func_deinit
@@ -31,6 +33,8 @@
 			this.nf_y = this.nf_x
 
 			Allocate(this.d(this.ns_y:this.nf_y, this.ns_x:this.nf_x))
+			Allocate(this.du(this.ns_y:this.nf_y, this.ns_x:this.nf_x))
+			Allocate(this.dv(this.ns_y:this.nf_y, this.ns_x:this.nf_x))
 
 		End Subroutine
 
@@ -41,6 +45,8 @@
 			Class(func) :: this
 
 			if (Allocated(this.d)) Deallocate(this.d)
+			if (Allocated(this.du)) Deallocate(this.du)
+			if (Allocated(this.dv)) Deallocate(this.dv)
 
 		End Subroutine
 
@@ -54,10 +60,13 @@
 			do y = this.ns_y, this.nf_y
 				do x = this.ns_x,this.nf_x
 					this.d(y,x)=that.d(y,x)
+					this.du(y,x)=that.du(y,x)
+					this.dv(y,x)=that.dv(y,x)
 				end do
 			end do
 
 		End Subroutine
+
 
 
 

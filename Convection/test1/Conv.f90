@@ -5,7 +5,7 @@ program uravnenie
 	Use modnet, Only: grid
 	Use method, Only: met
 	Use Schema, Only: sch
-	Use SemiLagr, Only: Lagr
+! 	Use SemiLagr, Only: Lagr
 ! 	Use Interp, Only: intp
 
 	Implicit None
