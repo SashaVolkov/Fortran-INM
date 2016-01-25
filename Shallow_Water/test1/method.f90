@@ -88,17 +88,19 @@ IMPLICIT NONE
 	End Subroutine
 
 
-	Subroutine met_Print(this, f, g, t, name, timeset)
+	Subroutine met_Print(this, f, g, t, folder_name, timeset, index)
 
 		Class(met) :: this
 		Class(func) :: f
 		Class(grid) :: g
 
 		Integer x, y, i, j, request(g.np)
-		Integer(4), Intent(In) :: t, timeset
-		character(40), Intent(In) :: name
+		Integer(4), Intent(In) :: t, timeset, index
+		character(6), Intent(In) :: folder_name
+		character(1) str
 
 		Real(8) W_mass(1:g.StepsY, 1:g.StepsX)
+		write(str, "(I1)") index
 
 		do j=1, g.StepsX
 			do i = 1, g.StepsY
@@ -117,7 +119,7 @@ IMPLICIT NONE
 
 		if ( g.id == 0 ) then
 			print *, "Writing"
-			open(14,file='/home/sasha/Fortran/Shallow_Water/datFiles/'//name)
+			open(14,file='/home/sasha/Fortran/Shallow_Water/datFiles/'//folder_name//'/'//str//'.dat')
 			do y = 1, g.StepsY
 				write(14,'(3(e20.12))') (Real(x-1,8)*g.dx, Real(y-1,8)*g.dy, W_mass(y,x), x=1,g.StepsX)
 ! 				write(14,'(a)') " "
