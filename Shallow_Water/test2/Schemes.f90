@@ -97,15 +97,17 @@ IMPLICIT NONE
 
 		do y = g.ns_y, g.nf_y
 			do x = g.ns_x, g.nf_y
-				u(y,x) = uprev(y,x) + g.dt*(cor*vprev(y,x)- (grav*0.5)*(hprev(y, x+1) - hprev(y, x-1))/g.dx)! - (uprev(y,x)*(uprev(y, x+1) - uprev(y, x-1)) + vprev(y,x)*(uprev(y+1, x) - uprev(y-1, x)))
-				
+				u(y,x) = uprev(y,x) + g.dt*(cor*vprev(y,x) - (grav*0.5)*(hprev(y, x+1) - hprev(y, x-1))/g.dx)! - (uprev(y,x)*(uprev(y, x+1) - uprev(y, x-1)) + vprev(y,x)*(uprev(y+1, x) - uprev(y-1, x)))
 				v(y,x) = vprev(y,x) - g.dt*(cor*uprev(y,x) - (grav*0.5)*(hprev(y+1, x) - hprev(y-1, x))/g.dx)! - (uprev(y,x)*(vprev(y, x+1) - vprev(y, x-1)) + vprev(y,x)*(vprev(y+1, x) - vprev(y-1, x)))
-				
 				h(y,x) = hprev(y,x) - g.dt*height*0.5*(((uprev(y, x+1) - uprev(y, x-1)))/g.dx + ((vprev(y+1, x) - vprev(y-1, x)))/g.dy)! - (uprev(y,x)*(hprev(y, x+1) - hprev(y, x-1)) + vprev(y,x)*(hprev(y+1, x) - hprev(y-1, x)))
 			end do
 		end do
 
+
 	End Subroutine
+
+
+
 
 
 
@@ -120,6 +122,7 @@ IMPLICIT NONE
 		Integer(4) :: x,y
 		Integer(4) :: ier
 		Integer(4) :: status(MPI_STATUS_SIZE)
+! 		Integer(4), Intent(In) :: eqvtype
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
 
 
@@ -155,6 +158,7 @@ IMPLICIT NONE
 		Class(sch) :: this
 
 		Integer(4) :: x,y
+! 		Integer(4), Intent(In) :: eqvtype
 
 		Real(8), Intent(In) :: uprev(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
 		Real(8), Intent(In) :: vprev(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
@@ -175,7 +179,10 @@ IMPLICIT NONE
 			end do
 		end do
 
+
 	end Subroutine
+
+
 
 
 

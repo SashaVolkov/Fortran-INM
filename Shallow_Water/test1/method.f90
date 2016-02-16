@@ -56,13 +56,13 @@ IMPLICIT NONE
 	if ( g.np>1 ) then
 
 		if ( g.id==g.np-1 ) then
-! 			call MPI_Send(trans_mass(1, g.nf_x+1-g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, this.ier)
+			call MPI_Send(trans_mass(1, g.nf_x+1-g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, this.ier)
 		else
 			call MPI_Send(trans_mass(1, g.nf_x+1-g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.ier)
 		end if
 
 		if ( g.id==0 ) then
-! 			call MPI_Recv(trans_mass(1, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.np-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
+			call MPI_Recv(trans_mass(1, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.np-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
 		else
 			call MPI_Recv(trans_mass(1, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
 		end if
@@ -71,13 +71,13 @@ IMPLICIT NONE
 		if ( g.fstep > 0) then
 
 			if ( g.id==0 ) then
-! 				call MPI_Send(trans_mass(1, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.np-1, g.id, MPI_COMM_WORLD, this.ier);
+				call MPI_Send(trans_mass(1, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.np-1, g.id, MPI_COMM_WORLD, this.ier);
 			else
 				call MPI_Send(trans_mass(1, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.ier);
 			end if
 
 			if ( g.id==g.np-1 ) then
-! 				call MPI_Recv(trans_mass(1, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, this.status, this.ier)
+				call MPI_Recv(trans_mass(1, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, this.status, this.ier)
 			else
 				call MPI_Recv(trans_mass(1, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.status, this.ier)
 			end if

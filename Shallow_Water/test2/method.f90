@@ -3,7 +3,6 @@ Module method
 	Use modnet
 	Use modfunc
 	Use MPI
-	Use netcdf
 
 IMPLICIT NONE
 
@@ -57,13 +56,13 @@ IMPLICIT NONE
 	if ( g.np>1 ) then
 
 		if ( g.id==g.np-1 ) then
-			call MPI_Send(trans_mass(1, g.nf_x+1-g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, this.ier)
+! 			call MPI_Send(trans_mass(1, g.nf_x+1-g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, this.ier)
 		else
 			call MPI_Send(trans_mass(1, g.nf_x+1-g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.ier)
 		end if
 
 		if ( g.id==0 ) then
-			call MPI_Recv(trans_mass(1, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.np-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
+! 			call MPI_Recv(trans_mass(1, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.np-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
 		else
 			call MPI_Recv(trans_mass(1, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
 		end if
@@ -72,13 +71,13 @@ IMPLICIT NONE
 		if ( g.fstep > 0) then
 
 			if ( g.id==0 ) then
-				call MPI_Send(trans_mass(1, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.np-1, g.id, MPI_COMM_WORLD, this.ier);
+! 				call MPI_Send(trans_mass(1, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.np-1, g.id, MPI_COMM_WORLD, this.ier);
 			else
 				call MPI_Send(trans_mass(1, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.ier);
 			end if
 
 			if ( g.id==g.np-1 ) then
-				call MPI_Recv(trans_mass(1, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, this.status, this.ier)
+! 				call MPI_Recv(trans_mass(1, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, this.status, this.ier)
 			else
 				call MPI_Recv(trans_mass(1, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.status, this.ier)
 			end if
@@ -95,7 +94,7 @@ IMPLICIT NONE
 			Class(func) :: f
 			Class(grid) :: g
 
-			Integer x, y, i, j, request(g.np), Wid
+			Integer x, y, i, j, request(g.np)
 			Integer(4), Intent(In) :: t, timeset
 			character(40), Intent(In) :: name
 
@@ -117,43 +116,12 @@ IMPLICIT NONE
 			if ( g.np > 1 ) call MPI_Gather(W_mass(1, g.id*g.Xsize + 1), g.Xsize*g.StepsY, MPI_DOUBLE_PRECISION, W_mass, g.Xsize*g.StepsY,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, this.ier)
 
 			if ( g.id == 0 ) then
-! 				print *, "Writing"
-! 				open(14,file='/home/sasha/Fortran/Shallow_Water/datFiles/'//name)
-! 				do y = 1, g.StepsY
-! 					write(14,'(3(e20.12))') (Real(x-1,8)*g.dx, Real(y-1,8)*g.dy, W_mass(y,x), x=1,g.StepsX)
-! 				end do
-! 				close(14)
-
-
-
-! 			 	status(1) = nf90_open     (trim("filename.nc"), IOR(NF90_NOWRITE,NF90_NETCDF4),ncid)
-! 			  if (status == NF90_NOERR) STOP
-			  status = nf90_create (path = trim("filename.nc"), cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), &
-			                                              comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid) 
-
-			  
-			!  call check( nf90_create  (path = trim(this.ncfn), cmode = IOR(NF90_NETCDF4, NF90_MPIIO), &
-			!                                  ncid = this.ncid, comm = comm1d, info = MPI_INFO_NULL) )
-			!   status = nf90_put_att (ncid, NF90_GLOBAL, 'title', trim(ncfn))
-			  status = nf90_def_dim (ncid, "x", g.StepsX, x)
-			  status = nf90_def_dim (ncid, "y", g.StepsY, y)
-! 			  status = nf90_def_dim (ncid, "k", nk, kd)
-			  status = nf90_def_dim (ncid, "t", Tmax, t)
-! 			call check( nf90_close (this.ncid) )
-
-			! ! проверка наличия в файле переменной
-! 			 call check( nf90_inq_varid (this.ncid, trim(varname), varid) )
-
-
-			  status = nf90_def_var (ncid, "test", NF90_REAL, (/ x, y, t /), Wid)
-			  status = nf90_enddef  (ncid)
-
-			! ! указатель на первый элемент массива varval , число элементов
-			  status = nf90_put_var (ncid, Wid, W_mass, (/ 1, 1, 1/), (/ g.StepsX, g.StepsY, Tmax/) )
-
-! 				nf90_get_var
-				status = nf90_close (ncid)
-
+				print *, "Writing"
+				open(14,file='/home/sasha/Fortran/Shallow_Water/datFiles/'//name)
+				do y = 1, g.StepsY
+					write(14,'(3(e20.12))') (Real(x-1,8)*g.dx, Real(y-1,8)*g.dy, W_mass(y,x), x=1,g.StepsX)
+				end do
+				close(14)
 			end if
 
 		End Subroutine

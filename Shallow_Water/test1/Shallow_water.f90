@@ -45,14 +45,16 @@ program uravnenie
 
 
 !initialization
-	if ( id == 0 ) then
+! 	if ( id == 0 ) then
 		open(9,file='/home/sasha/Fortran/Shallow_Water/test1/init.file')
+! 	end if
 			read(9, FMT="(5(I14), 3(e20.12))") init.Xmax, init.Ymax, init.Tmax,&
 			init.timeset, init.casenumb, init.grav, init.cor, init.height
+	if ( id == 0 ) then
 		close(9)
 	end if
-	call MPI_Bcast( init, 12, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
-	call mpi_barrier(MPI_COMM_WORLD, ier)
+! 	call MPI_Bcast( init, 12, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
+! 	call mpi_barrier(MPI_COMM_WORLD, ier)
 !end of initialization
 
 
@@ -82,8 +84,7 @@ program uravnenie
 ! first moment state
 	do x = f.ns_x, f.nf_x
 		do y = f.ns_x, f.nf_x
-			fprev.d(y, x) = exp(-((((5.0/init.Xmax)*(x-init.Xmax*0.5))**2)&
-				+(((5.0/init.Ymax)*(y-init.Ymax*0.5))**2))) + 0
+			fprev.d(y, x) = exp(-((((10.0/init.Xmax)*(x-init.Xmax*0.5))**2)+(((10.0/init.Ymax)*(y-init.Ymax*0.5))**2))) + 0
 			!f.d(y, x) = exp(-((((20.0/Xmax)*(x-Xmax/2))**2)+(((20.0/Ymax)*(y-Ymax/2))**2)))
 			fprev.du(y,x) = 0
 			fprev.dv(y,x) = 0
@@ -130,18 +131,22 @@ program uravnenie
 		call fprev.eq(f)
 
 
-		if(t == index*timeset)then
-		call m.to_print(fprev, g, t, folder_name, timeset, index)
-		index = index + 1
-		if ( index == 10 ) then
-			index = 0
-		end if
+		if(t == index*init.timeset)then
+			if ( id == 0 ) then
+				print *, t
+			end if
+
+			call m.to_print(f, g, t, folder_name, init.timeset, index)
+			index = index + 1
+			if ( index == 10 ) then
+				index = 0
+			end if
 		end if
 
 	end do
 
 
-	print *,11,id
+! 	print *,11,id
 
 	call mpi_barrier(MPI_COMM_WORLD, ier)
 

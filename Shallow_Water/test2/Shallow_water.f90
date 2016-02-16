@@ -5,15 +5,13 @@ program uravnenie
 	Use modnet, Only: grid
 	Use method, Only: met
 	Use Schema, Only: sch
-
-  Use netcdf
-
 ! 	Use SemiLagr, Only: Lagr
 ! 	Use Interp, Only: intp
 
 	Implicit None
 
-	integer x,y,t, ier, id,np, synchr, i, rc, eqvtype, iter_stpes, index, testid
+
+	integer x,y,t, ier, id,np, synchr, i, rc, eqvtype, iter_stpes, index
 	integer Xmax, Ymax, Tmax, bstep, fstep, timeset, casenumb, rcase, lcase, newfile
 
 	character(40) name, sch_name
@@ -21,7 +19,6 @@ program uravnenie
 	character(2) str2
 	real(8)  lengthX, lengthY, lengthT, cor, grav, height
 	real(8), Allocatable :: kurant(:,:)
-! 	real(8), Allocatable :: test(:,:,:)
 
 
 
@@ -33,13 +30,12 @@ program uravnenie
 	Type(sch) :: s
 ! 	Type(intp) :: inter
 
-	integer status(MPI_STATUS_SIZE)  , ncid
+	integer status(MPI_STATUS_SIZE)  
 
 
 	call MPI_Init(ier)
 	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
-! 	cw = MPI_COMM_WORLD
 
 	lengthX=1;	lengthY=1;	lengthT=2
 	Xmax = 100; Ymax = 100;	Tmax = 100;	synchr = 0
@@ -49,8 +45,6 @@ program uravnenie
 ! 	temp=1.35
 	cor = 0
 	grav = .2
-
-
 
 
 	if ( id == 0 ) then
@@ -73,7 +67,7 @@ program uravnenie
 	call mpi_barrier(MPI_COMM_WORLD, ier)
 
 
-! 	Allocate(test(1:Xmax, 1:Ymax, 1:Tmax))
+
 
 	if (casenumb == 1 ) then
 		fstep = 1
@@ -95,25 +89,12 @@ program uravnenie
 
 	do x = f.ns_x, f.nf_x
 		do y = f.ns_y, f.nf_y
-			fprev.d(y, x) = height*exp(-((((20.0/Xmax)*(x-Xmax*0.5))**2)+(((20.0/Ymax)*(y-Ymax*0.5))**2))) + 0
+			fprev.d(y, x) = exp(-((((20.0/Xmax)*(x-Xmax*0.5))**2)+(((20.0/Ymax)*(y-Ymax*0.5))**2))) + 0
 			!f.d(y, x) = exp(-((((20.0/Xmax)*(x-Xmax/2))**2)+(((20.0/Ymax)*(y-Ymax/2))**2)))
 			fprev.du(y,x) = 0
 			fprev.dv(y,x) = 0
 		end do
 	end do
-
-
-! 	do x=1,Xmax
-! 		do y=1,Ymax
-! 			do t=1,Tmax
-! 				test(x,y,t) = sqrt(t*1.0)*exp(-((((20.0/Xmax)*(x-Xmax*0.5))**2)+(((20.0/Ymax)*(y-Ymax*0.5))**2))) + 0
-! 			end do
-! 		end do
-! 	end do
-
-
-
-! 	  STOP
 
 
 ! 	call m.to_print(fprev, g, 1, folder_name, 1, index)
@@ -140,13 +121,13 @@ program uravnenie
 
 
 			do x = g.ns_x, g.nf_x
-				f.dv(g.ns_y,x) = f.dv(f.nf_y,x)
-				f.du(g.ns_y,x) = f.du(f.nf_y,x)
-				f.d(g.ns_y,x) = f.d(f.nf_y,x)
+				f.dv(g.ns_y,x) = -f.dv(g.ns_y,x)
+				f.dv(g.nf_y,x) = -f.dv(g.nf_y,x)
+			end do
 
-				f.dv(f.ns_y,x) = f.dv(g.nf_y,x)
-				f.du(f.ns_y,x) = f.du(g.nf_y,x)
-				f.d(f.ns_y,x) = f.d(g.nf_y,x)
+			do y = g.ns_y, g.nf_y
+				f.du(y,g.ns_x) = -f.du(y,g.ns_x)
+				f.du(y,g.nf_x) = -f.du(y,g.nf_x)
 			end do
 
 
