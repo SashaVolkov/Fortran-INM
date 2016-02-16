@@ -102,28 +102,17 @@ program uravnenie
 		end do
 	end do
 
-
-! 	do x=1,Xmax
-! 		do y=1,Ymax
-! 			do t=1,Tmax
-! 				test(x,y,t) = sqrt(t*1.0)*exp(-((((20.0/Xmax)*(x-Xmax*0.5))**2)+(((20.0/Ymax)*(y-Ymax*0.5))**2))) + 0
-! 			end do
-! 		end do
-! 	end do
-
-
-
-! 	  STOP
-
-
 ! 	call m.to_print(fprev, g, 1, folder_name, 1, index)
 
 ! 	call m.BornParam(fprev, g)
 
 
+		status = nf90_create (path = trim("filename.nc"), &
+cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
+
 	index = 1
 
-	do t=1,Tmax-1
+	do t=1,Tmax
 
 ! 		call m.Message(fprev.d, g)
 ! 		call m.Message(fprev.du, g)
@@ -151,18 +140,9 @@ program uravnenie
 
 
 		call fprev.eq(f)
-		if(t == index*timeset)then
-
-			if ( index < 10 ) then
-				Write( str1, '(i1)') index
-				call m.to_print(fprev, g, t, str1//name, timeset)
-			else
-				Write( str2, '(i2)') index
-				call m.to_print(fprev, g, t, str2//name, timeset)
-			end if
-			index = index + 1
-			if ( index*timeset == Tmax ) index = 0
-		end if
+! 		if(t == index*timeset)then
+				call m.to_print(fprev, g, t, name, Tmax)
+! 		end if
 
 	end do
 
@@ -171,6 +151,8 @@ program uravnenie
 	print *,11,id
 
 	call mpi_barrier(MPI_COMM_WORLD, ier)
+
+	status = nf90_close (ncid)
 
 	if ( g.id == 0 ) then
 		print *,"done"

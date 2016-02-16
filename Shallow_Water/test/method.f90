@@ -89,14 +89,15 @@ IMPLICIT NONE
 	End Subroutine
 
 
-	Subroutine met_Print(this, f, g, t, name, timeset)
+	Subroutine met_Print(this, f, g, t, name, Tmax)
 
 			Class(met) :: this
 			Class(func) :: f
 			Class(grid) :: g
 
-			Integer x, y, i, j, request(g.np), Wid
-			Integer(4), Intent(In) :: t, timeset
+			Integer x, y, i, j, request(g.np), Wid, xid, yid, tid
+			Integer status , ncid
+			Integer(4), Intent(In) :: t, Tmax
 			character(40), Intent(In) :: name
 
 			Real(8) W_mass(1:g.StepsY, 1:g.StepsX)
@@ -126,33 +127,27 @@ IMPLICIT NONE
 
 
 
-! 			 	status(1) = nf90_open     (trim("filename.nc"), IOR(NF90_NOWRITE,NF90_NETCDF4),ncid)
-! 			  if (status == NF90_NOERR) STOP
-			  status = nf90_create (path = trim("filename.nc"), cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), &
-			                                              comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid) 
-
 			  
 			!  call check( nf90_create  (path = trim(this.ncfn), cmode = IOR(NF90_NETCDF4, NF90_MPIIO), &
 			!                                  ncid = this.ncid, comm = comm1d, info = MPI_INFO_NULL) )
 			!   status = nf90_put_att (ncid, NF90_GLOBAL, 'title', trim(ncfn))
-			  status = nf90_def_dim (ncid, "x", g.StepsX, x)
-			  status = nf90_def_dim (ncid, "y", g.StepsY, y)
-! 			  status = nf90_def_dim (ncid, "k", nk, kd)
-			  status = nf90_def_dim (ncid, "t", Tmax, t)
+			  status = nf90_def_dim (ncid, "x", g.StepsX, xid)
+			  status = nf90_def_dim (ncid, "y", g.StepsY, yid)
+			  status = nf90_def_dim (ncid, "t", Tmax, tid)
 ! 			call check( nf90_close (this.ncid) )
 
 			! ! проверка наличия в файле переменной
 ! 			 call check( nf90_inq_varid (this.ncid, trim(varname), varid) )
 
 
-			  status = nf90_def_var (ncid, "test", NF90_REAL, (/ x, y, t /), Wid)
+			  status = nf90_def_var (ncid, "test", NF90_REAL, (/ xid, yid/), Wid)
 			  status = nf90_enddef  (ncid)
 
 			! ! указатель на первый элемент массива varval , число элементов
-			  status = nf90_put_var (ncid, Wid, W_mass, (/ 1, 1, 1/), (/ g.StepsX, g.StepsY, Tmax/) )
+			  status = nf90_put_var (ncid, Wid, W_mass, (/ 1, 1, t/), (/ g.StepsX, g.StepsY, Tmax/) )
 
 ! 				nf90_get_var
-				status = nf90_close (ncid)
+
 
 			end if
 
