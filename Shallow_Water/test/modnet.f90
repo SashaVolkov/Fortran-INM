@@ -34,17 +34,16 @@
 			this.bstep = bstep
 			this.fstep = fstep
 
-
 			this.np = np
 			this.id = id
-
+! print *, this.StepsY, this.id
 
 			this.dx = this.LX/this.StepsX
 			this.dy = this.LY/this.StepsY
 			this.dt = this.LT/this.StepsT
 			this.Xsize = this.StepsX/np
 
-			this.ns_x = 1; this.nf_x = this.Xsize
+			this.ns_x = 1; this.nf_x = this.StepsX
 			
 			this.ns_y = 1; this.nf_y = StepsY;
 

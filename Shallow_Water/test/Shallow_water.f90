@@ -15,6 +15,7 @@ program uravnenie
 
 	integer x,y,t, ier, id,np, synchr, i, rc, eqvtype, iter_stpes, index, testid
 	integer Xmax, Ymax, Tmax, bstep, fstep, timeset, casenumb, rcase, lcase, newfile
+	integer Wid, xid, yid, tid
 
 	character(40) name, sch_name
 	character(1) str1
@@ -43,7 +44,7 @@ program uravnenie
 
 	lengthX=1;	lengthY=1;	lengthT=2
 	Xmax = 100; Ymax = 100;	Tmax = 100;	synchr = 0
-	bstep = 1;	fstep = 0
+	bstep = 2;	fstep = 2
 	rcase = 3;	timeset = 1;	eqvtype = 1;	casenumb = 1; iter_stpes = 2; lcase = 1
 	newfile=0
 ! 	temp=1.35
@@ -76,10 +77,10 @@ program uravnenie
 ! 	Allocate(test(1:Xmax, 1:Ymax, 1:Tmax))
 
 	if (casenumb == 1 ) then
-		fstep = 1
+		fstep = 2
 		name = 'Linear.dat'; sch_name = 'Linear'
 	elseif (casenumb == 5 ) then
-		fstep = 1
+		fstep = 2
 		name = 'RungeK.dat'; sch_name = 'RungeKutta'
 	end if
 
@@ -110,43 +111,46 @@ program uravnenie
 		status = nf90_create (path = trim("filename.nc"), &
 cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
 
+		status = nf90_def_dim (ncid, "x", g.StepsX, xid)
+		status = nf90_def_dim (ncid, "y", g.StepsY, yid)
+		status = nf90_def_dim (ncid, "t", Tmax, tid)
+
+		status = nf90_def_var (ncid, "water", NF90_REAL, (/ xid, yid, tid/), Wid)
+		status = nf90_enddef  (ncid)
+
 	index = 1
 
-	do t=1,Tmax
+do t=1,Tmax
 
 ! 		call m.Message(fprev.d, g)
 ! 		call m.Message(fprev.du, g)
 ! 		call m.Message(fprev.dv, g)
 
-			SELECT CASE (casenumb)
-			CASE(0)
+	SELECT CASE (casenumb)
+	CASE(0)
 
-			CASE (1)
-				call s.linear(f.d, fprev.d, f.du, fprev.du, f.dv, fprev.dv, g)
-			CASE(5)
-				call s.RungeKutta(f, fprev, g, m)
-			END SELECT 
-
-
-			do x = g.ns_x, g.nf_x
-				f.dv(g.ns_y,x) = f.dv(f.nf_y,x)
-				f.du(g.ns_y,x) = f.du(f.nf_y,x)
-				f.d(g.ns_y,x) = f.d(f.nf_y,x)
-
-				f.dv(f.ns_y,x) = f.dv(g.nf_y,x)
-				f.du(f.ns_y,x) = f.du(g.nf_y,x)
-				f.d(f.ns_y,x) = f.d(g.nf_y,x)
-			end do
+	CASE (1)
+		call s.linear(f.d, fprev.d, f.du, fprev.du, f.dv, fprev.dv, g)
+	CASE(5)
+		call s.RungeKutta(f, fprev, g, m)
+	END SELECT 
 
 
-		call fprev.eq(f)
-! 		if(t == index*timeset)then
-				call m.to_print(fprev, g, t, name, Tmax)
-! 		end if
+	do x = g.ns_x, g.nf_x
+		f.dv(g.ns_y,x) = f.dv(f.nf_y,x)
+		f.du(g.ns_y,x) = f.du(f.nf_y,x)
+		f.d(g.ns_y,x) = f.d(f.nf_y,x)
 
+		f.dv(f.ns_y,x) = f.dv(g.nf_y,x)
+		f.du(f.ns_y,x) = f.du(g.nf_y,x)
+		f.d(f.ns_y,x) = f.d(g.nf_y,x)
 	end do
 
-! 	if ( casenumb /= 0 ) call m.SchemeParam(f, g, sch_name)
+	call fprev.eq(f)
+	call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
+
+end do
+
 
 	print *,11,id
 

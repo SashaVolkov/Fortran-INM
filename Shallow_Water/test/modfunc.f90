@@ -39,8 +39,6 @@
 		End Subroutine
 
 
-
-
 		Subroutine func_deinit(this)
 			Class(func) :: this
 
@@ -49,7 +47,6 @@
 			if (Allocated(this.dv)) Deallocate(this.dv)
 
 		End Subroutine
-
 
 
 		Subroutine func_eq(this, that)
@@ -68,8 +65,4 @@
 		End Subroutine
 
 
-
-
 	End Module
-
-

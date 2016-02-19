@@ -89,67 +89,40 @@ IMPLICIT NONE
 	End Subroutine
 
 
-	Subroutine met_Print(this, f, g, t, name, Tmax)
+	Subroutine met_Print(this, f, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
 
-			Class(met) :: this
-			Class(func) :: f
-			Class(grid) :: g
+		Class(met) :: this
+		Class(func) :: f
+		Class(grid) :: g
 
-			Integer x, y, i, j, request(g.np), Wid, xid, yid, tid
-			Integer status , ncid
-			Integer(4), Intent(In) :: t, Tmax
-			character(40), Intent(In) :: name
+		Integer x, y, i, j
+		Integer status 
+		Integer(4), Intent(In) :: t, Tmax, Wid, xid, yid, tid, ncid
+		character(40), Intent(In) :: name
 
-			Real(8) W_mass(1:g.StepsY, 1:g.StepsX)
+		Real(8) W_mass(1:g.StepsY, 1:g.StepsX)
 
-			do j=1, g.StepsX
-				do i = 1, g.StepsY
-					W_mass(i, j) = 0
-				end do
+		do j=1, g.StepsX
+			do i = 1, g.StepsY
+				W_mass(i, j) = 0
 			end do
+		end do
 
-			do j = g.ns_x, g.nf_x
-				do i = 1, g.StepsY
-					W_mass(i, j) = f.d(i, j)
-				end do
+		do j = g.ns_x, g.nf_x
+			do i = 1, g.StepsY
+				W_mass(i, j) = f.d(i, j)
 			end do
+		end do
 
 
-			if ( g.np > 1 ) call MPI_Gather(W_mass(1, g.id*g.Xsize + 1), g.Xsize*g.StepsY, MPI_DOUBLE_PRECISION, W_mass, g.Xsize*g.StepsY,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, this.ier)
+		if ( g.np > 1 ) then
+			call MPI_Gather(W_mass(1, g.id*g.Xsize + 1), g.Xsize*g.StepsY, MPI_DOUBLE_PRECISION, W_mass, g.Xsize*g.StepsY,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, this.ier)
+		end if
 
-			if ( g.id == 0 ) then
-! 				print *, "Writing"
-! 				open(14,file='/home/sasha/Fortran/Shallow_Water/datFiles/'//name)
-! 				do y = 1, g.StepsY
-! 					write(14,'(3(e20.12))') (Real(x-1,8)*g.dx, Real(y-1,8)*g.dy, W_mass(y,x), x=1,g.StepsX)
-! 				end do
-! 				close(14)
-
-
-
-			  
-			!  call check( nf90_create  (path = trim(this.ncfn), cmode = IOR(NF90_NETCDF4, NF90_MPIIO), &
-			!                                  ncid = this.ncid, comm = comm1d, info = MPI_INFO_NULL) )
-			!   status = nf90_put_att (ncid, NF90_GLOBAL, 'title', trim(ncfn))
-			  status = nf90_def_dim (ncid, "x", g.StepsX, xid)
-			  status = nf90_def_dim (ncid, "y", g.StepsY, yid)
-			  status = nf90_def_dim (ncid, "t", Tmax, tid)
-! 			call check( nf90_close (this.ncid) )
-
-			! ! проверка наличия в файле переменной
-! 			 call check( nf90_inq_varid (this.ncid, trim(varname), varid) )
-
-
-			  status = nf90_def_var (ncid, "test", NF90_REAL, (/ xid, yid/), Wid)
-			  status = nf90_enddef  (ncid)
-
-			! ! указатель на первый элемент массива varval , число элементов
-			  status = nf90_put_var (ncid, Wid, W_mass, (/ 1, 1, t/), (/ g.StepsX, g.StepsY, Tmax/) )
-
-! 				nf90_get_var
-
-
-			end if
+		if ( g.id == 0 ) then
+		! ! указатель на первый элемент массива varval , число элементов
+		  status = nf90_put_var (ncid, Wid, W_mass, (/ 1, 1, t/), (/ g.StepsX, g.StepsY, 1/) )
+		end if
 
 		End Subroutine
 
