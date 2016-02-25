@@ -79,36 +79,30 @@ IMPLICIT NONE
 
 	End Subroutine
 
-	Subroutine sch_scheme_linear(this, h, hprev, u, uprev, v, vprev, g)
+	Subroutine sch_scheme_linear(this, h, hpr, u, upr, v, vpr, g)
 
 		Class(sch) :: this
 		Class(grid) :: g
 
 		Integer(4) :: x, y
-		Real(8), Intent(inout) :: h(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(inout) :: hprev(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(inout) :: u(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(inout) :: uprev(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(inout) :: v(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(inout) :: vprev(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8) cor, grav, height
+		Real(8), Intent(out) :: h(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(in) :: hpr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(out) :: u(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(in) :: upr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(out) :: v(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(in) :: vpr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8) cor, gr, height
 
-		cor = this.cor; grav = this.grav; height = this.height
+		cor = this.cor; gr = this.grav; height = this.height
 
 		do y = g.ns_y, g.nf_y
 			do x = g.ns_x, g.nf_y
-				u(y,x) = uprev(y,x) + g.dt*(cor*vprev(y,x) - (grav*0.5)*(hprev(y, x+1) - hprev(y, x-1))/g.dx)! - (uprev(y,x)*(uprev(y, x+1) - uprev(y, x-1)) + vprev(y,x)*(uprev(y+1, x) - uprev(y-1, x)))
-				v(y,x) = vprev(y,x) - g.dt*(cor*uprev(y,x) - (grav*0.5)*(hprev(y+1, x) - hprev(y-1, x))/g.dx)! - (uprev(y,x)*(vprev(y, x+1) - vprev(y, x-1)) + vprev(y,x)*(vprev(y+1, x) - vprev(y-1, x)))
-				h(y,x) = hprev(y,x) - g.dt*height*0.5*(((uprev(y, x+1) - uprev(y, x-1)))/g.dx + ((vprev(y+1, x) - vprev(y-1, x)))/g.dy)! - (uprev(y,x)*(hprev(y, x+1) - hprev(y, x-1)) + vprev(y,x)*(hprev(y+1, x) - hprev(y-1, x)))
+				u(y,x) = upr(y,x) + g.dt*(cor*vpr(y,x) - (gr*0.5)*(hpr(y, x+1) - hpr(y, x-1))/g.dx)! - (uprev(y,x)*(uprev(y, x+1) - uprev(y, x-1)) + vprev(y,x)*(uprev(y+1, x) - uprev(y-1, x)))
+				v(y,x) = vpr(y,x) - g.dt*(cor*upr(y,x) - (gr*0.5)*(hpr(y+1, x) - hpr(y-1, x))/g.dx)! - (uprev(y,x)*(vprev(y, x+1) - vprev(y, x-1)) + vprev(y,x)*(vprev(y+1, x) - vprev(y-1, x)))
+				h(y,x) = hpr(y,x) - g.dt*height*0.5*(((upr(y, x+1) - upr(y, x-1)))/g.dx + ((vpr(y+1, x) - vpr(y-1, x)))/g.dy)! - (uprev(y,x)*(hprev(y, x+1) - hprev(y, x-1)) + vprev(y,x)*(hprev(y+1, x) - hprev(y-1, x)))
 			end do
 		end do
-
-
 	End Subroutine
-
-
-
-
 
 
 
@@ -183,7 +177,6 @@ IMPLICIT NONE
 				kh(y,x) = - g.dt*height*0.5*(&
 					4.0*((upr(y, x+1) - upr(y, x-1))/(g.dx*3.0) + (vpr(y+1, x) - vpr(y-1, x))/(g.dy*3.0)) - &
 					0.5*((upr(y, x+2) - upr(y, x-2))/(g.dx*3.0) + (vpr(y+2, x) - vpr(y-2, x))/(g.dy*3.0)))
-
 
 			end do
 		end do

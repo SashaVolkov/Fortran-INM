@@ -49,30 +49,30 @@ IMPLICIT NONE
 
 		Class(met) :: this
 		Class(grid) :: g
-		Real(8), Intent(inout) :: trans_mass(g.ns_y: g.nf_y, g.ns_x - g.bstep : g.nf_x + g.fstep) 
+		Real(8), Intent(inout) :: trans_mass(g.ns_y - g.bstep : g.nf_y + g.bstep , g.ns_x - g.bstep : g.nf_x + g.fstep) 
 		Integer(4) y
 
-		y=g.StepsY
+		y=g.StepsY + 2*g.bstep
 
-	if ( g.np>1 ) then
+	if (g.np > 1) then
 
-		if ( g.id/=g.np-1 ) then
-			call MPI_Send(trans_mass(1, g.nf_x+1 - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.ier)
+		if (g.id/=g.np - 1) then
+			call MPI_Send(trans_mass(g.ns_y - g.bstep, g.nf_x+1 - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.ier)
 		end if
 
 		if ( g.id/=0 ) then
-			call MPI_Recv(trans_mass(1, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
+			call MPI_Recv(trans_mass(g.ns_y - g.bstep, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
 		end if
 
 
 		if ( g.fstep > 0) then
 
 			if ( g.id/=0 ) then
-				call MPI_Send(trans_mass(1, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.ier);
+				call MPI_Send(trans_mass(g.ns_y - g.bstep, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.ier);
 			end if
 
 			if ( g.id/=g.np-1 ) then
-				call MPI_Recv(trans_mass(1, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.status, this.ier)
+				call MPI_Recv(trans_mass(g.ns_y - g.bstep, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.status, this.ier)
 			end if
 
 		end if
