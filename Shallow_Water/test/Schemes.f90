@@ -153,32 +153,40 @@ IMPLICIT NONE
 	End Subroutine
 
 
-	Subroutine sch_FRunge(this, ku, kv, kh, uprev, vprev, hprev, g)
+	Subroutine sch_FRunge(this, ku, kv, kh, upr, vpr, hpr, g)
 		Class(grid) :: g
 		Class(sch) :: this
 
 		Integer(4) :: x,y
 ! 		Integer(4), Intent(In) :: eqvtype
 
-		Real(8), Intent(In) :: uprev(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(In) :: vprev(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(In) :: hprev(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(In) :: upr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(In) :: vpr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(In) :: hpr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
 		Real(8), Intent(inout) :: ku(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
 		Real(8), Intent(inout) :: kv(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
 		Real(8), Intent(inout) :: kh(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
 
-		Real(8) cor, grav, height
-		cor = this.cor; grav = this.grav; height = this.height
-
+		Real(8) cor, gr, height
+		cor = this.cor; gr = this.grav; height = this.height
 
 		do y = g.ns_y, g.nf_y
 			do x = g.ns_x, g.nf_x
-					ku(y,x) = g.dt*(cor*vprev(y,x) - (grav*0.5)*(hprev(y, x+1) - hprev(y, x-1))/g.dx)
-					kv(y,x) = g.dt*( - cor*uprev(y,x) - (grav*0.5)*(hprev(y+1, x) - hprev(y-1, x))/g.dx)
-					kh(y,x) = - g.dt*height*0.5*(((uprev(y, x+1) - uprev(y, x-1)))/g.dx + ((vprev(y+1, x) - vprev(y-1, x)))/g.dy)
+				ku(y,x) = g.dt*(cor*vpr(y,x) - (gr*0.5)* &
+					(4.0*hpr(y, x+1) + 0.5*hpr(y, x-2) - 4.0*hpr(y, x-1) - 0.5*hpr(y, x+2))/(g.dx*3.0))
+
+
+				kv(y,x) = g.dt*( - cor*upr(y,x) - (gr*0.5)* &
+					(4.0*hpr(y+1, x) + 0.5*hpr(y-2, x) - 4.0*hpr(y-1, x) - 0.5*hpr(y+2, x))/(g.dy*3.0))
+
+
+				kh(y,x) = - g.dt*height*0.5*(&
+					4.0*((upr(y, x+1) - upr(y, x-1))/(g.dx*3.0) + (vpr(y+1, x) - vpr(y-1, x))/(g.dy*3.0)) - &
+					0.5*((upr(y, x+2) - upr(y, x-2))/(g.dx*3.0) + (vpr(y+2, x) - vpr(y-2, x))/(g.dy*3.0)))
+
+
 			end do
 		end do
-
 
 	end Subroutine
 

@@ -42,7 +42,7 @@ program uravnenie
 	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
 ! 	cw = MPI_COMM_WORLD
 
-	lengthX=1;	lengthY=1;	lengthT=2
+	lengthX=1;	lengthY=1;	lengthT=1.5
 	Xmax = 100; Ymax = 100;	Tmax = 100;	synchr = 0
 	bstep = 2;	fstep = 2
 	rcase = 3;	timeset = 1;	eqvtype = 1;	casenumb = 1; iter_stpes = 2; lcase = 1
@@ -57,7 +57,7 @@ program uravnenie
 	if ( id == 0 ) then
 
 		open(9,file='/home/sasha/Fortran/Shallow_Water/test/init.file')
-			read(9, FMT="(5(I14), 3(e20.12))") Xmax, Ymax, Tmax, timeset, casenumb, grav, cor, height
+			read(9, FMT="(5(I14), 4(e20.12))") Xmax, Ymax, Tmax, timeset, casenumb, grav, cor, height, lengthT
 		close(9)
 
 	end if
@@ -71,17 +71,19 @@ program uravnenie
 	call MPI_Bcast(grav, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 	call MPI_Bcast(cor, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 	call MPI_Bcast(height, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
+	call MPI_Bcast(lengthT, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ier)
 	call mpi_barrier(MPI_COMM_WORLD, ier)
 
 
 ! 	Allocate(test(1:Xmax, 1:Ymax, 1:Tmax))
 
 	if (casenumb == 1 ) then
-		fstep = 2
-		name = 'Linear.dat'; sch_name = 'Linear'
+		fstep = 1
+		name = 'Linear.nc'; sch_name = 'Linear'
 	elseif (casenumb == 5 ) then
 		fstep = 2
-		name = 'RungeK.dat'; sch_name = 'RungeKutta'
+		bstep = 2
+		name = 'RungeK.nc'; sch_name = 'RungeKutta'
 	end if
 
 	call g.init (lengthX, lengthY, lengthT, Xmax, Ymax, Tmax, bstep, fstep, np, id)
@@ -96,7 +98,7 @@ program uravnenie
 
 	do x = f.ns_x, f.nf_x
 		do y = f.ns_y, f.nf_y
-			fprev.d(y, x) = height*exp(-((((20.0/Xmax)*(x-Xmax*0.5))**2)+(((20.0/Ymax)*(y-Ymax*0.5))**2))) + 0
+			fprev.d(y, x) = height*exp(-((((10.0/Xmax)*(x-Xmax*0.5))**2)+(((10.0/Ymax)*(y-Ymax*0.5))**2))) + 0
 			!f.d(y, x) = exp(-((((20.0/Xmax)*(x-Xmax/2))**2)+(((20.0/Ymax)*(y-Ymax/2))**2)))
 			fprev.du(y,x) = 0
 			fprev.dv(y,x) = 0
@@ -108,7 +110,7 @@ program uravnenie
 ! 	call m.BornParam(fprev, g)
 
 
-		status = nf90_create (path = trim("filename.nc"), &
+		status = nf90_create (path = trim('/home/sasha/Fortran/Shallow_Water/datFiles/'//name), &
 cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
 
 		status = nf90_def_dim (ncid, "x", g.StepsX, xid)
@@ -120,39 +122,43 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 
 	index = 1
 
-do t=1,Tmax
-
-! 		call m.Message(fprev.d, g)
-! 		call m.Message(fprev.du, g)
-! 		call m.Message(fprev.dv, g)
-
-	SELECT CASE (casenumb)
-	CASE(0)
-
-	CASE (1)
-		call s.linear(f.d, fprev.d, f.du, fprev.du, f.dv, fprev.dv, g)
-	CASE(5)
-		call s.RungeKutta(f, fprev, g, m)
-	END SELECT 
 
 
-	do x = g.ns_x, g.nf_x
-		f.dv(g.ns_y,x) = f.dv(f.nf_y,x)
-		f.du(g.ns_y,x) = f.du(f.nf_y,x)
-		f.d(g.ns_y,x) = f.d(f.nf_y,x)
+	do t=1,Tmax
 
-		f.dv(f.ns_y,x) = f.dv(g.nf_y,x)
-		f.du(f.ns_y,x) = f.du(g.nf_y,x)
-		f.d(f.ns_y,x) = f.d(g.nf_y,x)
+		SELECT CASE (casenumb)
+		CASE(0)
+
+		CASE (1)
+			call s.linear(f.d, fprev.d, f.du, fprev.du, f.dv, fprev.dv, g)
+		CASE(5)
+			call s.RungeKutta(f, fprev, g, m)
+		END SELECT 
+
+
+		do x = g.ns_x, g.nf_x
+			f.dv(g.ns_y,x) = -f.dv(g.ns_y,x)
+			f.du(g.ns_y,x) = -f.du(g.ns_y,x)
+			f.dv(g.nf_y,x) = -f.dv(g.nf_y,x)
+			f.du(g.nf_y,x) = -f.du(g.nf_y,x)
+		end do
+
+		do y = g.ns_y, g.nf_y
+			f.dv(y,g.ns_x) = -f.dv(y,g.ns_x)
+			f.du(y,g.ns_x) = -f.du(y,g.ns_x)
+			f.dv(y,g.nf_x) = -f.dv(y,g.nf_x)
+			f.du(y,g.nf_x) = -f.du(y,g.nf_x)
+		end do
+
+		call fprev.eq(f)
+		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
+! 		end if
 	end do
 
-	call fprev.eq(f)
-	call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
-
-end do
 
 
-	print *,11,id
+
+! 	print *,11,id
 
 	call mpi_barrier(MPI_COMM_WORLD, ier)
 
