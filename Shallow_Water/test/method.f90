@@ -50,9 +50,14 @@ IMPLICIT NONE
 		Class(met) :: this
 		Class(grid) :: g
 		Real(8), Intent(inout) :: trans_mass(g.ns_y - g.bstep : g.nf_y + g.bstep , g.ns_x - g.bstep : g.nf_x + g.fstep) 
-		Integer(4) y
+		Integer(4) y, rc
 
 		y=g.StepsY + 2*g.bstep
+
+		if ( g.np /= 1 .and. g.np /= 2 ) then
+			call MPI_FINALIZE(rc)
+			STOP
+		end if
 
 	if (g.np > 1) then
 
