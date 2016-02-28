@@ -50,6 +50,7 @@ program uravnenie
 ! 	temp=1.35
 	cor = 0
 	grav = .2
+	t = 0
 
 
 
@@ -100,6 +101,8 @@ program uravnenie
 		do y = f.ns_y, f.nf_y
 			fprev.d(y, x) = height*exp(-((((10.0/Xmax)*(x-Xmax*0.5))**2)+(((10.0/Ymax)*(y-Ymax*0.5))**2))) + 0
 			!f.d(y, x) = exp(-((((20.0/Xmax)*(x-Xmax/2))**2)+(((20.0/Ymax)*(y-Ymax/2))**2)))
+! 			fprev.d(y,x) = id+1
+! 		fprev.d(y, x) = id * 10
 			fprev.du(y,x) = 0
 			fprev.dv(y,x) = 0
 		end do
@@ -117,8 +120,9 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 		status = nf90_def_dim (ncid, "y", g.StepsY, yid)
 		status = nf90_def_dim (ncid, "t", Tmax, tid)
 
-		status = nf90_def_var (ncid, "water", NF90_REAL, (/ xid, yid, tid/), Wid)
+		status = nf90_def_var (ncid, "water", NF90_REAL, (/ yid, xid, tid/), Wid)
 		status = nf90_enddef  (ncid)
+		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
 
 	index = 1
 
@@ -135,21 +139,32 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 
 		CASE(5)
 			call s.RungeKutta(f, fprev, g, m)
+			call m.Message(f.d, g);call m.Message(f.du, g);call m.Message(f.dv, g)
 		END SELECT 
 
 
 		do x = g.ns_x, g.nf_x
-			f.dv(g.ns_y,x) = -f.dv(g.ns_y,x)
-			f.du(g.ns_y,x) = -f.du(g.ns_y,x)
-			f.dv(g.nf_y,x) = -f.dv(g.nf_y,x)
-			f.du(g.nf_y,x) = -f.du(g.nf_y,x)
+			if ( g.ns_y == 1 ) then
+				f.dv(g.ns_y,x) = -f.dv(g.ns_y,x)
+				f.du(g.ns_y,x) = -f.du(g.ns_y,x)
+			end if
+
+			if ( g.nf_y == g.StepsY ) then
+				f.dv(g.nf_y,x) = -f.dv(g.nf_y,x)
+				f.du(g.nf_y,x) = -f.du(g.nf_y,x)
+			end if
 		end do
 
 		do y = g.ns_y, g.nf_y
-			f.dv(y,g.ns_x) = -f.dv(y,g.ns_x)
-			f.du(y,g.ns_x) = -f.du(y,g.ns_x)
-			f.dv(y,g.nf_x) = -f.dv(y,g.nf_x)
-			f.du(y,g.nf_x) = -f.du(y,g.nf_x)
+			if ( g.ns_x == 1 ) then
+				f.dv(y,g.ns_x) = -f.dv(y,g.ns_x)
+				f.du(y,g.ns_x) = -f.du(y,g.ns_x)
+			end if
+
+			if ( g.nf_x == g.StepsX ) then
+				f.dv(y,g.nf_x) = -f.dv(y,g.nf_x)
+				f.du(y,g.nf_x) = -f.du(y,g.nf_x)
+			end if
 		end do
 
 		call fprev.eq(f)
@@ -172,9 +187,9 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 		print *, "Your file is: "//name
 	end if
 
-	call f.deinit()
-	call fprev.deinit()
-	call s.deinit()
+! 	call f.deinit()
+! 	call fprev.deinit()
+! 	call s.deinit()
 ! 	call l.deinit()
 
 	call MPI_FINALIZE(rc)

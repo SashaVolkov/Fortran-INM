@@ -49,40 +49,57 @@ IMPLICIT NONE
 
 		Class(met) :: this
 		Class(grid) :: g
-		Real(8), Intent(inout) :: trans_mass(g.ns_y - g.bstep : g.nf_y + g.bstep , g.ns_x - g.bstep : g.nf_x + g.fstep) 
-		Integer(4) y, rc
+		Real(8), Intent(inout) :: trans_mass(g.first_y : g.last_y, g.first_x : g.last_x) 
+		Integer(4) y, x, rc, u, d, r, l, i, j, mp_cw, mp_dp, b_grey_zone, f_grey_zone
+		u = g.Neighb_up; d = g.Neighb_down
+		r = g.Neighb_right; l = g.Neighb_left
+		mp_cw = MPI_COMM_WORLD; mp_dp = MPI_DOUBLE_PRECISION
 
-		y=g.StepsY + 2*g.bstep
+		y=g.Ysize + g.bstep + g.fstep
+		x=g.Xsize + g.bstep + g.fstep
 
-		if ( g.np /= 1 .and. g.np /= 2 ) then
-			call MPI_FINALIZE(rc)
-			STOP
+		call MPI_TYPE_VECTOR(x*g.bstep, g.bstep, y, mp_dp, b_grey_zone, this.ier)
+		call MPI_TYPE_VECTOR(x*g.fstep, g.fstep, y, mp_dp, f_grey_zone, this.ier)
+
+		call MPI_TYPE_COMMIT(b_grey_zone, this.ier)
+		call MPI_TYPE_COMMIT(f_grey_zone, this.ier)
+
+if (g.np > 1) then
+
+		if (r > -1) then
+			call MPI_Send(trans_mass(g.first_y, g.nf_x+1 - g.bstep), g.bstep*y, mp_dp, r, r, mp_cw, this.ier);
+		end if
+		if (l > -1) then
+			call MPI_Recv(trans_mass(g.first_y, g.first_x), g.bstep*y, mp_dp, l, g.id, mp_cw, this.status, this.ier);
 		end if
 
-	if (g.np > 1) then
 
-		if (g.id/=g.np - 1) then
-			call MPI_Send(trans_mass(g.ns_y - g.bstep, g.nf_x+1 - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.ier)
+
+	if ( g.fstep > 0) then
+		if (l > -1) then
+			call MPI_Send(trans_mass(g.first_y, g.ns_x), g.fstep*y, mp_dp, l, g.id, mp_cw, this.ier);
 		end if
-
-		if ( g.id/=0 ) then
-			call MPI_Recv(trans_mass(g.ns_y - g.bstep, g.ns_x - g.bstep), g.bstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.status, this.ier);
+		if ( r > -1) then
+			call MPI_Recv(trans_mass(g.first_y, g.nf_x + 1), g.fstep*y, mp_dp, r, r, mp_cw, this.status, this.ier);
 		end if
-
-
-		if ( g.fstep > 0) then
-
-			if ( g.id/=0 ) then
-				call MPI_Send(trans_mass(g.ns_y - g.bstep, g.ns_x), g.fstep*y, MPI_DOUBLE_PRECISION, g.id-1, g.id, MPI_COMM_WORLD, this.ier);
-			end if
-
-			if ( g.id/=g.np-1 ) then
-				call MPI_Recv(trans_mass(g.ns_y - g.bstep, g.nf_x + 1), g.fstep*y, MPI_DOUBLE_PRECISION, g.id+1, g.id+1, MPI_COMM_WORLD, this.status, this.ier)
-			end if
-
-		end if
-
 	end if
+
+	if ( d > -1 ) then
+		call MPI_Send(trans_mass(g.nf_y+1 - g.bstep, g.first_x), 1, b_grey_zone, d, d, mp_cw, this.ier)
+	end if
+	if ( u > -1 ) then
+		call MPI_Recv(trans_mass(g.first_y, g.first_x), 1, b_grey_zone, u, g.id, mp_cw, this)
+	end if
+
+	if ( u > -1 ) then
+		call MPI_Send(trans_mass(g.ns_y, g.first_x), 1, f_grey_zone, u, u, mp_cw, this.ier)
+	end if
+	if ( d > -1 ) then
+		call MPI_Recv(trans_mass(g.nf_y+1, g.first_x), 1, f_grey_zone, d, g.id, mp_cw, this)
+	end if
+
+
+end if
 
 	End Subroutine
 
@@ -98,29 +115,19 @@ IMPLICIT NONE
 		Integer(4), Intent(In) :: t, Tmax, Wid, xid, yid, tid, ncid
 		character(40), Intent(In) :: name
 
-		Real(8) W_mass(1:g.StepsY, 1:g.StepsX)
-
-		do j=1, g.StepsX
-			do i = 1, g.StepsY
-				W_mass(i, j) = 0
-			end do
-		end do
+		Real(8) W_mass(g.ns_y:g.nf_y, g.ns_x:g.nf_x)
 
 		do j = g.ns_x, g.nf_x
-			do i = 1, g.StepsY
+			do i = g.ns_y, g.nf_y
 				W_mass(i, j) = f.d(i, j)
 			end do
 		end do
 
 
-		if ( g.np > 1 ) then
-			call MPI_Gather(W_mass(1, g.id*g.Xsize + 1), g.Xsize*g.StepsY, MPI_DOUBLE_PRECISION, W_mass, g.Xsize*g.StepsY,MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, this.ier)
-		end if
-
-		if ( g.id == 0 ) then
+! 		if ( g.id == 0 ) then
 		! ! указатель на первый элемент массива varval , число элементов
-		  status = nf90_put_var (ncid, Wid, W_mass, (/ 1, 1, t/), (/ g.StepsX, g.StepsY, 1/) )
-		end if
+		  status = nf90_put_var (ncid, Wid, W_mass, (/ g.ns_y, g.ns_x, t/), (/ g.nf_y - g.ns_y + 1, g.nf_x - g.ns_x + 1, 1/) )
+! 		end if
 
 		End Subroutine
 

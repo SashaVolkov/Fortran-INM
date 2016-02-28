@@ -27,10 +27,10 @@
 
 			call this.deinit()
 
-			this.ns_x = g.ns_x-g.bstep
-			this.nf_x = g.nf_x+g.fstep
-			this.ns_y = g.ns_y-g.bstep
-			this.nf_y = g.nf_y+g.bstep
+			this.ns_x = g.first_x
+			this.nf_x = g.last_x
+			this.ns_y = g.first_y
+			this.nf_y = g.last_y
 
 			Allocate(this.d(this.ns_y:this.nf_y, this.ns_x:this.nf_x))
 			Allocate(this.du(this.ns_y:this.nf_y, this.ns_x:this.nf_x))

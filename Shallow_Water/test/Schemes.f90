@@ -122,19 +122,19 @@ IMPLICIT NONE
 
 		call this.FRunge(this.ku1, this.kv1, this.kh1, fprev.du, fprev.dv, fprev.d, g)
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
-		call m.Message(this.ku1, g);call m.Message(this.kv1, g);call m.Message(this.kh1, g)
+! 		call m.Message(this.ku1, g);call m.Message(this.kv1, g);call m.Message(this.kh1, g)
 
 		call this.FRunge(this.ku2, this.kv2, this.kh2, fprev.du, fprev.dv, fprev.d, g)
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
-		call m.Message(this.ku2, g);call m.Message(this.kv2, g);call m.Message(this.kh2, g)
+! 		call m.Message(this.ku2, g);call m.Message(this.kv2, g);call m.Message(this.kh2, g)
 
 		call this.FRunge(this.ku3, this.kv3, this.kh3, fprev.du, fprev.dv, fprev.d, g)
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
-		call m.Message(this.ku3, g);call m.Message(this.kv3, g);call m.Message(this.kh3, g)
+! 		call m.Message(this.ku3, g);call m.Message(this.kv3, g);call m.Message(this.kh3, g)
 
 		call this.FRunge(this.ku4, this.kv4, this.kh4, fprev.du, fprev.dv, fprev.d, g)
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
-		call m.Message(this.ku4, g);call m.Message(this.kv4, g);call m.Message(this.kh4, g)
+! 		call m.Message(this.ku4, g);call m.Message(this.kv4, g);call m.Message(this.kh4, g)
 
 		do y = g.ns_y, g.nf_y
 			do x=g.ns_x, g.nf_x
@@ -154,12 +154,12 @@ IMPLICIT NONE
 		Integer(4) :: x,y
 ! 		Integer(4), Intent(In) :: eqvtype
 
-		Real(8), Intent(In) :: upr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(In) :: vpr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(In) :: hpr(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(inout) :: ku(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(inout) :: kv(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
-		Real(8), Intent(inout) :: kh(g.ns_y - g.bstep : g.nf_y + g.fstep, g.ns_x - g.bstep : g.nf_x + g.fstep)
+		Real(8), Intent(In) :: upr(g.first_y : g.last_y, g.first_x : g.last_x)
+		Real(8), Intent(In) :: vpr(g.first_y : g.last_y, g.first_x : g.last_x)
+		Real(8), Intent(In) :: hpr(g.first_y : g.last_y, g.first_x : g.last_x)
+		Real(8), Intent(inout) :: ku(g.first_y : g.last_y, g.first_x : g.last_x)
+		Real(8), Intent(inout) :: kv(g.first_y : g.last_y, g.first_x : g.last_x)
+		Real(8), Intent(inout) :: kh(g.first_y : g.last_y, g.first_x : g.last_x)
 
 		Real(8) cor, gr, height
 		cor = this.cor; gr = this.grav; height = this.height
