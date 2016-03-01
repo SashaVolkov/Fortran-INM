@@ -51,52 +51,71 @@ IMPLICIT NONE
 		Class(grid) :: g
 		Real(8), Intent(inout) :: trans_mass(g.first_y : g.last_y, g.first_x : g.last_x) 
 		Integer(4) y, x, rc, u, d, r, l, i, j, mp_cw, mp_dp, b_grey_zone, f_grey_zone
+		Integer(4) reqs(8), numb_oper
+		integer stats(MPI_STATUS_SIZE, 4)
 		u = g.Neighb_up; d = g.Neighb_down
 		r = g.Neighb_right; l = g.Neighb_left
 		mp_cw = MPI_COMM_WORLD; mp_dp = MPI_DOUBLE_PRECISION
+		numb_oper = 0
 
 		y=g.Ysize + g.bstep + g.fstep
 		x=g.Xsize + g.bstep + g.fstep
 
-		call MPI_TYPE_VECTOR(x*g.bstep, g.bstep, y, mp_dp, b_grey_zone, this.ier)
-		call MPI_TYPE_VECTOR(x*g.fstep, g.fstep, y, mp_dp, f_grey_zone, this.ier)
+		call MPI_TYPE_VECTOR(x, g.bstep, y, mp_dp, b_grey_zone, this.ier)
+		call MPI_TYPE_VECTOR(x, g.fstep, y, mp_dp, f_grey_zone, this.ier)
 
 		call MPI_TYPE_COMMIT(b_grey_zone, this.ier)
 		call MPI_TYPE_COMMIT(f_grey_zone, this.ier)
 
 if (g.np > 1) then
 
-		if (r > -1) then
-			call MPI_Send(trans_mass(g.first_y, g.nf_x+1 - g.bstep), g.bstep*y, mp_dp, r, r, mp_cw, this.ier);
-		end if
-		if (l > -1) then
-			call MPI_Recv(trans_mass(g.first_y, g.first_x), g.bstep*y, mp_dp, l, g.id, mp_cw, this.status, this.ier);
-		end if
+	if (l > -1) then
+		call MPI_IRecv(trans_mass(g.first_y, g.first_x), g.bstep*y, mp_dp, l, g.id, mp_cw, reqs(1), this.ier);
+		numb_oper = numb_oper + 1
+	end if
+	if ( r > -1) then
+		call MPI_IRecv(trans_mass(g.first_y, g.nf_x + 1), g.fstep*y, mp_dp, r, r, mp_cw, reqs(2), this.ier);
+		numb_oper = numb_oper + 1
+	end if
+
+	if ( u > -1 ) then
+		call MPI_IRecv(trans_mass(g.first_y, g.first_x), 1, b_grey_zone, u, g.id, mp_cw, reqs(3), this.ier)
+	end if
+	if ( d > -1 ) then
+		call MPI_IRecv(trans_mass(g.nf_y+1, g.first_x), 1, f_grey_zone, d, g.id, mp_cw, reqs(4), this.ier)
+	end if
 
 
-
-	if ( g.fstep > 0) then
-		if (l > -1) then
-			call MPI_Send(trans_mass(g.first_y, g.ns_x), g.fstep*y, mp_dp, l, g.id, mp_cw, this.ier);
-		end if
-		if ( r > -1) then
-			call MPI_Recv(trans_mass(g.first_y, g.nf_x + 1), g.fstep*y, mp_dp, r, r, mp_cw, this.status, this.ier);
-		end if
+	if (r > -1) then
+		call MPI_Send(trans_mass(g.first_y, g.nf_x+1 - g.bstep), g.bstep*y, mp_dp, r, r, mp_cw, this.ier);
+		numb_oper = numb_oper + 1
+	end if
+	if (l > -1) then
+		call MPI_Send(trans_mass(g.first_y, g.ns_x), g.fstep*y, mp_dp, l, g.id, mp_cw, this.ier);
+		numb_oper = numb_oper + 1
 	end if
 
 	if ( d > -1 ) then
 		call MPI_Send(trans_mass(g.nf_y+1 - g.bstep, g.first_x), 1, b_grey_zone, d, d, mp_cw, this.ier)
 	end if
 	if ( u > -1 ) then
-		call MPI_Recv(trans_mass(g.first_y, g.first_x), 1, b_grey_zone, u, g.id, mp_cw, this)
-	end if
-
-	if ( u > -1 ) then
 		call MPI_Send(trans_mass(g.ns_y, g.first_x), 1, f_grey_zone, u, u, mp_cw, this.ier)
 	end if
-	if ( d > -1 ) then
-		call MPI_Recv(trans_mass(g.nf_y+1, g.first_x), 1, f_grey_zone, d, g.id, mp_cw, this)
+
+
+	if ( l > -1 ) then
+		call MPI_Wait(reqs(1), stats(1,1), this.ier)
 	end if
+	if ( r > -1 ) then
+		call MPI_Wait(reqs(2), stats(1,2), this.ier)
+	end if
+	if ( u > -1 ) then
+		call MPI_Wait(reqs(3), stats(1,3), this.ier)
+	end if
+	if ( d > -1 ) then
+		call MPI_Wait(reqs(4), stats(1,4), this.ier)
+	end if
+
 
 
 end if

@@ -187,9 +187,9 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 		print *, "Your file is: "//name
 	end if
 
-! 	call f.deinit()
-! 	call fprev.deinit()
-! 	call s.deinit()
+	call f.deinit()
+	call fprev.deinit()
+	call s.deinit()
 ! 	call l.deinit()
 
 	call MPI_FINALIZE(rc)
