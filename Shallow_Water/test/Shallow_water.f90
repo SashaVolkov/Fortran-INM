@@ -135,11 +135,11 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 
 		CASE (1)
 			call s.linear(f.d, fprev.d, f.du, fprev.du, f.dv, fprev.dv, g)
-			call m.Message(f.d, g);call m.Message(f.du, g);call m.Message(f.dv, g)
+			call m.Message(f, g)!;call m.Message(f.du, g);call m.Message(f.dv, g)
 
 		CASE(5)
 			call s.RungeKutta(f, fprev, g, m)
-			call m.Message(f.d, g);call m.Message(f.du, g);call m.Message(f.dv, g)
+			call m.Message(f, g)!;call m.Message(f.du, g);call m.Message(f.dv, g)
 		END SELECT 
 
 
