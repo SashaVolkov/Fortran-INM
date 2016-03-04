@@ -2,12 +2,14 @@ Module method
 
 	Use modnet
 	Use modfunc
-	Use MPI
-	Use netcdf
+
+! 	Use netcdf
 
 IMPLICIT NONE
 
+	Private
 	Public :: met
+	include"mpif.h"
 
 	Type met
 
@@ -173,7 +175,7 @@ end if
 
 ! 		if ( g.id == 0 ) then
 		! ! указатель на первый элемент массива varval , число элементов
-		  status = nf90_put_var (ncid, Wid, W_mass, (/ g.ns_y, g.ns_x, t/), (/ g.nf_y - g.ns_y + 1, g.nf_x - g.ns_x + 1, 1/) )
+! 		  status = nf90_put_var (ncid, Wid, W_mass, (/ g.ns_y, g.ns_x, t/), (/ g.nf_y - g.ns_y + 1, g.nf_x - g.ns_x + 1, 1/) )
 ! 		end if
 
 		End Subroutine

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+netcdf="/home/sasha/netcdf"
+
+mpiifort -g -traceback -check all -fpe-all=0 -fpe0 $@ -I /opt/intel/impi/4.0.1/include/ -c -I $netcdf/inc -L $netcdf/lib -lhdf5_hl -lhdf5 -lz -lm
+
+ # -fpe-all=0 -fpe0

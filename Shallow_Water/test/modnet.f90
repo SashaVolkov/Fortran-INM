@@ -1,7 +1,7 @@
 Module modnet
 
 	IMPLICIT NONE
-
+	Private
 	Public :: grid
 
 	Type grid
@@ -75,7 +75,7 @@ Module modnet
 
 		this.ns_x = 1 + this.Xsize*(this.block_x - 1); this.nf_x = this.Xsize*this.block_x
 		this.ns_y = 1 + this.Ysize*(this.block_y - 1); this.nf_y = this.Ysize*this.block_y
-		print *, this.ns_x, this.nf_x, this.ns_y, this.nf_y, id
+! 		print *, this.ns_x, this.nf_x, this.ns_y, this.nf_y, id
 		this.first_x = this.ns_x - this.bstep; this.last_x = this.nf_x + this.fstep
 		this.first_y = this.ns_y - this.bstep; this.last_y = this.nf_y + this.fstep
 
@@ -108,7 +108,7 @@ Module modnet
 	end if
 
 
-	print *,"id:",id,"right:",this.Neighb_right,"left:",this.Neighb_left,"down:",this.Neighb_down,"up:",this.Neighb_up
+! 	print *,"id:",id,"right:",this.Neighb_right,"left:",this.Neighb_left,"down:",this.Neighb_down,"up:",this.Neighb_up
 
 ! 	call MPI_FINALIZE(rc)
 ! 	STOP

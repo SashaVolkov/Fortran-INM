@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mpdboot -n 1 --ncpus=16

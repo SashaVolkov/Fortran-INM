@@ -1,0 +1,7 @@
+#!/bin/bash
+netcdf="/home/sasha/netcdf"
+
+# ls $netcdf/lib
+
+mpiifort -traceback -check all *.o -o a.out -Wl,--start-group -L /opt/intel/impi/4.0.1.007/lib -lmpi -lmpigf -lmpigi -lmpiif 
+-lmpi_ilp64 -Wl,--end-group

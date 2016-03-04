@@ -1,0 +1,67 @@
+# Sample .bashrc for SuSE Linux
+# Copyright (c) SuSE GmbH Nuernberg
+
+# There are 3 different types of shells in bash: the login shell, normal shell
+# and interactive shell. Login shells read ~/.profile and interactive shells
+# read ~/.bashrc; in our setup, /etc/profile sources ~/.bashrc - thus all
+# settings made here will also take effect in a login shell.
+#
+# NOTE: It is recommended to make language settings in ~/.profile rather than
+# here, since multilingual X sessions would not work properly if LANG is over-
+# ridden in every subshell.
+
+# Some applications read the EDITOR variable to determine your favourite text
+# editor. So uncomment the line below and enter the editor of your choice :-)
+#export EDITOR=/usr/bin/vim
+#export EDITOR=/usr/bin/mcedit
+
+# For some news readers it makes sense to specify the NEWSSERVER variable here
+#export NEWSSERVER=your.news.server
+
+# If you want to use a Palm device with Linux, uncomment the two lines below.
+# For some (older) Palm Pilots, you might need to set a lower baud rate
+# e.g. 57600 or 38400; lowest is 9600 (very slow!)
+#
+#export PILOTPORT=/dev/pilot
+#export PILOTRATE=115200
+export I_MPI_ROOT=/opt/intel/impi/4.0.1/
+export MKL_HOME=/opt/intel/composer_xe_2011_sp1.6.233/mkl
+export PATH=$PATH:$HOME/git/bin
+export KMP_STACKSIZE=2200m
+export MPI_OPENMP_INTEROP=yes
+export OMP_NUM_THREADS=4
+export I_MPI_PIN_DOMAIN=auto
+export TAPENADE_HOME=/data1/tolstykh/tapenade3.4
+export KMP_AFFINITY=enabled
+ulimit -s 3600000
+
+#[[ -f /opt/intel/composer_xe_2013_sp1.2.144/bin/compilervars.sh ]] && . /opt/intel/composer_xe_2013_sp1.2.144/bin/compilervars.sh intel64
+
+[[ -f /opt/intel/composer_xe_2013/bin/compilervars.sh ]] && . /opt/intel/composer_xe_2013/bin/compilervars.sh intel64
+
+[[ -f /opt/intel/impi/4.0.1/bin64/mpivars.sh ]] && . /opt/intel/impi/4.0.1/bin64/mpivars.sh
+
+export PATH="/opt/intel/impi/4.0.1.007/intel64/bin:/opt/intel/impi/4.0.1/lib:${PATH}"
+export PATH="/usr/local/mpiexec/bin:${PATH}"
+PATH=$PATH:/data4t/tolstykh/grads-2.0.2/bin
+export PATH
+export LD_LIBRARY_PATH="/data4t/rrd/libs13:${LD_LIBRARY_PATH}"
+
+#alias python='~/util/Python/bin/python'
+#alias scons='~/util/scons/bin/scons'
+
+export PATH=~/util/mumps/cmake-2.8.12.2/bin/:${PATH}
+GADDIR=~/grads/data
+export GADDIR
+
+
+# sasha aliases
+
+alias Fcomp='/data4t/avolkov/Fortran/Comands/comp'
+alias Fcompl='/data4t/avolkov/Fortran/Comands/complight'
+alias Fcompc='/data4t/avolkov/Fortran/Comands/compc'
+alias Fcompo='/data4t/avolkov/Fortran/Comands/compo'
+
+alias Frun='/data4t/avolkov/Fortran/Comands/run'
+alias Fmpd='/data4t/avolkov/Fortran/Comands/mpdscr'
+

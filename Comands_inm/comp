@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mpiifort -traceback -check all $@ -I /opt/intel/impi/4.0.1/include -L /opt/intel/impi/4.0.1/lib -lmpi -lmpigf -lmpigi -lmpiif -lmpi_ilp64 -lmpi_mt

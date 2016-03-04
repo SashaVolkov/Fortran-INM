@@ -1,17 +1,18 @@
 program uravnenie
 
-	Use MPI
 	Use modfunc, Only: func
 	Use modnet, Only: grid
 	Use method, Only: met
 	Use Schema, Only: sch
 
-  Use netcdf
+!   Use netcdf
 
 ! 	Use SemiLagr, Only: Lagr
 ! 	Use Interp, Only: intp
 
 	Implicit None
+
+	include"mpif.h"
 
 	integer x,y,t, ier, id,np, synchr, i, rc, eqvtype, iter_stpes, index, testid
 	integer Xmax, Ymax, Tmax, bstep, fstep, timeset, casenumb, rcase, lcase, newfile
@@ -21,6 +22,8 @@ program uravnenie
 	character(1) str1
 	character(2) str2
 	real(8)  lengthX, lengthY, lengthT, cor, grav, height
+	real(8), Allocatable :: time(:)
+	real(8), Allocatable :: diftime(:)
 	real(8), Allocatable :: kurant(:,:)
 ! 	real(8), Allocatable :: test(:,:,:)
 
@@ -42,6 +45,8 @@ program uravnenie
 	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
 ! 	cw = MPI_COMM_WORLD
 
+
+
 	lengthX=1;	lengthY=1;	lengthT=1.5
 	Xmax = 100; Ymax = 100;	Tmax = 100;	synchr = 0
 	bstep = 2;	fstep = 2
@@ -57,7 +62,7 @@ program uravnenie
 
 	if ( id == 0 ) then
 
-		open(9,file='/home/sasha/Fortran/Shallow_Water/test/init.file')
+		open(9,file='/data4t/avolkov/Fortran/Shallow_Water/test/init.file')
 			read(9, FMT="(5(I14), 4(e20.12))") Xmax, Ymax, Tmax, timeset, casenumb, grav, cor, height, lengthT
 		close(9)
 
@@ -76,7 +81,10 @@ program uravnenie
 	call mpi_barrier(MPI_COMM_WORLD, ier)
 
 
-! 	Allocate(test(1:Xmax, 1:Ymax, 1:Tmax))
+	Allocate(time(0:Tmax+1))
+	Allocate(diftime(1:Tmax))
+
+
 
 	if (casenumb == 1 ) then
 		fstep = 1
@@ -113,20 +121,23 @@ program uravnenie
 ! 	call m.BornParam(fprev, g)
 
 
-		status = nf90_create (path = trim('/home/sasha/Fortran/Shallow_Water/datFiles/'//name), &
-cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
+! 		status = nf90_create (path = trim('/data4t/avolkov/Fortran/Shallow_Water/datFiles/'//name), &
+! cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
 
-		status = nf90_def_dim (ncid, "x", g.StepsX, xid)
-		status = nf90_def_dim (ncid, "y", g.StepsY, yid)
-		status = nf90_def_dim (ncid, "t", Tmax, tid)
+! 		status = nf90_def_dim (ncid, "x", g.StepsX, xid)
+! 		status = nf90_def_dim (ncid, "y", g.StepsY, yid)
+! 		status = nf90_def_dim (ncid, "t", Tmax, tid)
 
-		status = nf90_def_var (ncid, "water", NF90_REAL, (/ yid, xid, tid/), Wid)
-		status = nf90_enddef  (ncid)
-		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
+! 		status = nf90_def_var (ncid, "water", NF90_REAL, (/ yid, xid, tid/), Wid)
+! 		status = nf90_enddef  (ncid)
+! 		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
 
 	index = 1
 
-
+	call mpi_barrier(MPI_COMM_WORLD, ier)
+	if ( id == 0 ) then
+		time(0) = MPI_Wtime()
+	end if
 
 	do t=1,Tmax
 
@@ -168,8 +179,15 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 		end do
 
 		call fprev.eq(f)
-		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
+! 		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
 ! 		end if
+
+		call mpi_barrier(MPI_COMM_WORLD, ier)
+		if ( id == 0 ) then
+			time(t) = MPI_Wtime()
+			diftime(t) = time(t) - time(t-1)
+		end if
+
 	end do
 
 
@@ -179,7 +197,7 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 
 	call mpi_barrier(MPI_COMM_WORLD, ier)
 
-	status = nf90_close (ncid)
+! 	status = nf90_close (ncid)
 
 	if ( g.id == 0 ) then
 		print *,"done"
@@ -191,6 +209,20 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 	call fprev.deinit()
 	call s.deinit()
 ! 	call l.deinit()
+
+	call mpi_barrier(MPI_COMM_WORLD, ier)
+	if ( id == 0 ) then
+! 		do t = 1,Tmax
+! 			print *, "cycle time = ", diftime(t)
+! 		end do
+		time(Tmax+1) = MPI_Wtime()
+		print *, "time = ", time(Tmax+1) - time(0)
+		print *, "max cycle time = ", MAXVAL(diftime)
+		print *, "min cycle time = ", MINVAL(diftime)
+		print *, "med cycle time = ", (time(Tmax+1) - time(0))/Tmax
+	end if
+
+
 
 	call MPI_FINALIZE(rc)
 
