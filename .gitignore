@@ -4,6 +4,8 @@
 *.dat
 *.out
 *.doc
+*.ods*
+*.odt*
 *.jpeg
 Ссылка на *
 *.odt

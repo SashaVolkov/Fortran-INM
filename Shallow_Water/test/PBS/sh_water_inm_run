@@ -1,8 +1,8 @@
 #!/bin/bash
 #PBS -N Shallow_water
-#PBS -l nodes=4:ppn=8
+#PBS -l nodes=112
 #PBS -l walltime=00:15:00
-#PBS -q e5core
+#PBS -q x6core
 WDIR=/data4t/avolkov/Fortran/Shallow_Water/test/
 
 cd $WDIR

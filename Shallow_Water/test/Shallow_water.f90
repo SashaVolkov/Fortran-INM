@@ -23,7 +23,9 @@ program uravnenie
 	character(2) str2
 	real(8)  lengthX, lengthY, lengthT, cor, grav, height
 	real(8), Allocatable :: time(:)
+	real(8), Allocatable :: msgtime(:)
 	real(8), Allocatable :: diftime(:)
+	real(8), Allocatable :: msgdiftime(:)
 	real(8), Allocatable :: kurant(:,:)
 ! 	real(8), Allocatable :: test(:,:,:)
 
@@ -82,7 +84,9 @@ program uravnenie
 
 
 	Allocate(time(0:Tmax+1))
+	Allocate(msgtime(1:2*Tmax))
 	Allocate(diftime(1:Tmax))
+	Allocate(msgdiftime(1:Tmax))
 
 
 
@@ -90,8 +94,8 @@ program uravnenie
 		fstep = 1
 		name = 'Linear.nc'; sch_name = 'Linear'
 	elseif (casenumb == 5 ) then
-		fstep = 2
-		bstep = 2
+		fstep = 4
+		bstep = 4
 		name = 'RungeK.nc'; sch_name = 'RungeKutta'
 	end if
 
@@ -150,7 +154,9 @@ program uravnenie
 
 		CASE(5)
 			call s.RungeKutta(f, fprev, g, m)
+			msgtime(t) = MPI_Wtime()
 			call m.Message(f, g)!;call m.Message(f.du, g);call m.Message(f.dv, g)
+			msgtime(2*t) = MPI_Wtime()
 		END SELECT 
 
 
@@ -186,6 +192,7 @@ program uravnenie
 		if ( id == 0 ) then
 			time(t) = MPI_Wtime()
 			diftime(t) = time(t) - time(t-1)
+			msgdiftime(t) = msgtime(2*t) - msgtime(t)
 		end if
 
 	end do
@@ -220,6 +227,7 @@ program uravnenie
 		print *, "max cycle time = ", MAXVAL(diftime)
 		print *, "min cycle time = ", MINVAL(diftime)
 		print *, "med cycle time = ", (time(Tmax+1) - time(0))/Tmax
+		print *, "Msg all time = ", SUM(msgdiftime)
 	end if
 
 
