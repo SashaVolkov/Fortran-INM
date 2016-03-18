@@ -12,18 +12,18 @@ endmodule
 integer function conformal_cubed_sphere_grid_generation(x_points,y_points)
 	use morphism
 	use matrix_rotation
-	use conformal
+	use conformal_sasha, Only: conf
 
 	implicit none
 	integer x_points, y_points
 	character*14 filename
 	character istring
 
-	real*8 rots(3,3,48)
-	real*8 rot(1:3,1:3)
-	real*8 r(1:3)
-	real*8 x,y,z
-	real*8 x1,y1, x_edge, y_edge
+	real(8) rots(3,3,48)
+	real(8) rot(1:3,1:3)
+	real(8) r(1:3)
+	real(8) x,y,z
+	real(8) x1,y1, x_edge, y_edge
 	complex*16 w
 
 	integer i, j, k, status, index
@@ -58,7 +58,7 @@ integer function conformal_cubed_sphere_grid_generation(x_points,y_points)
 					y_edge = abs(sign(1d0,y1)*(1-abs(y1)))/2d0
 				endif
 
-				status = conformal_z_w(dcmplx(x_edge,y_edge), w)
+				status = conformal_z_w(dcmplx(x_edge,y_edge), w) ! conformal module
 
 				status = reverse_stereo_projection(dreal(w),dimag(w),1d0,x,y,z)
 
@@ -88,8 +88,8 @@ integer function cubed_sphere_grid_generation(x_points, y_points)
 	character*14 filename
 	character istring
 
-	real*8 x,y,z
-	real*8 x1,y1
+	real(8) x,y,z
+	real(8) x1,y1
 
 	integer i, j, k, status
 	do i=1, 6

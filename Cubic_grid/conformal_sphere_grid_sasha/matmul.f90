@@ -1,7 +1,7 @@
 module matmul_module
 implicit none
 interface matmul1
-   module procedure matmul2		
+   module procedure matmul2
    module procedure matmul3
    module procedure matmul4
    module procedure matmul5

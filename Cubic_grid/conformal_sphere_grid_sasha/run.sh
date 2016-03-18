@@ -61,7 +61,7 @@ EOF' > grid/plotscript.sh
 chmod 755 grid/plotscript.sh
 
 
-gfortran geometry.f90 conformal.f90 matmul.f90 morphism.f90 grid_generator.f90 data_analyzer.f90 spherical.f90 main.f90 -o exec.o
+gfortran geometry.f90 conformal.f90 matmul.f90 simple_rotations.f90 matrix_rotation.f90 morphism.f90 grid_generator.f90 data_analyzer.f90 spherical.f90 main.f90 -o exec.o
 ./exec.o
 
 cd analyze
