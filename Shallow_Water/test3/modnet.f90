@@ -1,7 +1,7 @@
 Module modnet
 
 	IMPLICIT NONE
-	Private
+
 	Public :: grid
 
 	Type grid
@@ -25,8 +25,7 @@ Module modnet
 
 		integer, Intent(In) :: StepsX, StepsY, StepsT, np, id, bstep, fstep
 		real(8), Intent(In) :: LX, LY, LT
-		integer k, i, j, rc, p, ier
-		integer dims(2)
+		integer k, i, j, rc, p
 
 		k=1; i = 0; j = 0; p = 1
 
@@ -51,16 +50,13 @@ Module modnet
 			end if
 		end do
 
-		call MPI_DIMS_CREATE(np, 2, dims, ier)
+		this.Ydim_block = 2**(j); this.Xdim_block = 2**(i)
 
-		this.Ydim_block = dims(1); this.Xdim_block = dims(2)
-
-! 		if ( k > np ) then
-! 			if ( id == 0 ) print *, "Use number of process 2^n", this.Xdim_block, this.Ydim_block
-! 			if ( id == 0 ) print *, dims(1), dims(2)
-! 			call MPI_FINALIZE(rc)
-! 			STOP
-! 		else
+		if ( k > np ) then
+			if ( id == 0 ) print *, "Use number of process 2^n", this.Xdim_block, this.Ydim_block
+			call MPI_FINALIZE(rc)
+			STOP
+		else
 			if ( id == 0 ) print *, this.Xdim_block, this.Ydim_block
 			this.block_y = mod((id), this.Ydim_block)+1
 
@@ -69,7 +65,7 @@ Module modnet
 			end do
 			this.block_x = p
 ! 			print *,"table", this.block_x, this.block_y, id+1
-! 		end if
+		end if
 
 
 		this.Xsize = StepsX/this.Xdim_block
@@ -79,7 +75,7 @@ Module modnet
 
 		this.ns_x = 1 + this.Xsize*(this.block_x - 1); this.nf_x = this.Xsize*this.block_x
 		this.ns_y = 1 + this.Ysize*(this.block_y - 1); this.nf_y = this.Ysize*this.block_y
-! 		print *, this.ns_x, this.nf_x, this.ns_y, this.nf_y, id
+		print *, this.ns_x, this.nf_x, this.ns_y, this.nf_y, id
 		this.first_x = this.ns_x - this.bstep; this.last_x = this.nf_x + this.fstep
 		this.first_y = this.ns_y - this.bstep; this.last_y = this.nf_y + this.fstep
 
@@ -112,7 +108,7 @@ Module modnet
 	end if
 
 
-! 	print *,"id:",id,"right:",this.Neighb_right,"left:",this.Neighb_left,"down:",this.Neighb_down,"up:",this.Neighb_up
+	print *,"id:",id,"right:",this.Neighb_right,"left:",this.Neighb_left,"down:",this.Neighb_down,"up:",this.Neighb_up
 
 ! 	call MPI_FINALIZE(rc)
 ! 	STOP

@@ -2,14 +2,12 @@ Module method
 
 	Use modnet
 	Use modfunc
-
-! 	Use netcdf
+	Use MPI
+	Use netcdf
 
 IMPLICIT NONE
 
-	Private
 	Public :: met
-	include"mpif.h"
 
 	Type met
 
@@ -97,6 +95,8 @@ if (g.np > 1) then
 		call MPI_IRecv(f.dv(g.nf_y+1, g.first_x), 1, f_grey_zone, d, g.id, mp_cw, reqsd(3), this.ier)
 	end if
 
+
+
 	if (l > -1) then
 		call MPI_ISend(f.d(g.first_y, g.ns_x), g.fstep*y, mp_dp, l, g.id, mp_cw, s_reqsl(1), this.ier);
 		call MPI_ISend(f.du(g.first_y, g.ns_x), g.fstep*y, mp_dp, l, g.id, mp_cw, s_reqsl(2), this.ier);
@@ -120,16 +120,31 @@ if (g.np > 1) then
 	end if
 
 ! Wait RECV
-	if ( l > -1 ) call MPI_Waitall(3, reqsl, statsl, this.ier)
-	if ( r > -1 ) call MPI_Waitall(3, reqsr, statsr, this.ier)
-	if ( u > -1 ) call MPI_Waitall(3, reqsu, statsu, this.ier)
-	if ( d > -1 ) call MPI_Waitall(3, reqsd, statsd, this.ier)
+	if ( l > -1 ) then
+		call MPI_Waitall(3, reqsl, statsl, this.ier)
+	end if
+	if ( r > -1 ) then
+		call MPI_Waitall(3, reqsr, statsr, this.ier)
+	end if
+	if ( u > -1 ) then
+		call MPI_Waitall(3, reqsu, statsu, this.ier)
+	end if
+	if ( d > -1 ) then
+		call MPI_Waitall(3, reqsd, statsd, this.ier)
+	end if
 ! Wait SEND
-	if ( l > -1 ) call MPI_Waitall(3, s_reqsl, s_statsl, this.ier)
-	if ( r > -1 ) call MPI_Waitall(3, s_reqsr, s_statsr, this.ier)
-
-	if ( u > -1 ) call MPI_Waitall(3, s_reqsu, s_statsu, this.ier)
-	if ( d > -1 ) call MPI_Waitall(3, s_reqsd, s_statsd, this.ier)
+	if ( l > -1 ) then
+		call MPI_Waitall(3, s_reqsl, s_statsl, this.ier)
+	end if
+	if ( r > -1 ) then
+		call MPI_Waitall(3, s_reqsr, s_statsr, this.ier)
+	end if
+	if ( u > -1 ) then
+		call MPI_Waitall(3, s_reqsu, s_statsu, this.ier)
+	end if
+	if ( d > -1 ) then
+		call MPI_Waitall(3, s_reqsd, s_statsd, this.ier)
+	end if
 
 end if
 
@@ -156,6 +171,134 @@ end if
 		end do
 
 
+! 		if ( g.id == 0 ) then
+		! ! указатель на первый элемент массива varval , число элементов
+		  status = nf90_put_var (ncid, Wid, W_mass, (/ g.ns_y, g.ns_x, t/), (/ g.nf_y - g.ns_y + 1, g.nf_x - g.ns_x + 1, 1/) )
+! 		end if
+
+		End Subroutine
+
+! 	Subroutine met_func_BornParam(this, f, g)
+
+! 		Class(met) :: this
+! 		Class(func) :: f
+! 		Class(grid) :: g
+
+! 		Integer(4) i
+
+! 		this.Fmax = MAXVAL(f.d(g.ns_x: g.nf_x))
+! 		this.Fmin = MINVAL(f.d(g.ns_x: g.nf_x))
+! 		call MPI_AllReduce(this.Fmax, this.AbsFmax_l, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, this.ier)
+
+
+! 		this.Fmed = this.AbsFmax_l/2
+! 		this.w_counter = 0
+
+! 		if ( this.Fmax < this.Fmed ) then
+! 			!nothing
+! 		elseif ( this.Fmin > this.Fmed ) then
+! 			!all
+! 			this.w_counter = (g.nf_x - g.ns_x)*g.dx
+! 		elseif ( this.Fmax > this.Fmed .AND. this.Fmin < this.Fmed ) then
+! 			!cycle
+! 			do i = g.ns_x, g.nf_x
+! 				if ( f.d(i) > this.Fmed ) then
+! 					this.w_counter = this.w_counter + g.dx
+! 				end if
+! 			end do
+! 		end if
+
+! 		call MPI_Reduce(this.w_counter, this.width_last, 1, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, this.ier)
+
+
+! 		this.N1_mass = 0
+! 		do i = g.ns_x, g.nf_x
+! 			this.N1_mass = this.N1_mass + g.dx*((f.d(i-1)+f.d(i))/2.0)
+! 		end do
+! 		call MPI_ALLREDUCE(this.N1_mass, this.N1_All_mass_l, g.np, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, this.ier)
+
+
+! 		this.N2_mass = 0
+! 		do i = g.ns_x, g.nf_x
+! 			this.N2_mass = this.N2_mass + g.dx*(((f.d(i-1)+f.d(i))*(f.d(i-1)+f.d(i)))/4.0)
+! 		end do
+! 		call MPI_ALLREDUCE(this.N2_mass, this.N2_All_mass_l, g.np, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, this.ier)
+
+
+! 	End Subroutine
+
+
+
+! 	Subroutine met_SchemeParam(this, f, g, name)
+
+! 		Class(met) :: this
+! 		Class(func) :: f
+! 		Class(grid) :: g
+
+! 		character(20), Intent(In) :: name
+
+! 		Real(8) :: width_first, AbsFmax_f, N1_All_mass_f, N2_All_mass_f, N1_Mass_Def, N2_Mass_Def
+! 		Real(8) :: AbsF, PulseStretching
+
+
+! 		width_first = this.width_last
+! 		AbsFmax_f = this.AbsFmax_l
+! 		N1_All_mass_f = this.N1_All_mass_l
+! 		N2_All_mass_f = this.N2_All_mass_l
+
+! 		call MPI_Barrier(MPI_COMM_WORLD, this.ier)
+! 		if ( g.id == 0 ) then
+! 			print *, "SchemeParam start"
+! 		end if
+
+! 		call this.BornParam(f, g)
+! 		call MPI_Barrier(MPI_COMM_WORLD, this.ier)
+
+! 		if ( g.id == 0 ) then
+
+! 			PulseStretching = width_first - this.width_last
+! 			AbsF = AbsFmax_f - this.AbsFmax_l
+! 			N1_Mass_Def = N1_All_mass_f - this.N1_All_mass_l
+! 			N2_Mass_Def = N2_All_mass_f - this.N2_All_mass_l
+
+! ! 			open(10,file='SchemeParam'//name, position="append")
+! ! 			write(10,*) (name)
+! ! 			write(10,*) ("Number of steps", g.StepsX)
+! ! 			write(10,*) ("Decreasing = ", AbsF)
+! ! 			write(10,*) ("Stretching = ", PulseStretching)
+! ! 			write(10,*) ("N1 Mass Defect = ", N1_Mass_Def)
+! ! 			write(10,*) ("N2 Mass Defect = ", N2_Mass_Def)
+
+
+! 			if ( this.newfile == 1 ) then
+! 				open(10,file='/home/sasha/Fortran/Convection/MethodParams/SchemeParam'//name)
+! 				write(10,*) ('Steps; Decreasing; Stretching; L1; L2') !,'Decreasing','Stretching','L1','L2')
+! 				write(10,FMT="(I14, A, E14.7, A, E14.7, A, E14.7, A, E14.7)") g.StepsX,";",AbsF,";", PulseStretching,";", N1_Mass_Def,";", N2_Mass_Def
+! 				close(10)
+
+! 			else
+! 				open(10,file='/home/sasha/Fortran/Convection/MethodParams/SchemeParam'//name, position="append")
+! ! 				write(10,*) ('Steps; Decreasing; Stretching; L1; L2') !,'Decreasing','Stretching','L1','L2')
+! 				write(10,FMT="(I14, A, E14.7, A, E14.7, A, E14.7, A, E14.7)") g.StepsX,";",AbsF,";", PulseStretching,";", N1_Mass_Def,";", N2_Mass_Def
+! 				close(10)
+
+! 			end if
+
+! 		end if
+
+
+! 	End Subroutine
+
+
+! 	Subroutine met_deinit(this)
+! 		Class(met) :: this
+
+! 		if (Allocated(this.k1)) Deallocate(this.k1)
+! 		if (Allocated(this.k2)) Deallocate(this.k2)
+! 		if (Allocated(this.k3)) Deallocate(this.k3)
+! 		if (Allocated(this.k4)) Deallocate(this.k4)
+
+! 	End Subroutine
 
 
 End Module

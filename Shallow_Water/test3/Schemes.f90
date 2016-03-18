@@ -1,14 +1,12 @@
 Module Schema
 
 	Use modnet
-	Use modfunc
+	Use MPI
 	Use method
 
 IMPLICIT NONE
 
-	Private
 	Public :: sch
-	include"mpif.h"
 
 	Type sch
 

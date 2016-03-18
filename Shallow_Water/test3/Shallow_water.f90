@@ -1,5 +1,6 @@
 program uravnenie
 
+	Use MPI
 	Use modfunc, Only: func
 	Use modnet, Only: grid
 	Use method, Only: met
@@ -12,8 +13,6 @@ program uravnenie
 
 	Implicit None
 
-	include"mpif.h"
-
 	integer x,y,t, ier, id,np, synchr, i, rc, eqvtype, iter_stpes, index, testid
 	integer Xmax, Ymax, Tmax, bstep, fstep, timeset, casenumb, rcase, lcase, newfile
 	integer Wid, xid, yid, tid
@@ -22,10 +21,6 @@ program uravnenie
 	character(1) str1
 	character(2) str2
 	real(8)  lengthX, lengthY, lengthT, cor, grav, height
-	real(8), Allocatable :: time(:)
-	real(8), Allocatable :: msgtime(:)
-	real(8), Allocatable :: diftime(:)
-	real(8), Allocatable :: msgdiftime(:)
 	real(8), Allocatable :: kurant(:,:)
 ! 	real(8), Allocatable :: test(:,:,:)
 
@@ -47,8 +42,6 @@ program uravnenie
 	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
 ! 	cw = MPI_COMM_WORLD
 
-
-
 	lengthX=1;	lengthY=1;	lengthT=1.5
 	Xmax = 100; Ymax = 100;	Tmax = 100;	synchr = 0
 	bstep = 2;	fstep = 2
@@ -64,7 +57,7 @@ program uravnenie
 
 	if ( id == 0 ) then
 
-		open(9,file='~/Fortran/Shallow_Water/test1/init.file')
+		open(9,file='/home/sasha/Fortran/Shallow_Water/test3/init.file')
 			read(9, FMT="(5(I14), 4(e20.12))") Xmax, Ymax, Tmax, timeset, casenumb, grav, cor, height, lengthT
 		close(9)
 
@@ -83,19 +76,14 @@ program uravnenie
 	call mpi_barrier(MPI_COMM_WORLD, ier)
 
 
-	Allocate(time(0:Tmax+1))
-	Allocate(msgtime(1:2*Tmax))
-	Allocate(diftime(1:Tmax))
-	Allocate(msgdiftime(1:Tmax))
-
-
+! 	Allocate(test(1:Xmax, 1:Ymax, 1:Tmax))
 
 	if (casenumb == 1 ) then
 		fstep = 1
 		name = 'Linear.nc'; sch_name = 'Linear'
 	elseif (casenumb == 5 ) then
-		fstep = 4
-		bstep = 4
+		fstep = 2
+		bstep = 2
 		name = 'RungeK.nc'; sch_name = 'RungeKutta'
 	end if
 
@@ -125,7 +113,7 @@ program uravnenie
 ! 	call m.BornParam(fprev, g)
 
 
-		status = nf90_create (path = trim('/data4t/avolkov/Fortran/Shallow_Water/datFiles/'//name), &
+		status = nf90_create (path = trim('/home/sasha/Fortran/Shallow_Water/datFiles/'//name), &
 cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
 
 		status = nf90_def_dim (ncid, "x", g.StepsX, xid)
@@ -138,10 +126,7 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 
 	index = 1
 
-	call mpi_barrier(MPI_COMM_WORLD, ier)
-	if ( id == 0 ) then
-		time(0) = MPI_Wtime()
-	end if
+
 
 	do t=1,Tmax
 
@@ -154,9 +139,7 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 
 		CASE(5)
 			call s.RungeKutta(f, fprev, g, m)
-			msgtime(t) = MPI_Wtime()
 			call m.Message(f, g)!;call m.Message(f.du, g);call m.Message(f.dv, g)
-			msgtime(2*t) = MPI_Wtime()
 		END SELECT 
 
 
@@ -187,14 +170,6 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 		call fprev.eq(f)
 		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, tid, ncid)
 ! 		end if
-
-		call mpi_barrier(MPI_COMM_WORLD, ier)
-		if ( id == 0 ) then
-			time(t) = MPI_Wtime()
-			diftime(t) = time(t) - time(t-1)
-			msgdiftime(t) = msgtime(2*t) - msgtime(t)
-		end if
-
 	end do
 
 
@@ -204,7 +179,7 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 
 	call mpi_barrier(MPI_COMM_WORLD, ier)
 
-! 	status = nf90_close (ncid)
+	status = nf90_close (ncid)
 
 	if ( g.id == 0 ) then
 		print *,"done"
@@ -216,21 +191,6 @@ cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, i
 	call fprev.deinit()
 	call s.deinit()
 ! 	call l.deinit()
-
-	call mpi_barrier(MPI_COMM_WORLD, ier)
-	if ( id == 0 ) then
-! 		do t = 1,Tmax
-! 			print *, "cycle time = ", diftime(t)
-! 		end do
-		time(Tmax+1) = MPI_Wtime()
-		print *, "time = ", time(Tmax+1) - time(0)
-		print *, "max cycle time = ", MAXVAL(diftime)
-		print *, "min cycle time = ", MINVAL(diftime)
-		print *, "med cycle time = ", (time(Tmax+1) - time(0))/Tmax
-		print *, "Msg all time = ", SUM(msgdiftime)
-	end if
-
-
 
 	call MPI_FINALIZE(rc)
 
