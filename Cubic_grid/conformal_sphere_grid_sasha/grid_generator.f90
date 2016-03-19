@@ -27,6 +27,8 @@ integer function conformal_cubed_sphere_grid_generation(x_points,y_points)
 	complex*16 w
 
 	integer i, j, k, status, index
+	Type(conf) :: c
+
 	status = init_compute_matrices(rots)
 	
 	open (20, file = "grid/matrices.dat")
@@ -58,7 +60,7 @@ integer function conformal_cubed_sphere_grid_generation(x_points,y_points)
 					y_edge = abs(sign(1d0,y1)*(1-abs(y1)))/2d0
 				endif
 
-				status = conformal_z_w(dcmplx(x_edge,y_edge), w) ! conformal module
+				call c.conformal_z_w(dcmplx(x_edge,y_edge), w) 
 
 				status = reverse_stereo_projection(dreal(w),dimag(w),1d0,x,y,z)
 
