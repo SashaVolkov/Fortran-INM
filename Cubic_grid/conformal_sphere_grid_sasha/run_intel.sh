@@ -75,7 +75,7 @@ else
 	echo `grep -c error err.file` "errors"
 	echo `grep -c warning err.file` "warnings"
 
-	/home/sasha/Fortran/Comands/./run 1
+	mpiexec -n 1 ./a.out
 
 	cd analyze
 	./plotscript.sh
