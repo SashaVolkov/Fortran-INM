@@ -1,18 +1,26 @@
 module matrix_rotation
+
+implicit none
+
 	interface
-		 integer function init_compute_matrices(rots)
-			 real(8) rots(3,3,48)
-		 end function init_compute_matrices
 	 integer function index_rotation_matrix(x,y,z)
 		 real(8) x,y,z
 	 end function index_rotation_matrix
+
+	integer function cube2sphere(x, y, z, x_edge, y_edge, r_sphere, number_edge)
+		real(8) x, y, z
+		real(8) x_edge, y_edge, r_sphere
+		integer number_edge
+		real(8) rr
+	end function cube2sphere
 	end interface
-end module matrix_rotation
+
+CONTAINS
+
 
 
 integer function init_compute_matrices(rots)
 ! computes matrices of rotation
-	implicit none
 
 	interface
 		integer function cube2sphere(x,y,z,xe,ye,r,i)
@@ -82,6 +90,7 @@ integer function init_compute_matrices(rots)
 end function init_compute_matrices
 
 
+end module matrix_rotation
 
 
 
