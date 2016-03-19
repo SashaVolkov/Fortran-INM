@@ -1,20 +1,15 @@
 module grid_generator
-	interface 
-		 integer function conformal_cubed_sphere_grid_generation(x_points, y_points)
-			 integer x_points, y_points
-		 end function conformal_cubed_sphere_grid_generation
-		 integer function cubed_sphere_grid_generation(x_points, y_points)
-			 integer x_points, y_points
-		 end function cubed_sphere_grid_generation
-	endinterface
-endmodule
+
+use morphism
+use matrix_rotation
+use conformal, Only: conf
+
+implicit none
+CONTAINS
+
 
 integer function conformal_cubed_sphere_grid_generation(x_points,y_points)
-	use morphism
-	use matrix_rotation
-	use conformal_sasha, Only: conf
 
-	implicit none
 	integer x_points, y_points
 	character*14 filename
 	character istring
@@ -117,3 +112,5 @@ integer function cubed_sphere_grid_generation(x_points, y_points)
 
 
 end function cubed_sphere_grid_generation
+
+end module
