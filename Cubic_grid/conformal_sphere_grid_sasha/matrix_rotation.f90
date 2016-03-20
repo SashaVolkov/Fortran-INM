@@ -1,43 +1,24 @@
 module matrix_rotation
 
 use subfunc, Only: func
+use matmul_module
+use simple_rotations
 
 implicit none
 
-	interface
-	 integer function index_rotation_matrix(x,y,z)
-		 real(8) x,y,z
-	 end function index_rotation_matrix
-	end interface
+	Public :: matrix
+
+	Type matrix
+		CONTAINS
+		Procedure :: init_compute_matrices => init_compute_matrices
+	End Type
 
 CONTAINS
 
 
 
-	integer function init_compute_matrices(rots)
+	subroutine init_compute_matrices(this, rots)
 	! computes matrices of rotation
-
-		interface
-			integer function index_rotation_matrix(x,y,z)
-				real(8) x,y,z
-			end function index_rotation_matrix
-
-			integer function matrix_verge_rotation(x,y,z,rot)
-				real(8) x,y,z
-				real(8) rot(3,3)
-			end function matrix_verge_rotation
-
-			integer function matrix_vertex_rotation(x,y,z,rot)
-				real(8) x,y,z
-				real(8) rot(3,3)
-			end function matrix_vertex_rotation
-
-			integer function matrix_rotation_to_top(x,y,z,rot)
-				real(8) x,y,z
-				real(8) rot(3,3)
-			end function matrix_rotation_to_top
-		end interface
-
 
 		real(8), dimension(1:3,1:3, 48) :: rots
 
@@ -46,6 +27,7 @@ CONTAINS
 		real(8) x,y,z, x_edge, y_edge
 		integer i, j, index, status
 		Type(func) :: f
+		Class(matrix) :: this
 		
 		rots=0
 		do i = 1,6
@@ -69,18 +51,147 @@ CONTAINS
 
 					r = matmul(rot,(/x,y,z/))
 					x=r(1); y=r(2); z=r(3)
-					 
-					if ( matrix_rotation_to_top(x,y,z,rot) ) then
-						rots(1:3,1:3,index) = matmul(rot, rots(1:3,1:3,index))
-					end if 
+					
+
+					call f.matrix_rotation_to_top(x,y,z,rot,status)
+					rots(1:3,1:3,index) = matmul(rot, rots(1:3,1:3,index))
 
 				end if
 			end do
 		end do
-		init_compute_matrices = 1
-	end function init_compute_matrices
+	end subroutine init_compute_matrices
+
+
+
+	integer function index_rotation_matrix(x,y,z)
+
+		real(8) x,y,z
+		real(8) rot(1:3,1:3), r(1:3)
+		integer status
+
+		index_rotation_matrix = (index_verge_calc(x,y,z)-1) * 8
+		status = matrix_verge_rotation(x,y,z,rot)
+		r = matmul(rot, (/x,y,z/))
+		index_rotation_matrix = index_rotation_matrix + index_vertex_calc(r(1),r(2),r(3))
+
+	end function index_rotation_matrix
+
+
+
+	integer function matrix_verge_rotation(x,y,z, rot)
+
+		real(8) x,y,z
+		real(8) rot(1:3,1:3)
+		integer index_verge
+
+		index_verge = index_verge_calc(x,y,z)
+		matrix_verge_rotation = 0
+
+		select case (index_verge)
+			case(1)
+				 rot=0d0; rot(1,1) = 1d0; rot(2,2)=1d0; rot(3,3)=1d0 ! identify matrix
+			case(2)
+				 call matmul1(transpose(Rotation_xy), Rotation_yz, rot)
+			case(3)
+				 rot = Rotation_yz
+			case(4)
+				 call matmul1(Rotation_xy, Rotation_yz, rot)
+			case(5)
+				 call matmul1(Rotation_xy, Rotation_xy, Rotation_yz, rot)
+			case(6)
+				 call matmul1(Rotation_yz, Rotation_yz, rot)
+			case default
+				 matrix_verge_rotation = 1
+		end select
+
+		rot = transpose(rot)
+	end function matrix_verge_rotation
+
+
+
+	integer function index_verge_calc(x,y,z)
+
+		real(8) x,y,z
+
+		If ( (-z) .ge. max(abs(x),abs(y)) ) then
+			 index_verge_calc = 1
+		else if(   x  .ge. max(abs(y),abs(z)) ) then
+			 index_verge_calc = 2
+		else if(   y  .ge. max(abs(x),abs(z)) ) then
+			 index_verge_calc = 3
+		else if(  -x  .ge. max(abs(y),abs(z)) ) then
+			 index_verge_calc = 4
+		else if(  -y  .ge. max(abs(x),abs(z)) ) then
+			 index_verge_calc = 5
+		else if(   z  .ge. max(abs(x),abs(y)) ) then
+			 index_verge_calc = 6
+		end if
+
+	end function index_verge_calc
+
+
+
+
+	integer function matrix_vertex_rotation(x,y,z, rot)
+
+		real(8) x,y,z
+		real(8) rot(1:3,1:3)
+
+		integer index_vertex
+
+		index_vertex = index_vertex_calc(x,y,z)
+		matrix_vertex_rotation = 0
+
+		select case (index_vertex)
+			 case(1)
+					rot=0d0; rot(1,1)=1d0; rot(2,2)=1d0; rot(3,3)=1d0!identify matrix
+			 case(2)
+					call matmul1(Rotation_xy, Rotation_mir, rot)
+			 case(3)
+					rot = Rotation_xy
+			 case(4)
+					call matmul1(Rotation_xy, Rotation_xy, Rotation_mir, rot)
+			 case(5)
+					call matmul1(Rotation_xy, Rotation_xy, rot)
+			 case(6)
+					call matmul1(transpose(Rotation_xy),Rotation_mir, rot)
+			 case(7)
+					rot = transpose(Rotation_xy)
+			 case(8)
+					rot = Rotation_mir
+			 case default
+					matrix_vertex_rotation = 1
+		end select
+		rot=transpose(rot)
+		matrix_vertex_rotation = 1
+
+	end function matrix_vertex_rotation
+
+
+	integer function index_vertex_calc(x,y,z)
+		real(8) x,y,z
+
+		index_vertex_calc = 0
+
+		If ( x .ge.  y  .and.    y  .ge.  0d0) then
+			 index_vertex_calc = 1
+		else if( y .ge.  x  .and.    x  .ge.  0d0) then
+			 index_vertex_calc = 2
+		else if( y .ge. -x  .and.   -x  .ge.  0d0) then
+			 index_vertex_calc = 3
+		else if(-x .ge.  y  .and.    y  .ge.  0d0) then
+			 index_vertex_calc = 4
+		else if(-x .ge. -y  .and.   -y  .ge.  0d0) then
+			 index_vertex_calc = 5
+		else if(-y .ge.  x  .and.   -x  .ge.  0d0) then
+			 index_vertex_calc = 6
+		else if(-y .ge.  x  .and.    x  .ge.  0d0) then
+			 index_vertex_calc = 7
+		else if( x .ge. -y  .and.   -y  .ge.  0d0) then
+			 index_vertex_calc = 8
+		end if
+
+	end function index_vertex_calc
 
 
 end module matrix_rotation
-
-

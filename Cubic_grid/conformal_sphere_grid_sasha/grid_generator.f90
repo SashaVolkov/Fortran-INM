@@ -26,8 +26,9 @@ CONTAINS
 		Type(conf) :: c
 		Type(func) :: f
 		Type(morp) :: mor
+		Type(matrix) :: matr
 
-		status = init_compute_matrices(rots)
+		call matr.init_compute_matrices(rots)
 		
 		open (20, file = "grid/matrices.dat")
 		do i =1,48
