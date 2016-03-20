@@ -1,16 +1,25 @@
 module grid_generator
 
-use morphism
-use subfunc, Only: func
+use projections, Only: projection
+! use subfunc, Only: func
 use matrix_rotation
-use conformal, Only: conf
+use mapping, Only: conf
 
 implicit none
+
+Private
+Public :: grid
+
+Type grid
+	CONTAINS
+	Procedure :: conformal_cubed_sphere => conformal_cubed_sphere_grid_generation
+End Type
+
 CONTAINS
 
 
-	subroutine conformal_cubed_sphere_grid_generation(x_points,y_points)
-
+	subroutine conformal_cubed_sphere_grid_generation(this, x_points,y_points)
+		Class(grid) :: this
 		integer x_points, y_points
 		character*14 filename
 		character istring
@@ -23,9 +32,9 @@ CONTAINS
 		complex*16 w
 
 		integer i, j, k, status, index
-		Type(conf) :: c
-		Type(func) :: f
-		Type(morp) :: mor
+		Type(conf) :: conformal
+		! Type(func) :: f
+		Type(projection) :: projection
 		Type(matrix) :: matr
 
 		call matr.init_compute_matrices(rots)
@@ -48,7 +57,7 @@ CONTAINS
 					x1=j/dble(x_points)
 					y1=k/dble(y_points)
 
-					call f.cube2sphere(x,y,z,x1,y1,1d0,i, status)
+					call conformal.cube2sphere(x,y,z,x1,y1,1d0,i, status)
 					index = index_rotation_matrix(x,y,z)
 
 					if (abs(x1)>abs(y1)) then
@@ -59,9 +68,9 @@ CONTAINS
 						y_edge = abs(sign(1d0,y1)*(1-abs(y1)))/2d0
 					end if
 
-					call c.conformal_z_w(dcmplx(x_edge,y_edge), w) 
+					call conformal.mapping_z_w(dcmplx(x_edge,y_edge), w) 
 
-					call mor.reverse_stereo_projection(dreal(w),dimag(w),1d0,x,y,z,status)
+					call projection.inverse(dreal(w),dimag(w),1d0,x,y,z,status)
 
 					r = matmul(transpose(rots(1:3,1:3,index)),(/x,y,z/))
 					x = r(1); y=r(2); z=r(3)

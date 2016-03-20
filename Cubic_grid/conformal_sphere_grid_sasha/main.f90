@@ -1,10 +1,16 @@
-program main
-use grid_generator
-use data_analyzer
+!!!!To know more look through Rancic Parser Mesinger article!!!! 
+!!!!!!!!!Q.J.R. Meteorol. Soc. 1996, 122, pp. 959-982!!!!!!!!!!!
 
-call conformal_cubed_sphere_grid_generation(50,50)
-!status = cubed_sphere_grid_generation(50,50)
-status = analyze_data_generation()
-ostatus = analyze_data_computation()
+program main
+
+	use grid_generator, Only: grid
+	use data_analyzer, Only: data_an
+
+	Type(grid) :: generator
+	Type(data_an) :: analyzer
+
+	call generator.conformal_cubed_sphere(50,50)
+	call analyzer.generated()
+	call analyzer.computated()
 
 end program

@@ -1,6 +1,7 @@
 module matrix_rotation
 
-use subfunc, Only: func
+! use subfunc, Only: func
+use mapping, Only: conf
 use matmul_module
 use simple_rotations
 
@@ -11,6 +12,7 @@ implicit none
 	Type matrix
 		CONTAINS
 		Procedure :: init_compute_matrices => init_compute_matrices
+		Procedure :: matrix_rotation_to_top => matrix_rotation_to_top
 	End Type
 
 CONTAINS
@@ -26,7 +28,7 @@ CONTAINS
 		real(8) rot(3,3), r(3)
 		real(8) x,y,z, x_edge, y_edge
 		integer i, j, index, status
-		Type(func) :: f
+		Type(conf) :: conformal
 		Class(matrix) :: this
 		
 		rots=0
@@ -35,7 +37,7 @@ CONTAINS
 				if (mod(j,3).ne.0) then
 					x_edge = cos(pi2*dble(j)/12d0)
 					y_edge = sin(pi2*dble(j)/12d0)
-					call f.cube2sphere(x, y, z, x_edge,y_edge, 1d0, i, status)
+					call conformal.cube2sphere(x, y, z, x_edge,y_edge, 1d0, i, status)
 
 					index = index_rotation_matrix(x,y,z)
 
@@ -45,21 +47,38 @@ CONTAINS
 					r = matmul(rot,(/x,y,z/))
 					x=r(1);y=r(2);z=r(3)
 
-					if ( matrix_vertex_rotation(x,y,z,rot) ) then
+					status = matrix_vertex_rotation(x,y,z,rot)
 						rots(1:3,1:3,index) = matmul(rot, rots(1:3,1:3,index))
-					end if 
 
 					r = matmul(rot,(/x,y,z/))
 					x=r(1); y=r(2); z=r(3)
 					
 
-					call f.matrix_rotation_to_top(x,y,z,rot,status)
+					call this.matrix_rotation_to_top(x,y,z,rot,status)
 					rots(1:3,1:3,index) = matmul(rot, rots(1:3,1:3,index))
 
 				end if
 			end do
 		end do
 	end subroutine init_compute_matrices
+
+	subroutine matrix_rotation_to_top(this,x,y,z, rot, status)
+	! computes matrix rot for rotation of cube
+	! nearest to (x,y,z) vertex to (0,0,R)
+	! next nearest to (2sqrt2,0,3)
+		
+		real(8), intent(in) :: x,y,z
+		real(8), dimension(1:3,1:3), intent(out) :: rot
+		integer(4), intent(out) :: status
+		Class(matrix) :: this
+
+		rot(1:3,1) =(/  1, -2, -1 /) / sqrt(6d0)
+		rot(1:3,2) =(/ -1, 0,  -1 /) / sqrt(2d0)
+		rot(1:3,3) =(/  1, 1, -1 /) / sqrt(3d0)
+
+		rot = transpose(rot)
+		status = 1
+	end subroutine matrix_rotation_to_top
 
 
 
