@@ -1,52 +1,79 @@
 
-integer function cube2sphere(x, y, z, x_edge, y_edge, r_sphere, number_edge)
- ! mapping between points on edge of cubed sphere on real sphere
- ! xi_edge - coordinate on number's edge, in [-1, 1]
- ! r_sphere - radius of inscribed sphere
- ! x, y, z - cartesian coordinates of point
-	implicit none
-	real(8) x, y, z
-	real(8) x_edge, y_edge, r_sphere
-	integer number_edge
+! integer function cube2sphere(x, y, z, x_edge, y_edge, r_sphere, number_edge)
+!  ! mapping between points on edge of cubed sphere on real sphere
+!  ! xi_edge - coordinate on number's edge, in [-1, 1]
+!  ! r_sphere - radius of inscribed sphere
+!  ! x, y, z - cartesian coordinates of point
+! 	implicit none
+! 	real(8) x, y, z
+! 	real(8) x_edge, y_edge, r_sphere
+! 	integer number_edge
 
-	real(8) rr
+! 	real(8) rr
 
-	cube2sphere = 0
-	rr = r_sphere / sqrt(1 + x_edge**2 + y_edge**2)
+! 	cube2sphere = 0
+! 	rr = r_sphere / sqrt(1 + x_edge**2 + y_edge**2)
 
-	select case (number_edge)
-		 case (1)
-				x = y_edge * rr
-				y = x_edge * rr
-				z = - rr
-		 case (2)
-				x = rr
-				y = x_edge * rr
-				z = y_edge * rr
-		 case (3)
-				x = - x_edge * rr
-				y = rr
-				z = y_edge * rr
-		 case (4)
-				x = - rr
-				y = - x_edge * rr
-				z = y_edge * rr
-		 case (5)
-				x = x_edge * rr
-				y = - rr
-				z = y_edge * rr
-		 case (6)
-				x = -y_edge * rr
-				y = x_edge * rr
-				z = rr 
-		 case default
-				cube2sphere = 1
-	end select
+! 	select case (number_edge)
+! 		 case (1)
+! 				x = y_edge * rr
+! 				y = x_edge * rr
+! 				z = - rr
+! 		 case (2)
+! 				x = rr
+! 				y = x_edge * rr
+! 				z = y_edge * rr
+! 		 case (3)
+! 				x = - x_edge * rr
+! 				y = rr
+! 				z = y_edge * rr
+! 		 case (4)
+! 				x = - rr
+! 				y = - x_edge * rr
+! 				z = y_edge * rr
+! 		 case (5)
+! 				x = x_edge * rr
+! 				y = - rr
+! 				z = y_edge * rr
+! 		 case (6)
+! 				x = -y_edge * rr
+! 				y = x_edge * rr
+! 				z = rr 
+! 		 case default
+! 				cube2sphere = 1
+! 	end select
 
-end function
+! end function
 
 
 
+
+integer function index_rotation_matrix(x,y,z)
+	interface
+		 integer function index_verge_calc(x,y,z)
+			 real(8) x,y,z
+		 end function index_verge_calc
+
+		 integer function index_vertex_calc(x,y,z)
+			 real(8) x,y,z
+		 end function index_vertex_calc
+
+		 integer function matrix_verge_rotation(x,y,z,rot)
+			 real(8) x,y,z, rot(1:3,1:3)
+		 end function matrix_verge_rotation
+	end interface
+
+	real(8) x,y,z
+	real(8) rot(1:3,1:3), r(1:3)
+	integer status
+
+	index_rotation_matrix = (index_verge_calc(x,y,z)-1) * 8
+	status = matrix_verge_rotation(x,y,z,rot)
+	r = matmul(rot, (/x,y,z/))
+	index_rotation_matrix = index_rotation_matrix + index_vertex_calc(r(1),r(2),r(3))
+	
+
+end function index_rotation_matrix
 
 
 integer function matrix_rotation_to_top(x,y,z, rot)
@@ -66,7 +93,6 @@ integer function matrix_rotation_to_top(x,y,z, rot)
 	rot = transpose(rot)
 	matrix_rotation_to_top = 1
 end function matrix_rotation_to_top
-
 
 
 integer function matrix_verge_rotation(x,y,z, rot)

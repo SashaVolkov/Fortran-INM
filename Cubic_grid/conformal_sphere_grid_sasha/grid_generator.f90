@@ -1,6 +1,7 @@
 module grid_generator
 
 use morphism
+use subfunc, Only: func
 use matrix_rotation
 use conformal, Only: conf
 
@@ -23,6 +24,8 @@ CONTAINS
 
 		integer i, j, k, status, index
 		Type(conf) :: c
+		Type(func) :: f
+		Type(morp) :: mor
 
 		status = init_compute_matrices(rots)
 		
@@ -44,7 +47,7 @@ CONTAINS
 					x1=j/dble(x_points)
 					y1=k/dble(y_points)
 
-					status = cube2sphere(x,y,z,x1,y1,1d0,i)
+					call f.cube2sphere(x,y,z,x1,y1,1d0,i, status)
 					index = index_rotation_matrix(x,y,z)
 
 					if (abs(x1)>abs(y1)) then
@@ -57,7 +60,7 @@ CONTAINS
 
 					call c.conformal_z_w(dcmplx(x_edge,y_edge), w) 
 
-					status = reverse_stereo_projection(dreal(w),dimag(w),1d0,x,y,z)
+					call mor.reverse_stereo_projection(dreal(w),dimag(w),1d0,x,y,z,status)
 
 					r = matmul(transpose(rots(1:3,1:3,index)),(/x,y,z/))
 					x = r(1); y=r(2); z=r(3)
