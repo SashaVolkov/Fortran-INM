@@ -6,12 +6,12 @@ module mapping
 IMPLICIT NONE
 
 	Private
-	Public :: conf
+	Public :: mapp
 
-	Type conf
+	Type mapp
 		CONTAINS
-		Procedure :: mapping_z_w => conformal_z_w
-		Procedure :: mapping_w_z => conformal_w_z
+		Procedure :: conformal_z_w => conformal_z_w
+		Procedure :: conformal_w_z => conformal_w_z
 		Procedure :: cube2sphere => cube2sphere
 	End Type
 
@@ -20,8 +20,9 @@ IMPLICIT NONE
 CONTAINS
 
 	subroutine conformal_z_w(this, z, w)
+	! mapping z -> w 
 
-		Class(conf) :: this
+		Class(mapp) :: this
 
 		real(8), dimension(:), parameter :: A_c(1:30) = &
 				 (/       147713062600964d-14, &
@@ -70,7 +71,7 @@ CONTAINS
 
 	subroutine conformal_w_z(this, w,z)
 
-		Class(conf) :: this
+		Class(mapp) :: this
 	  complex*8 w,z, BIG_W,BIG_Z
 	  integer i
 	  real(8), dimension(:), parameter:: &
@@ -126,7 +127,7 @@ CONTAINS
 		integer number_edge, status
 
 		real(8) rr
-		Class(conf) :: this
+		Class(mapp) :: this
 
 		status = 0
 		rr = r_sphere / sqrt(1 + x_edge**2 + y_edge**2)

@@ -1,9 +1,8 @@
 module grid_generator
 
 use projections, Only: projection
-! use subfunc, Only: func
-use matrix_rotation
-use mapping, Only: conf
+use matrix_rotation, Only: matrix
+use mapping, Only: mapp
 
 implicit none
 
@@ -32,8 +31,7 @@ CONTAINS
 		complex*16 w
 
 		integer i, j, k, status, index
-		Type(conf) :: conformal
-		! Type(func) :: f
+		Type(mapp) :: map
 		Type(projection) :: projection
 		Type(matrix) :: matr
 
@@ -57,8 +55,8 @@ CONTAINS
 					x1=j/dble(x_points)
 					y1=k/dble(y_points)
 
-					call conformal.cube2sphere(x,y,z,x1,y1,1d0,i, status)
-					index = index_rotation_matrix(x,y,z)
+					call map.cube2sphere(x,y,z,x1,y1,1d0,i, status)
+					call matr.index_rotation(x,y,z,index)
 
 					if (abs(x1)>abs(y1)) then
 						y_edge = abs(sign(1d0,x1)*(1-abs(x1)))/2d0
@@ -68,7 +66,7 @@ CONTAINS
 						y_edge = abs(sign(1d0,y1)*(1-abs(y1)))/2d0
 					end if
 
-					call conformal.mapping_z_w(dcmplx(x_edge,y_edge), w) 
+					call map.conformal_z_w(dcmplx(x_edge,y_edge), w) 
 
 					call projection.inverse(dreal(w),dimag(w),1d0,x,y,z,status)
 

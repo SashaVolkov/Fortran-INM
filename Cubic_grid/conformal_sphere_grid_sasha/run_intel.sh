@@ -1,6 +1,6 @@
 #/bin/bash
 
-./clean.sh
+rm -rf *.o *.mod *.out *.file analyze grid *~ 2>/dev/null
 
 mkdir grid 2>/dev/null
 mkdir analyze 2>/dev/null

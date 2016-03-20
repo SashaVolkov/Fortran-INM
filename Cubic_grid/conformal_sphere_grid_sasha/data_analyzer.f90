@@ -1,5 +1,6 @@
 module data_analyzer
 
+	use geometry
 	implicit none
 
 	Private
@@ -74,20 +75,19 @@ module data_analyzer
 	! |_____|
 	! 3     4
 
-		use geometry
 		real*8, dimension(1:3) :: r1,r2,r3,r4
 		
 		real*8 angle_cell(4), distance_cell(4), square
 
-		angle_cell(1) = angle(r1,r2,r3)
-		angle_cell(2) = angle(r2,r1,r4)
-		angle_cell(3) = angle(r3,r1,r4)
-		angle_cell(4) = angle(r4,r2,r3)
+		angle_cell(1) = angle_r(r1,r2,r3)
+		angle_cell(2) = angle_r(r2,r1,r4)
+		angle_cell(3) = angle_r(r3,r1,r4)
+		angle_cell(4) = angle_r(r4,r2,r3)
 
-		distance_cell(1) = distance(r1,r2)
-		distance_cell(2) = distance(r2,r4)
-		distance_cell(3) = distance(r4,r3)
-		distance_cell(4) = distance(r3,r1)
+		distance_cell(1) = distance_r(r1,r2)
+		distance_cell(2) = distance_r(r2,r4)
+		distance_cell(3) = distance_r(r4,r3)
+		distance_cell(4) = distance_r(r3,r1)
 
 		square = 5d-1 * (distance_cell(1) *  distance_cell(4) * sin(angle_cell(1)) + &
 										 distance_cell(2) *  distance_cell(3) * sin(angle_cell(4)))

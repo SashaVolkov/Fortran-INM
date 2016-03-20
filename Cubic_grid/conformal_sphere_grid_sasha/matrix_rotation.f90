@@ -1,23 +1,23 @@
 module matrix_rotation
 
-! use subfunc, Only: func
-use mapping, Only: conf
+use mapping, Only: mapp
 use matmul_module
 use simple_rotations
 
 implicit none
 
+	Private
 	Public :: matrix
 
 	Type matrix
 		CONTAINS
-		Procedure :: init_compute_matrices => init_compute_matrices
-		Procedure :: matrix_rotation_to_top => matrix_rotation_to_top
+		Procedure, Public :: init_compute_matrices => init_compute_matrices
+		Procedure, Private :: matrix_rotation_to_top => matrix_rotation_to_top
+		Procedure, Public :: index_rotation => index_rotation_matrix
 	End Type
 
+
 CONTAINS
-
-
 
 	subroutine init_compute_matrices(this, rots)
 	! computes matrices of rotation
@@ -28,7 +28,7 @@ CONTAINS
 		real(8) rot(3,3), r(3)
 		real(8) x,y,z, x_edge, y_edge
 		integer i, j, index, status
-		Type(conf) :: conformal
+		Type(mapp) :: map
 		Class(matrix) :: this
 		
 		rots=0
@@ -37,9 +37,9 @@ CONTAINS
 				if (mod(j,3).ne.0) then
 					x_edge = cos(pi2*dble(j)/12d0)
 					y_edge = sin(pi2*dble(j)/12d0)
-					call conformal.cube2sphere(x, y, z, x_edge,y_edge, 1d0, i, status)
+					call map.cube2sphere(x, y, z, x_edge,y_edge, 1d0, i, status)
 
-					index = index_rotation_matrix(x,y,z)
+					call this.index_rotation(x,y,z,index)
 
 					status = matrix_verge_rotation(x,y,z, rot)
 					rots(1:3,1:3,index) = rot
@@ -62,7 +62,9 @@ CONTAINS
 		end do
 	end subroutine init_compute_matrices
 
-	subroutine matrix_rotation_to_top(this,x,y,z, rot, status)
+
+
+	subroutine matrix_rotation_to_top(this, x ,y ,z ,rot, status)
 	! computes matrix rot for rotation of cube
 	! nearest to (x,y,z) vertex to (0,0,R)
 	! next nearest to (2sqrt2,0,3)
@@ -82,22 +84,24 @@ CONTAINS
 
 
 
-	integer function index_rotation_matrix(x,y,z)
+	subroutine index_rotation_matrix(this, x, y, z, index)
 
+		Class(matrix) :: this
 		real(8) x,y,z
 		real(8) rot(1:3,1:3), r(1:3)
-		integer status
+		integer(4), intent(out) :: index
+		integer(4) status
 
-		index_rotation_matrix = (index_verge_calc(x,y,z)-1) * 8
+		index = (index_verge_calc(x,y,z)-1) * 8
 		status = matrix_verge_rotation(x,y,z,rot)
 		r = matmul(rot, (/x,y,z/))
-		index_rotation_matrix = index_rotation_matrix + index_vertex_calc(r(1),r(2),r(3))
+		index = index + index_vertex_calc(r(1),r(2),r(3))
 
-	end function index_rotation_matrix
+	end subroutine index_rotation_matrix
 
 
 
-	integer function matrix_verge_rotation(x,y,z, rot)
+	integer function matrix_verge_rotation(x, y, z, rot)
 
 		real(8) x,y,z
 		real(8) rot(1:3,1:3)
@@ -128,21 +132,21 @@ CONTAINS
 
 
 
-	integer function index_verge_calc(x,y,z)
+	integer function index_verge_calc(x, y, z)
 
 		real(8) x,y,z
 
-		If ( (-z) .ge. max(abs(x),abs(y)) ) then
+		If ( (-z) >= max(abs(x),abs(y)) ) then
 			 index_verge_calc = 1
-		else if(   x  .ge. max(abs(y),abs(z)) ) then
+		else if(   x  >= max(abs(y),abs(z)) ) then
 			 index_verge_calc = 2
-		else if(   y  .ge. max(abs(x),abs(z)) ) then
+		else if(   y  >= max(abs(x),abs(z)) ) then
 			 index_verge_calc = 3
-		else if(  -x  .ge. max(abs(y),abs(z)) ) then
+		else if(  -x  >= max(abs(y),abs(z)) ) then
 			 index_verge_calc = 4
-		else if(  -y  .ge. max(abs(x),abs(z)) ) then
+		else if(  -y  >= max(abs(x),abs(z)) ) then
 			 index_verge_calc = 5
-		else if(   z  .ge. max(abs(x),abs(y)) ) then
+		else if(   z  >= max(abs(x),abs(y)) ) then
 			 index_verge_calc = 6
 		end if
 
@@ -150,8 +154,7 @@ CONTAINS
 
 
 
-
-	integer function matrix_vertex_rotation(x,y,z, rot)
+	integer function matrix_vertex_rotation(x, y, z,rot)
 
 		real(8) x,y,z
 		real(8) rot(1:3,1:3)
@@ -187,30 +190,31 @@ CONTAINS
 	end function matrix_vertex_rotation
 
 
-	integer function index_vertex_calc(x,y,z)
+
+	integer function index_vertex_calc(x, y, z)
 		real(8) x,y,z
 
 		index_vertex_calc = 0
 
-		If ( x .ge.  y  .and.    y  .ge.  0d0) then
+		If ( x >=  y  .and.    y  >=  0d0) then
 			 index_vertex_calc = 1
-		else if( y .ge.  x  .and.    x  .ge.  0d0) then
+		else if( y >=  x  .and.    x  >=  0d0) then
 			 index_vertex_calc = 2
-		else if( y .ge. -x  .and.   -x  .ge.  0d0) then
+		else if( y >= -x  .and.   -x  >=  0d0) then
 			 index_vertex_calc = 3
-		else if(-x .ge.  y  .and.    y  .ge.  0d0) then
+		else if(-x >=  y  .and.    y  >=  0d0) then
 			 index_vertex_calc = 4
-		else if(-x .ge. -y  .and.   -y  .ge.  0d0) then
+		else if(-x >= -y  .and.   -y  >=  0d0) then
 			 index_vertex_calc = 5
-		else if(-y .ge.  x  .and.   -x  .ge.  0d0) then
+		else if(-y >=  x  .and.   -x  >=  0d0) then
 			 index_vertex_calc = 6
-		else if(-y .ge.  x  .and.    x  .ge.  0d0) then
+		else if(-y >=  x  .and.    x  >=  0d0) then
 			 index_vertex_calc = 7
-		else if( x .ge. -y  .and.   -y  .ge.  0d0) then
+		else if( x >= -y  .and.   -y  >=  0d0) then
 			 index_vertex_calc = 8
 		end if
 
 	end function index_vertex_calc
 
 
-end module matrix_rotation
+end module
