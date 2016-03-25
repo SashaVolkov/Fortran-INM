@@ -116,47 +116,49 @@ CONTAINS
 	end subroutine conformal_w_z
 
 
-	subroutine cube2sphere(this, x, y, z, x_edge, y_edge, r_sphere, number_edge, status)
-	 ! mapping between points on edge of cubed sphere on real sphere
-	 ! xi_edge - coordinate on number's edge, in [-1, 1]
+	subroutine cube2sphere(this, x, y, z, x_face, y_face, r_sphere, face_index, status)
+	 ! mapping between points on face of cubed sphere on real sphere
+	 ! xi_face - coordinate on number's face, in [-1, 1]
 	 ! r_sphere - radius of inscribed sphere
 	 ! x, y, z - cartesian coordinates of point
 
-		real(8) x, y, z
-		real(8) x_edge, y_edge, r_sphere
-		integer number_edge, status
+		real(8), intent(in) :: x_face, y_face, r_sphere
+		integer(4), intent(in) :: face_index
 
-		real(8) rr
+		real(8), intent(out) :: x, y, z
+		integer(4), intent(out) ::  status
+
+		real(8) BIG_R
 		Class(mapp) :: this
 
 		status = 0
-		rr = r_sphere / sqrt(1 + x_edge**2 + y_edge**2)
+		BIG_R = r_sphere / sqrt(1 + x_face**2 + y_face**2) ! Baiburin p.5 (3.1)
 
-		select case (number_edge)
+		select case (face_index)
 			 case (1)
-					x = y_edge * rr
-					y = x_edge * rr
-					z = - rr
+					x = y_face * BIG_R
+					y = x_face * BIG_R		! Baiburin (3.2)
+					z = - BIG_R
 			 case (2)
-					x = rr
-					y = x_edge * rr
-					z = y_edge * rr
+					x = BIG_R
+					y = x_face * BIG_R		! Baiburin (3.3)
+					z = y_face * BIG_R
 			 case (3)
-					x = - x_edge * rr
-					y = rr
-					z = y_edge * rr
+					x = - x_face * BIG_R
+					y = BIG_R							! Baiburin (3.4)
+					z = y_face * BIG_R
 			 case (4)
-					x = - rr
-					y = - x_edge * rr
-					z = y_edge * rr
+					x = - BIG_R
+					y = - x_face * BIG_R	! Baiburin (3.5)
+					z = y_face * BIG_R
 			 case (5)
-					x = x_edge * rr
-					y = - rr
-					z = y_edge * rr
+					x = x_face * BIG_R
+					y = - BIG_R						! Baiburin (3.6)
+					z = y_face * BIG_R
 			 case (6)
-					x = -y_edge * rr
-					y = x_edge * rr
-					z = rr 
+					x = -y_face * BIG_R
+					y = x_face * BIG_R		! Baiburin (3.7)
+					z = BIG_R 
 			 case default
 					status = 1
 		end select

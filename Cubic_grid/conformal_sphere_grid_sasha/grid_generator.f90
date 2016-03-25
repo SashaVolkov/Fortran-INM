@@ -19,66 +19,64 @@ CONTAINS
 
 	subroutine conformal_cubed_sphere_grid_generation(this, x_points,y_points)
 		Class(grid) :: this
-		integer x_points, y_points
+		integer, intent(in) :: x_points, y_points
 		character*14 filename
 		character istring
 
-		real(8) rots(3,3,48)
+		real(8) matr_of_rots(3,3,48)
 		real(8) rot(1:3,1:3)
 		real(8) r(1:3)
 		real(8) x,y,z
-		real(8) x1,y1, x_edge, y_edge
+		real(8) x_face,y_face, x_edge, y_edge
+		real(8) r_sphere
 		complex*16 w
 
-		integer i, j, k, status, index
+		integer face_index, j, k, status, index
 		Type(mapp) :: map
 		Type(projection) :: projection
 		Type(matrix) :: matr
 
-		call matr.init_compute_matrices(rots)
-		
-		open (20, file = "grid/matrices.dat")
-		do i =1,48
-			 write(20,*) rots(1:3,1,i)
-			 write(20,*) rots(1:3,2,i)
-			 write(20,*) rots(1:3,3,i)
-			 write(20,*)
-		end do
-		close(20)
+		call matr.init_matrices(matr_of_rots) ! matr_of_rots - 48 2dim matrices (3*3). You can find them in grid/matrices_of_rotations.dat
 
-		do i=1, 6
-			write(istring(1:1), '(i1.1)') i
-			filename = "grid/edge" // istring // ".dat" 
+		do face_index= 1, 6
+
+			write(istring(1:1), '(i1.1)') face_index
+			filename = "grid/face" // istring // ".dat" 
 			open (20, file = filename)
+
 			do j=-x_points,x_points
 				do k=-y_points,y_points
-					x1=j/dble(x_points)
-					y1=k/dble(y_points)
 
-					call map.cube2sphere(x,y,z,x1,y1,1d0,i, status)
-					call matr.index_rotation(x,y,z,index)
+					x_face=j/dble(x_points)
+					y_face=k/dble(y_points)
+					r_sphere = 1d0
 
-					if (abs(x1)>abs(y1)) then
-						y_edge = abs(sign(1d0,x1)*(1-abs(x1)))/2d0
-						x_edge = abs(sign(1d0,y1)*(1-abs(y1)))/2d0
+					call map.cube2sphere(x,y,z,x_face,y_face,r_sphere,face_index, status) ! out :: x, y, z, status
+					call matr.index_rotation(x,y,z,index) ! out :: index = from 1 to 48
+
+					if (abs(x_face)>abs(y_face)) then
+						y_edge = abs(sign(1d0,x_face)*(1-abs(x_face)))/2d0				! SIGN(A,B) returns the value of A with the sign of B.
+						x_edge = abs(sign(1d0,y_face)*(1-abs(y_face)))/2d0				! WTF?
 					else
-						x_edge = abs(sign(1d0,x1)*(1-abs(x1)))/2d0
-						y_edge = abs(sign(1d0,y1)*(1-abs(y1)))/2d0
+						x_edge = abs(sign(1d0,x_face)*(1-abs(x_face)))/2d0				! sgn(x)*(1 - |x|)/2
+						y_edge = abs(sign(1d0,y_face)*(1-abs(y_face)))/2d0
 					end if
 
 					call map.conformal_z_w(dcmplx(x_edge,y_edge), w) 
+! DCMPLX(X [,Y]) returns a double complex number where X is converted to the real component.
+! If Y is present it is converted to the imaginary component if not present then imaginary is set to 0.0.
+! If X is complex then Y must not be present. 
+					call projection.inverse(dreal(w),dimag(w),r_sphere,x,y,z,status)
 
-					call projection.inverse(dreal(w),dimag(w),1d0,x,y,z,status)
-
-					r = matmul(transpose(rots(1:3,1:3,index)),(/x,y,z/))
+					r = matmul(transpose(matr_of_rots(1:3,1:3,index)),(/x,y,z/))
 					x = r(1); y=r(2); z=r(3)
-
 
 					write(20,*) x,y,z
 
 				end do
 				write(20,*)
 			end do
+
 		end do
 		close(20)
 

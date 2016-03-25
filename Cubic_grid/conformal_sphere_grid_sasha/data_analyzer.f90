@@ -19,7 +19,7 @@ module data_analyzer
 		Class(data_an) :: this
 
 		integer x_points, y_points
-		integer(4) i_edge, i, j, status, k
+		integer(4) i_face, i, j, status, k
 		character*14 filename
 		character istring
 		real*8, dimension(:,:,:,:), allocatable :: r
@@ -32,13 +32,13 @@ module data_analyzer
 		close(20)
 		allocate(r(1:3,1:6,-x_points:x_points, -y_points:y_points))
 
-		do i_edge = 1,6
-			write(istring(1:1), '(i1.1)') i_edge
-			filename = "grid/edge" // istring // ".dat" 
+		do i_face = 1,6
+			write(istring(1:1), '(i1.1)') i_face
+			filename = "grid/face" // istring // ".dat" 
 			open(20, file = filename)
 			do i = -x_points, x_points
 				do j = -y_points, y_points
-					read(20,*) r(1,i_edge,i,j), r(2,i_edge,i,j), r(3,i_edge,i,j)
+					read(20,*) r(1,i_face,i,j), r(2,i_face,i,j), r(3,i_face,i,j)
 				end do
 			end do
 			close(20)
