@@ -2,7 +2,6 @@ module grid_generator
 
 use projections, Only: projection
 use matrix_rotation, Only: matrix
-use mapping, Only: mapp
 
 implicit none
 
@@ -17,9 +16,9 @@ End Type
 CONTAINS
 
 
-	subroutine conformal_cubed_sphere_grid_generation(this, x_points,y_points)
+	subroutine conformal_cubed_sphere_grid_generation(this, x_dimension,y_dimension)
 		Class(grid) :: this
-		integer, intent(in) :: x_points, y_points
+		integer, intent(in) :: x_dimension, y_dimension
 		character*14 filename
 		character istring
 
@@ -31,12 +30,13 @@ CONTAINS
 		real(8) r_sphere
 		complex*16 w
 
-		integer face_index, j, k, status, index
-		Type(mapp) :: map
+		integer face_index, j, k, status, index, x_min, x_max, y_min, y_max
 		Type(projection) :: projection
 		Type(matrix) :: matr
 
 		call matr.init_matrices(matr_of_rots) ! matr_of_rots - 48 2dim matrices (3*3). You can find them in grid/matrices_of_rotations.dat
+
+		x_min = -x_dimension; x_max = x_dimension; y_min = -y_dimension; y_max = y_dimension
 
 		do face_index= 1, 6
 
@@ -44,15 +44,15 @@ CONTAINS
 			filename = "grid/face" // istring // ".dat" 
 			open (20, file = filename)
 
-			do j=-x_points,x_points
-				do k=-y_points,y_points
+			do j= x_min, x_max
+				do k= y_min, y_max
 
-					x_face=j/dble(x_points)
-					y_face=k/dble(y_points)
+					x_face = j/dble(x_dimension)		!normalized x coordinate
+					y_face = k/dble(y_dimension)
 					r_sphere = 1d0
 
-					call map.cube2sphere(x,y,z,x_face,y_face,r_sphere,face_index, status) ! out :: x, y, z, status
-					call matr.index_rotation(x,y,z,index) ! out :: index = from 1 to 48
+					call projection.cube2sphere( x, y, z, x_face, y_face, r_sphere, face_index, status) ! out :: x, y, z, status
+					call matr.index_rotation( x, y, z, index) ! out :: index = from 1 to 48
 
 					if (abs(x_face)>abs(y_face)) then
 						y_edge = abs(sign(1d0,x_face)*(1-abs(x_face)))/2d0				! SIGN(A,B) returns the value of A with the sign of B.
@@ -62,7 +62,9 @@ CONTAINS
 						y_edge = abs(sign(1d0,y_face)*(1-abs(y_face)))/2d0
 					end if
 
-					call map.conformal_z_w(dcmplx(x_edge,y_edge), w) 
+					! z = x_edge + i*y_edge
+
+					call projection.conformal_z_w(dcmplx(x_edge,y_edge), w) 
 ! DCMPLX(X [,Y]) returns a double complex number where X is converted to the real component.
 ! If Y is present it is converted to the imaginary component if not present then imaginary is set to 0.0.
 ! If X is complex then Y must not be present. 
@@ -81,7 +83,7 @@ CONTAINS
 		close(20)
 
 		open(20, file = "grid/parameters.dat")
-		write(20,*) x_points, y_points
+		write(20,*) x_dimension, y_dimension
 		close(20)
 	end subroutine conformal_cubed_sphere_grid_generation
 
