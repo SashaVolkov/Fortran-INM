@@ -1,10 +1,10 @@
 	Module modfunc
 
-	Use modnet
+	Use modnet, Only: grid
 
 		Implicit None
 
-
+		Private
 		Public :: func
 
 		Type func

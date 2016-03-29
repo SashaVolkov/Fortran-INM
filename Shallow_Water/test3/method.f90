@@ -6,7 +6,7 @@ Module method
 	Use netcdf
 
 IMPLICIT NONE
-
+	Private
 	Public :: met
 
 	Type met

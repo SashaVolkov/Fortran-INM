@@ -1,8 +1,9 @@
 Module Schema
 
-	Use modnet
+	Use modfunc, Only: func
+	Use modnet, Only: grid
 	Use MPI
-	Use method
+	Use method, Only: met
 
 IMPLICIT NONE
 

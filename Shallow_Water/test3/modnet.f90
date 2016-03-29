@@ -1,7 +1,7 @@
 Module modnet
 
 	IMPLICIT NONE
-
+	Private
 	Public :: grid
 
 	Type grid
