@@ -6,7 +6,7 @@ Module Schema
 	Use method, Only: met
 
 IMPLICIT NONE
-
+	Private
 	Public :: sch
 
 	Type sch
