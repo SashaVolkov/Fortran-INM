@@ -9,7 +9,7 @@ Type projection
 	Procedure :: inverse => inverse_direct_stereo_projection
 	Procedure :: conformal_z_w => conformal_z_w
 	Procedure :: conformal_w_z => conformal_w_z
-	Procedure :: cube2sphere => cube2sphere
+	Procedure :: stereographic_cube2sphere => cube2sphere
 	Procedure :: direct => direct_stereo_projection
 End Type
 
@@ -46,7 +46,7 @@ CONTAINS
 
 
 	subroutine conformal_z_w(this, z, w)
-	! projection z -> w 
+	! conformal projection z -> w 
 
 	!!!!To know more look through Rancic Parser Mesinger article 1996 Apendix A & B!!!!!!! 
 	!!!!Q.J.R. Meteorol. Soc. 1996, 122, pp. 959-982!!!!!
@@ -83,7 +83,8 @@ CONTAINS
 			-00012478875823d-14, &
 			-00011449267279d-14, &
 			-00010536946150d-14, &
-			-00009725109376d-14 /)
+			-00009725109376d-14 /)  !!Page 981 Table B1
+
 		complex*16 w, z, BIG_W, BIG_Z
 		integer i
 
@@ -99,6 +100,7 @@ CONTAINS
 
 
 	subroutine conformal_w_z(this, w,z)
+	! conformal projection w -> z
 
 		Class(projection) :: this
 	  complex*8 w,z, BIG_W,BIG_Z
@@ -133,14 +135,14 @@ CONTAINS
 	    .00082115710311, &
 	    .00076890728775, &
 	    .00072168382969, &
-	    .00067885087750  /)
+	    .00067885087750  /)  !!Page 981 Table B1
 
-	  BIG_W = w ** 3  !!Page 977 eq. A.2
+	  BIG_W = w ** 3  !!Page 978 (iii)
 	  BIG_Z = 0
 	  do i=1,30
-	     BIG_Z = BIG_Z + B_c(i)*(BIG_W**i)  !!Page 977 eq. A.3b
+	     BIG_Z = BIG_Z + B_c(i)*(BIG_W**i)  !!Page 978 (iv)
 	  end do
-	  z = BIG_Z ** (25d-2)
+	  z = BIG_Z ** (25d-2)  !!Page 978 (v)
 
 	end subroutine conformal_w_z
 

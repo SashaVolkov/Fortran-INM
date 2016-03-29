@@ -29,7 +29,7 @@ CONTAINS
 		real(8) rot(3,3), r(3)
 		real(8) x,y,z, x_face, y_face
 		integer i, j, index, status
-		Type(projection) :: proj
+		Type(projection) :: projection
 		Class(matrix) :: this
 		
 		matr_of_rots=0
@@ -38,7 +38,7 @@ CONTAINS
 				if (mod(j,3).ne.0) then						!MOD(x,y) = remainder x - INT(x/y)*y
 					x_face = cos(pi2*dble(j)/12d0)	!DBLE(A) Converts A to double precision real type
 					y_face = sin(pi2*dble(j)/12d0)
-					call proj.cube2sphere(x, y, z, x_face,y_face, 1d0, i, status)
+					call projection.stereographic_cube2sphere(x, y, z, x_face,y_face, 1d0, i, status)
 
 					call this.index_rotation(x,y,z,index)	! Calculating index. It can be from 1 to 48.
 

@@ -4,7 +4,7 @@
     <type>com.umlet.element.Class</type>
     <coordinates>
       <x>480</x>
-      <y>190</y>
+      <y>210</y>
       <w>210</w>
       <h>60</h>
     </coordinates>
@@ -17,19 +17,19 @@
   <element>
     <type>com.umlet.element.Relation</type>
     <coordinates>
-      <x>350</x>
-      <y>220</y>
-      <w>200</w>
-      <h>190</h>
+      <x>380</x>
+      <y>240</y>
+      <w>120</w>
+      <h>120</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>30;170;180;30</additional_attributes>
+    <additional_attributes>30;100;100;30</additional_attributes>
   </element>
   <element>
     <type>com.umlet.element.Class</type>
     <coordinates>
       <x>670</x>
-      <y>390</y>
+      <y>340</y>
       <w>200</w>
       <h>60</h>
     </coordinates>
@@ -43,8 +43,8 @@ conformal_cubed_sphere()</panel_attributes>
   <element>
     <type>com.umlet.element.Class</type>
     <coordinates>
-      <x>290</x>
-      <y>390</y>
+      <x>320</x>
+      <y>340</y>
       <w>190</w>
       <h>60</h>
     </coordinates>
@@ -57,58 +57,50 @@ computated()</panel_attributes>
   <element>
     <type>com.umlet.element.Relation</type>
     <coordinates>
+      <x>620</x>
+      <y>370</y>
+      <w>70</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>30;80;50;30</additional_attributes>
+  </element>
+  <element>
+    <type>com.umlet.element.Relation</type>
+    <coordinates>
+      <x>660</x>
+      <y>240</y>
+      <w>130</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>110;100;30;30</additional_attributes>
+  </element>
+  <element>
+    <type>com.umlet.element.Relation</type>
+    <coordinates>
       <x>840</x>
-      <y>420</y>
-      <w>160</w>
-      <h>160</h>
+      <y>370</y>
+      <w>70</w>
+      <h>100</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>140;140;30;30</additional_attributes>
-  </element>
-  <element>
-    <type>com.umlet.element.Relation</type>
-    <coordinates>
-      <x>510</x>
-      <y>420</y>
-      <w>180</w>
-      <h>160</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>30;140;160;30</additional_attributes>
-  </element>
-  <element>
-    <type>com.umlet.element.Relation</type>
-    <coordinates>
-      <x>630</x>
-      <y>220</y>
-      <w>160</w>
-      <h>190</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>140;170;30;30</additional_attributes>
-  </element>
-  <element>
-    <type>com.umlet.element.Relation</type>
-    <coordinates>
-      <x>740</x>
-      <y>420</y>
-      <w>50</w>
-      <h>160</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>30;140;30;30</additional_attributes>
+    <additional_attributes>50;80;30;30</additional_attributes>
   </element>
   <element>
     <type>com.umlet.element.Class</type>
     <coordinates>
-      <x>460</x>
-      <y>560</y>
-      <w>160</w>
-      <h>90</h>
+      <x>550</x>
+      <y>450</y>
+      <w>210</w>
+      <h>120</h>
     </coordinates>
     <panel_attributes>&lt;&lt;projections.f90&gt;&gt;
 --
 inverse()
+conformal_z_w()
+conformal_w_z()
+stereographic_cube2sphere()
 direct()
 
 </panel_attributes>
@@ -117,8 +109,8 @@ direct()
   <element>
     <type>com.umlet.element.Class</type>
     <coordinates>
-      <x>680</x>
-      <y>560</y>
+      <x>800</x>
+      <y>450</y>
       <w>180</w>
       <h>90</h>
     </coordinates>
@@ -131,37 +123,21 @@ index_rotation()</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
-    <type>com.umlet.element.Class</type>
-    <coordinates>
-      <x>920</x>
-      <y>560</y>
-      <w>160</w>
-      <h>90</h>
-    </coordinates>
-    <panel_attributes>&lt;&lt;mapping.f90&gt;&gt;
---
-
-conformal_z_w()
-conformal_w_z()
-cube2sphere()</panel_attributes>
-    <additional_attributes/>
-  </element>
-  <element>
     <type>com.umlet.element.Relation</type>
     <coordinates>
-      <x>830</x>
-      <y>590</y>
-      <w>110</w>
+      <x>730</x>
+      <y>470</y>
+      <w>90</w>
       <h>50</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>90;30;30;30</additional_attributes>
+    <additional_attributes>30;30;70;30</additional_attributes>
   </element>
   <element>
     <type>com.umlet.element.Class</type>
     <coordinates>
-      <x>170</x>
-      <y>560</y>
+      <x>310</x>
+      <y>450</y>
       <w>190</w>
       <h>100</h>
     </coordinates>
@@ -176,12 +152,12 @@ distance_xyz()</panel_attributes>
   <element>
     <type>com.umlet.element.Relation</type>
     <coordinates>
-      <x>240</x>
-      <y>420</y>
-      <w>160</w>
-      <h>160</h>
+      <x>380</x>
+      <y>370</y>
+      <w>50</w>
+      <h>100</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>30;140;140;30</additional_attributes>
+    <additional_attributes>30;80;30;30</additional_attributes>
   </element>
 </diagram>

@@ -51,26 +51,23 @@ CONTAINS
 					y_face = k/dble(y_dimension)
 					r_sphere = 1d0
 
-					call projection.cube2sphere( x, y, z, x_face, y_face, r_sphere, face_index, status) ! out :: x, y, z, status
-					call matr.index_rotation( x, y, z, index) ! out :: index = from 1 to 48
+					call projection.stereographic_cube2sphere( x, y, z, x_face, y_face, r_sphere, face_index, status) ! out :: x, y, z, status
+					call matr.index_rotation( x, y, z, index) ! out :: index = from 1 to 48  !! 48 - full group of symetries of the cube
 
+	! это гарантии последнего предложения на 13й странице, а именно x<y , координаты на грани должны попасть в 1/8 часть, если нет, то мы преобразуем их по симметрии относительно прямой x=y.
 					if (abs(x_face)>abs(y_face)) then
-						y_edge = abs(sign(1d0,x_face)*(1-abs(x_face)))/2d0				! SIGN(A,B) returns the value of A with the sign of B.
-						x_edge = abs(sign(1d0,y_face)*(1-abs(y_face)))/2d0				! WTF?
+						y_edge = abs(1-abs(x_face))/2d0
+						x_edge = abs(1-abs(y_face))/2d0
 					else
-						x_edge = abs(sign(1d0,x_face)*(1-abs(x_face)))/2d0				! sgn(x)*(1 - |x|)/2
-						y_edge = abs(sign(1d0,y_face)*(1-abs(y_face)))/2d0
+						x_edge = abs(1-abs(x_face))/2d0				! x = |(1 - |x|)|/2
+						y_edge = abs(1-abs(y_face))/2d0				! y = |(1 - |y|)|/2
 					end if
+					!x_edge >= 0; y_edge >= 0 and x_edge > y_edge
 
-					! z = x_edge + i*y_edge
+					call projection.conformal_z_w( dcmplx( x_edge, y_edge), w)			! z = x_edge + i*y_edge  !! Baiburin p.17 (3-5)
+					call projection.inverse( dreal(w), dimag(w), r_sphere, x, y, z, status)	! intent(out) :: x, y, z, status  !! Baiburin p.17 (6)
 
-					call projection.conformal_z_w(dcmplx(x_edge,y_edge), w) 
-! DCMPLX(X [,Y]) returns a double complex number where X is converted to the real component.
-! If Y is present it is converted to the imaginary component if not present then imaginary is set to 0.0.
-! If X is complex then Y must not be present. 
-					call projection.inverse(dreal(w),dimag(w),r_sphere,x,y,z,status)
-
-					r = matmul(transpose(matr_of_rots(1:3,1:3,index)),(/x,y,z/))
+					r = matmul(transpose(matr_of_rots(1:3,1:3,index)),(/x,y,z/))		!! Baiburin p.17 (7)
 					x = r(1); y=r(2); z=r(3)
 
 					write(20,*) x,y,z
