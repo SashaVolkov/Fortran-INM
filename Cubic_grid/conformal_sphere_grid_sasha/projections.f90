@@ -6,7 +6,7 @@ Public :: projection
 
 Type projection
 	CONTAINS
-	Procedure :: inverse => inverse_direct_stereo_projection
+	Procedure :: inverse => inverse_stereo_projection
 	Procedure :: conformal_z_w => conformal_z_w
 	Procedure :: conformal_w_z => conformal_w_z
 	Procedure :: stereographic_cube2sphere => cube2sphere
@@ -16,7 +16,7 @@ End Type
 
 CONTAINS
 
-	subroutine inverse_direct_stereo_projection(this, x_plane, y_plane,r_sphere, x, y, z, status)
+	subroutine inverse_stereo_projection(this, x_plane, y_plane,r_sphere, x, y, z, status)
 	! reverse central projection from south pole of sphere
 	! with centre in (0,0,0) on tangent plane in north pole (0,0,R)
 	! return: 

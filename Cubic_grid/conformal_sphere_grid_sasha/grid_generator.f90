@@ -19,18 +19,19 @@ CONTAINS
 	subroutine conformal_cubed_sphere_grid_generation(this, x_dimension,y_dimension)
 		Class(grid) :: this
 		integer, intent(in) :: x_dimension, y_dimension
+
 		character*14 filename
 		character istring
+		integer face_index, j, k, status, index, x_min, x_max, y_min, y_max
 
-		real(8) matr_of_rots(3,3,48)
-		real(8) rot(1:3,1:3)
+		real(8) matr_of_rots(3,3,48), rot(1:3,1:3)
 		real(8) r(1:3)
 		real(8) x,y,z
-		real(8) x_face,y_face, x_edge, y_edge
+		real(8) x_face,y_face, x_triangle, y_triangle
 		real(8) r_sphere
 		complex*16 w
 
-		integer face_index, j, k, status, index, x_min, x_max, y_min, y_max
+
 		Type(projection) :: projection
 		Type(matrix) :: matr
 
@@ -51,20 +52,20 @@ CONTAINS
 					y_face = k/dble(y_dimension)
 					r_sphere = 1d0
 
-					call projection.stereographic_cube2sphere( x, y, z, x_face, y_face, r_sphere, face_index, status) ! out :: x, y, z, status
+					call projection.stereographic_cube2sphere( x, y, z, x_face, y_face, r_sphere, face_index, status) ! out :: x, y, z, status !! Rancic p.978 (ii)
 					call matr.index_rotation( x, y, z, index) ! out :: index = from 1 to 48  !! 48 - full group of symetries of the cube
 
 	! это гарантии последнего предложения на 13й странице, а именно x<y , координаты на грани должны попасть в 1/8 часть, если нет, то мы преобразуем их по симметрии относительно прямой x=y.
 					if (abs(x_face)>abs(y_face)) then
-						y_edge = abs(1-abs(x_face))/2d0
-						x_edge = abs(1-abs(y_face))/2d0
+						y_triangle = abs(1-abs(x_face))/2d0
+						x_triangle = abs(1-abs(y_face))/2d0
 					else
-						x_edge = abs(1-abs(x_face))/2d0				! x = |(1 - |x|)|/2
-						y_edge = abs(1-abs(y_face))/2d0				! y = |(1 - |y|)|/2
+						x_triangle = abs(1-abs(x_face))/2d0				! x = |(1 - |x|)|/2
+						y_triangle = abs(1-abs(y_face))/2d0				! y = |(1 - |y|)|/2
 					end if
-					!x_edge >= 0; y_edge >= 0 and x_edge > y_edge
+					!x_triangle >= 0; y_triangle >= 0 and x_triangle > y_triangle
 
-					call projection.conformal_z_w( dcmplx( x_edge, y_edge), w)			! z = x_edge + i*y_edge  !! Baiburin p.17 (3-5)
+					call projection.conformal_z_w( dcmplx( x_triangle, y_triangle), w)			! z = x_triangle + i*y_triangle  !! Baiburin p.17 (3-5) !! Rancic p.978 (iii-iv)
 					call projection.inverse( dreal(w), dimag(w), r_sphere, x, y, z, status)	! intent(out) :: x, y, z, status  !! Baiburin p.17 (6)
 
 					r = matmul(transpose(matr_of_rots(1:3,1:3,index)),(/x,y,z/))		!! Baiburin p.17 (7)
