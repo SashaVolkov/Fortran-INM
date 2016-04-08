@@ -150,7 +150,7 @@ module data_analyzer
 			do i = 1, hist_points
 				 if (distribution(i)>0) then
 						write(21,*) x_coeff * (min + (max-min) * i /dble(hist_points)), &
-								 distribution(i) / dble(max_val)
+								 distribution(i) !/ dble(max_val)
 				 end if
 			end do
 			close(21)

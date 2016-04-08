@@ -75,12 +75,12 @@ else
 	echo `grep -c error err.file` "errors"
 	echo `grep -c warning err.file` "warnings"
 
-	mpiexec -n 1 ./a.out
+	time mpiexec -n 1 ./a.out
 
 	cd analyze
 	./plotscript.sh
 	cd ../grid
-	./plotscript.sh
+	# ./plotscript.sh
 fi
 
 

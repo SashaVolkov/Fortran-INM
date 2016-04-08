@@ -50,28 +50,27 @@ CONTAINS
 			do j= x_min, x_max
 				do k= y_min, y_max
 
-					x_face = j/dble(x_dimension)		!normalized x coordinate
-					y_face = k/dble(y_dimension)
+					x_face = j/dble(x_dimension); y_face = k/dble(y_dimension)		!normalized x coordinate
 
 					call projection.stereographic_cube_to_sphere( x, y, z, x_face, y_face, r_sphere, face_index, status) ! out :: x, y, z, status !! Rancic p.978 (ii)
 					call matr.index_rotation( x, y, z, index) ! out :: index = from 1 to 48  !! 48 - full group of symetries of the cube
 
-					call this.face_to_triangle(x_face, y_face, x_triangle, y_triangle)
+					call this.face_to_triangle(x_face, y_face, x_triangle, y_triangle) ! first octant x_triangle>y_triangle>0
 
 					call projection.conformal_z_w( dcmplx( x_triangle, y_triangle), w)			! z = x_triangle + i*y_triangle  !! Baiburin p.17 (3-5) !! Rancic p.978 (iii-iv)
-					call projection.inverse( dreal(w), dimag(w), r_sphere, x, y, z, status)	! intent(out) :: x, y, z, status  !! Baiburin p.17 (6)
+					call projection.inverse( dreal(w), dimag(w), r_sphere, x, y, z, status)	! intent(out) :: x, y, z, status  !! Baiburin p.17 (6) !! Rancic p.978 (v)
 
-					r = matmul(transpose(matr_of_rots(1:3,1:3,index)),(/x,y,z/))		!! Baiburin p.17 (7)
+					r = matmul(transpose(matr_of_rots(1:3,1:3,index)),(/x,y,z/))		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 					x = r(1); y=r(2); z=r(3)
-
 					write(20,*) x,y,z
 
 				end do
 				write(20,*)
 			end do
-
+			close(20)
 		end do
-		close(20)
+
+
 
 		open(20, file = "grid/parameters.dat")
 		write(20,*) x_dimension, y_dimension
