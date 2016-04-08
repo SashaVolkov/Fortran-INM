@@ -38,7 +38,7 @@ CONTAINS
 				if (mod(j,3).ne.0) then						!MOD(x,y) = remainder x - INT(x/y)*y
 					x_face = cos(pi2*dble(j)/12d0)	!DBLE(A) Converts A to double precision real type
 					y_face = sin(pi2*dble(j)/12d0)
-					call projection.stereographic_cube2sphere(x, y, z, x_face,y_face, 1d0, i, status)
+					call projection.stereographic_cube_to_sphere(x, y, z, x_face,y_face, 1d0, i, status)
 
 					call this.index_rotation(x,y,z,index)	! Calculating index. It can be from 1 to 48.
 

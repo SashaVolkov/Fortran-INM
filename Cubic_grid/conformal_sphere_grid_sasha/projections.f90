@@ -9,7 +9,7 @@ Type projection
 	Procedure :: inverse => inverse_stereo_projection
 	Procedure :: conformal_z_w => conformal_z_w
 	Procedure :: conformal_w_z => conformal_w_z
-	Procedure :: stereographic_cube2sphere => cube2sphere
+	Procedure :: stereographic_cube_to_sphere => cube2sphere
 	Procedure :: direct => direct_stereo_projection
 End Type
 

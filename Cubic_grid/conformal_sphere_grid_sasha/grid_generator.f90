@@ -10,7 +10,8 @@ Public :: grid
 
 Type grid
 	CONTAINS
-	Procedure :: conformal_cubed_sphere => conformal_cubed_sphere_grid_generation
+	Procedure, Public :: conformal_cubed_sphere => conformal_cubed_sphere_grid_generation
+	Procedure, Private :: face_to_triangle => face_to_triangle
 End Type
 
 CONTAINS
@@ -36,8 +37,9 @@ CONTAINS
 		Type(matrix) :: matr
 
 		call matr.init_matrices(matr_of_rots) ! matr_of_rots - 48 2dim matrices (3*3). You can find them in grid/matrices_of_rotations.dat
-
 		x_min = -x_dimension; x_max = x_dimension; y_min = -y_dimension; y_max = y_dimension
+		r_sphere = 1d0
+
 
 		do face_index= 1, 6
 
@@ -50,20 +52,11 @@ CONTAINS
 
 					x_face = j/dble(x_dimension)		!normalized x coordinate
 					y_face = k/dble(y_dimension)
-					r_sphere = 1d0
 
-					call projection.stereographic_cube2sphere( x, y, z, x_face, y_face, r_sphere, face_index, status) ! out :: x, y, z, status !! Rancic p.978 (ii)
+					call projection.stereographic_cube_to_sphere( x, y, z, x_face, y_face, r_sphere, face_index, status) ! out :: x, y, z, status !! Rancic p.978 (ii)
 					call matr.index_rotation( x, y, z, index) ! out :: index = from 1 to 48  !! 48 - full group of symetries of the cube
 
-	! это гарантии последнего предложения на 13й странице, а именно x<y , координаты на грани должны попасть в 1/8 часть, если нет, то мы преобразуем их по симметрии относительно прямой x=y.
-					if (abs(x_face)>abs(y_face)) then
-						y_triangle = abs(1-abs(x_face))/2d0
-						x_triangle = abs(1-abs(y_face))/2d0
-					else
-						x_triangle = abs(1-abs(x_face))/2d0				! x = |(1 - |x|)|/2
-						y_triangle = abs(1-abs(y_face))/2d0				! y = |(1 - |y|)|/2
-					end if
-					!x_triangle >= 0; y_triangle >= 0 and x_triangle > y_triangle
+					call this.face_to_triangle(x_face, y_face, x_triangle, y_triangle)
 
 					call projection.conformal_z_w( dcmplx( x_triangle, y_triangle), w)			! z = x_triangle + i*y_triangle  !! Baiburin p.17 (3-5) !! Rancic p.978 (iii-iv)
 					call projection.inverse( dreal(w), dimag(w), r_sphere, x, y, z, status)	! intent(out) :: x, y, z, status  !! Baiburin p.17 (6)
@@ -85,5 +78,23 @@ CONTAINS
 		close(20)
 	end subroutine conformal_cubed_sphere_grid_generation
 
+
+
+	subroutine face_to_triangle(this, x_face, y_face, x_triangle, y_triangle)
+	!x_triangle >= 0; y_triangle >= 0 and x_triangle > y_triangle
+	! это гарантии последнего предложения на 13й странице, а именно x<y , координаты на грани должны попасть в 1/8 часть, если нет, то мы преобразуем их по симметрии относительно прямой x=y.
+		Class(grid) :: this
+		real(8), intent(out) :: x_triangle, y_triangle
+		real(8), intent(in) :: x_face, y_face
+
+					if (abs(x_face)>abs(y_face)) then
+						y_triangle = abs(1-abs(x_face))/2d0
+						x_triangle = abs(1-abs(y_face))/2d0
+					else
+						x_triangle = abs(1-abs(x_face))/2d0				! x = |(1 - |x|)|/2
+						y_triangle = abs(1-abs(y_face))/2d0				! y = |(1 - |y|)|/2
+					end if
+
+	end subroutine face_to_triangle
 
 end module
