@@ -80,7 +80,7 @@ else
 	cd analyze
 	./plotscript.sh
 	cd ../grid
-	# ./plotscript.sh
+	./plotscript.sh
 fi
 
 

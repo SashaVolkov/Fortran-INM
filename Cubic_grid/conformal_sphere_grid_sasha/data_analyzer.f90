@@ -133,9 +133,9 @@ module data_analyzer
 			allocate(dat(1: N))
 			open(20, file = filename_input)
 			do i =1, N
-				 read(20,*) dat(i)
-				 if (dat(i)> max) max = dat(i)
-				 if (dat(i)< min) min = dat(i)
+				read(20,*) dat(i)
+				if (dat(i)> max) max = dat(i)
+				if (dat(i)< min) min = dat(i)
 			end do
 			close(20)
 
@@ -148,10 +148,10 @@ module data_analyzer
 
 			open(21, file = filename_output)
 			do i = 1, hist_points
-				 if (distribution(i)>0) then
-						write(21,*) x_coeff * (min + (max-min) * i /dble(hist_points)), &
-								 distribution(i) !/ dble(max_val)
-				 end if
+				if (distribution(i)>0) then
+					write(21,*) x_coeff * (min + (max-min) * i /dble(hist_points)), &
+								distribution(i) !/ dble(max_val)
+				end if
 			end do
 			close(21)
 			deallocate(dat)

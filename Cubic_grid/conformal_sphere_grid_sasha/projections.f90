@@ -8,22 +8,22 @@ Type projection
 	CONTAINS
 	Procedure :: inverse => inverse_stereo_projection
 	Procedure :: conformal_z_w => conformal_z_w
-	Procedure :: conformal_w_z => conformal_w_z
 	Procedure :: stereographic_cube_to_sphere => cube2sphere
+	Procedure :: conformal_w_z => conformal_w_z
 	Procedure :: direct => direct_stereo_projection
 End Type
 
 
 CONTAINS
 
-	subroutine inverse_stereo_projection(this, x_plane, y_plane,r_sphere, x, y, z, status)
+	subroutine inverse_stereo_projection(this, x_plane, y_plane,r_sphere, r_vector, status)
 	! reverse central projection from south pole of sphere
 	! with centre in (0,0,0) on tangent plane in north pole (0,0,R)
 	! return: 
 	!  0 if ok
 	!  1 if error, r_sphere < 0
 		real(8), intent(in) :: x_plane, y_plane, r_sphere
-		real(8), intent(out) :: x, y, z
+		real(8), intent(out) :: r_vector(1:3)
 		integer(4), intent(out) :: status
 		Class(projection) :: this
 
@@ -36,9 +36,9 @@ CONTAINS
 			write(*,*) "radius =", r_sphere
 			status = 1
 		else
-			x = 2*sqrt(2d0) * x_plane * r_coeff
-			y = 2*sqrt(2d0) * y_plane * r_coeff
-			z = (2-x_plane**2-y_plane**2) * r_coeff
+			r_vector(1) = 2*sqrt(2d0) * x_plane * r_coeff
+			r_vector(2) = 2*sqrt(2d0) * y_plane * r_coeff
+			r_vector(3) = (2-x_plane**2-y_plane**2) * r_coeff
 			status = 0
 		end if
 	end subroutine
@@ -99,6 +99,58 @@ CONTAINS
 	end subroutine conformal_z_w
 
 
+
+	subroutine cube2sphere(this, r_vector, x_face, y_face, r_sphere, face_index, status)
+	 ! stereographic projection between points on face of cubed sphere on real sphere
+	 ! xi_face - coordinate on number's face, in [-1, 1]
+	 ! r_sphere - radius of inscribed sphere
+	 ! x, y, z - cartesian coordinates of point
+
+		real(8), intent(in) :: x_face, y_face, r_sphere
+		integer(4), intent(in) :: face_index
+
+		real(8), intent(out) ::  r_vector(1:3)
+		integer(4), intent(out) ::  status
+
+		real(8) BIG_R
+		Class(projection) :: this
+
+		status = 0
+		BIG_R = r_sphere / sqrt(1 + x_face**2 + y_face**2) ! Baiburin p.5 (3.1)
+
+		select case (face_index)
+			 case (1)
+					r_vector(1) = y_face * BIG_R
+					r_vector(2) = x_face * BIG_R		! Baiburin (3.2)
+					r_vector(3) = - BIG_R
+			 case (2)
+					r_vector(1) = BIG_R
+					r_vector(2) = x_face * BIG_R		! Baiburin (3.3)
+					r_vector(3) = y_face * BIG_R
+			 case (3)
+					r_vector(1) = - x_face * BIG_R
+					r_vector(2) = BIG_R							! Baiburin (3.4)
+					r_vector(3) = y_face * BIG_R
+			 case (4)
+					r_vector(1) = - BIG_R
+					r_vector(2) = - x_face * BIG_R	! Baiburin (3.5)
+					r_vector(3) = y_face * BIG_R
+			 case (5)
+					r_vector(1) = x_face * BIG_R
+					r_vector(2) = - BIG_R						! Baiburin (3.6)
+					r_vector(3) = y_face * BIG_R
+			 case (6)
+					r_vector(1) = -y_face * BIG_R
+					r_vector(2) = x_face * BIG_R		! Baiburin (3.7)
+					r_vector(3) = BIG_R 
+			 case default
+					status = 1
+		end select
+
+	end subroutine
+
+
+
 	subroutine conformal_w_z(this, w,z)
 	! conformal projection w -> z
 
@@ -146,55 +198,6 @@ CONTAINS
 
 	end subroutine conformal_w_z
 
-
-	subroutine cube2sphere(this, x, y, z, x_face, y_face, r_sphere, face_index, status)
-	 ! stereographic projection between points on face of cubed sphere on real sphere
-	 ! xi_face - coordinate on number's face, in [-1, 1]
-	 ! r_sphere - radius of inscribed sphere
-	 ! x, y, z - cartesian coordinates of point
-
-		real(8), intent(in) :: x_face, y_face, r_sphere
-		integer(4), intent(in) :: face_index
-
-		real(8), intent(out) :: x, y, z
-		integer(4), intent(out) ::  status
-
-		real(8) BIG_R
-		Class(projection) :: this
-
-		status = 0
-		BIG_R = r_sphere / sqrt(1 + x_face**2 + y_face**2) ! Baiburin p.5 (3.1)
-
-		select case (face_index)
-			 case (1)
-					x = y_face * BIG_R
-					y = x_face * BIG_R		! Baiburin (3.2)
-					z = - BIG_R
-			 case (2)
-					x = BIG_R
-					y = x_face * BIG_R		! Baiburin (3.3)
-					z = y_face * BIG_R
-			 case (3)
-					x = - x_face * BIG_R
-					y = BIG_R							! Baiburin (3.4)
-					z = y_face * BIG_R
-			 case (4)
-					x = - BIG_R
-					y = - x_face * BIG_R	! Baiburin (3.5)
-					z = y_face * BIG_R
-			 case (5)
-					x = x_face * BIG_R
-					y = - BIG_R						! Baiburin (3.6)
-					z = y_face * BIG_R
-			 case (6)
-					x = -y_face * BIG_R
-					y = x_face * BIG_R		! Baiburin (3.7)
-					z = BIG_R 
-			 case default
-					status = 1
-		end select
-
-	end subroutine
 
 
 	subroutine direct_stereo_projection(this, x_plane, y_plane,r_sphere, x, y, z)
