@@ -2,6 +2,11 @@ module grid_generator_solver
 
 use projections, Only: projection
 use matrix_rotation, Only: matrix
+use spherical
+
+!			|6|
+!		|5|2|3|4|    Baiburin diploma pages 5-8
+!			|1|
 
 implicit none
 
@@ -21,14 +26,14 @@ CONTAINS
 		Class(grid) :: this
 		integer, intent(in) :: x_dimension, y_dimension
 		real(8), intent(in) :: r_sphere
-		real(8), intent(out) :: r_out(1:6, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:3) ! face_id, j, k, r_vector
+		real(8), intent(out) :: r_out(1:6, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:2) ! face_id, j, k, r_vector
 
 		character*14 filename
 		character istring
 		integer face_index, j, k, status, index, x_min, x_max, y_min, y_max, channel
 
 		real(8) matr_of_rots(3,3,48), rot(1:3,1:3), r_vector(1:3)
-		real(8) x_face,y_face, x_octant, y_octant, x_tan, y_tan
+		real(8) x_face,y_face, x_octant, y_octant, x_tan, y_tan, radius, theta, phi
 		complex*16 w
 
 		Type(projection) :: projection
@@ -55,7 +60,9 @@ CONTAINS
 
 					r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 
-					r_out(face_index, j, k, :) = r_vector
+					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, theta, phi)
+					r_out(face_index, j, k, 1) = theta
+					r_out(face_index, j, k, 2) = phi
 				end do
 			end do
 		end do

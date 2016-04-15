@@ -11,7 +11,7 @@ program solver
 
 	r_sphere = 1d0
 	dimention = 400
-	Allocate(r_out(1:6, -dimention:dimention, -dimention:dimention, 1:3))
+	Allocate(r_out(1:6, -dimention:dimention, -dimention:dimention, 1:2))
 
 !subroutines calls
 	call cpu_time(t(1))
@@ -21,7 +21,9 @@ program solver
 
 
 
-
+	print '(" Theta = ", f6.3, " Phi = ", f6.3)', r_out(2, 0, 0, :)
+	print '(" Theta = ", f6.3, " Phi = ", f6.3)', r_out(2, 400, 400, :)
+	print '(" Theta = ", f6.3, " Phi = ", f6.3)', r_out(2, -400, -400, :)
 
 
 
