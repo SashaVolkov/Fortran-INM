@@ -65,33 +65,25 @@ module data_analyzer
 
 		close(20);close(21);close(22)
 
+
+		open (20, file = "analyze/angle_edge.dat")
+		open (21, file = "analyze/distance_edge.dat")
+		open (22, file = "analyze/square_edge.dat")
+		i = -x_points
+		k=1
+		do j = -y_points, y_points-1
+			status = cell_analyzer(r(:, 1, i, j), r(:, 1, i+1, j), r(:, 1, i, j+1), r(:, 1,i+1, j+1), &
+			angle_cell(1:4), distance_cell(1:4), square)
+
+			write(20,*) angle_cell(k)*180.0/314159265358979323846d-20 , j
+			write(21,*) distance_cell(k), j
+			write(22,*) square
+		end do
+
+		close(20);close(21);close(22)
+
 	end subroutine analyze_data_generation
 
-
-	integer function cell_analyzer(r1,r2,r3,r4, angle_cell, distance_cell, square)
-	! 
-	! 1_____2
-	! |     |
-	! |_____|
-	! 3     4
-
-		real*8, dimension(1:3) :: r1,r2,r3,r4
-		
-		real*8 angle_cell(4), distance_cell(4), square
-
-		angle_cell(1) = angle_r(r1,r2,r3)
-		angle_cell(2) = angle_r(r2,r1,r4)
-		angle_cell(3) = angle_r(r3,r1,r4)
-		angle_cell(4) = angle_r(r4,r2,r3)
-
-		distance_cell(1) = distance_r(r1,r2)
-		distance_cell(2) = distance_r(r2,r4)
-		distance_cell(3) = distance_r(r4,r3)
-		distance_cell(4) = distance_r(r3,r1)
-
-		square = 5d-1 * (distance_cell(1) *  distance_cell(4) * sin(angle_cell(1)) + &
-										 distance_cell(2) *  distance_cell(3) * sin(angle_cell(4)))
-	end function cell_analyzer
 
 
 	subroutine analyze_data_computation(this)
@@ -100,7 +92,8 @@ module data_analyzer
 
 	integer, parameter :: hist_points=500
 
-	real*8, parameter :: pi = 314159265358979323d-17
+	real*8, parameter :: pi = 314159265358979323846d-20
+! 														314159265358979323846
 	real*8, dimension(:), allocatable :: dat
 	integer distribution(1:hist_points)
 	real*8 max, min, max_val

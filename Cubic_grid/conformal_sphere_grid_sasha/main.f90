@@ -12,7 +12,7 @@ program main
 	Type(grid) :: generator
 	Type(data_an) :: analyzer
 
-	dimention = 50
+	dimention = 100
 
 	call cpu_time(t(1))
 	call generator.conformal_cubed_sphere(dimention,dimention)

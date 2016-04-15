@@ -12,6 +12,7 @@ Type grid
 	CONTAINS
 	Procedure, Public :: conformal_cubed_sphere => conformal_cubed_sphere_grid_generation
 	Procedure, Private :: face_to_octant => face_to_octant
+	Procedure, Private :: Adcroft_tan => Adcroft_tan
 End Type
 
 CONTAINS
@@ -25,7 +26,7 @@ CONTAINS
 		integer face_index, j, k, status, index, x_min, x_max, y_min, y_max, channel
 
 		real(8) matr_of_rots(3,3,48), rot(1:3,1:3), r_vector(1:3)
-		real(8) x_face,y_face, x_octant, y_octant, r_sphere
+		real(8) x_face,y_face, x_octant, y_octant, r_sphere, x_tan, y_tan
 		complex*16 w
 
 		Type(projection) :: projection
@@ -87,5 +88,19 @@ CONTAINS
 					end if
 
 	end subroutine face_to_octant
+
+
+
+	subroutine Adcroft_tan(this, x, y, x_tan, y_tan)
+		Class(grid) :: this
+		real(8), intent(in) :: x, y
+		real(8), intent(out) :: x_tan, y_tan
+
+		x_tan = (1/datan(2d0/3d0)) * datan(x*2d0/3d0) ! DATAN like atan, but real(8)
+		y_tan = (1/datan(2d0/3d0)) * datan(y*2d0/3d0)
+
+	end subroutine Adcroft_tan
+
+
 
 end module
