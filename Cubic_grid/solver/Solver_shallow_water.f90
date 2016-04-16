@@ -1,29 +1,35 @@
 program solver
 
 	use grid_generator_solver, Only: grid
+	use special_variables, Only: variables
+
+implicit none
 
 !variables
-	real(8) t(2), r_sphere
-	integer(4) dimention
-	real(8), Allocatable :: r_out(:, :, :, :)
+	real(8) r_sphere, g, pi, step, omega_cor
+	integer(4) dim ! dimension
+	real(8), Allocatable :: grid_points(:, :, :, :)
 	Type(grid) :: generator
-!definition
+	Type(variables) :: var, var_prev
 
-	r_sphere = 1d0
-	dimention = 400
-	Allocate(r_out(1:6, -dimention:dimention, -dimention:dimention, 1:2))
+
+!definition
+	r_sphere= 6371220d0; g = 980616d-5; pi = 314159265358979323846d-20; omega_cor = 7292d-2
+	dim = 400
+	step = 2*pi*r_sphere/(8d0*dim)
+	Allocate(grid_points(1:6, -dim:dim, -dim:dim, 1:2)) ! face_id, 2dim*2dim, latitude(theta) & longitude(lambda)
+
 
 !subroutines calls
-	call cpu_time(t(1))
-	call generator.conformal_cubed_sphere(dimention,dimention, r_sphere, r_out)
-	call cpu_time(t(2))
-	print '("Time of generation = ", f6.3, " sec")', t(2) - t(1)
+	call generator.conformal_cubed_sphere(dim,dim, r_sphere, grid_points)
+
+	call var.init(grid_points, dim, omega_cor, r_sphere, g)
+	call var_prev.init(grid_points, dim, omega_cor, r_sphere, g)
 
 
 
-	print '(" Theta = ", f6.3, " Phi = ", f6.3)', r_out(2, 0, 0, :)
-	print '(" Theta = ", f6.3, " Phi = ", f6.3)', r_out(2, 400, 400, :)
-	print '(" Theta = ", f6.3, " Phi = ", f6.3)', r_out(2, -400, -400, :)
+	print '(" Theta = ", f6.3, " Phi = ", f6.3)', grid_points(6, 0, 0, :)
+	print '(" Grid step = ", f10.2, " m")', step
 
 
 
