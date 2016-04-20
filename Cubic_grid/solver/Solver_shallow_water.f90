@@ -25,6 +25,7 @@ implicit none
 
 	call var.init(grid_points, dim, omega_cor, r_sphere, g)
 	call var_prev.init(grid_points, dim, omega_cor, r_sphere, g)
+	call var_prev.start_conditions(grid_points, dim, omega_cor)
 
 
 

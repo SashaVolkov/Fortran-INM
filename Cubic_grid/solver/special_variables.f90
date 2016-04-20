@@ -21,6 +21,7 @@ implicit none
 		Procedure, Public :: init => init
 		Procedure, Public :: deinit => deinit
 		Procedure, Public :: eq => equal
+		Procedure, Public :: start_conditions => start_conditions
 	End Type
 
 
@@ -104,10 +105,17 @@ CONTAINS
 		do face_idx = 1, 6
 			do y = -dim, dim
 				do x = -dim, dim
-
-
-
+					this.h_height(face_idx, y, x) = 0
+					this.u_vel(face_idx, y, x) = 0
+					this.v_vel(face_idx, y, x) = 0
 				end do
+			end do
+		end do
+
+		face_idx = 2
+		do y = -dim, dim
+			do x = -dim, dim
+				this.h_height(face_idx, y, x) = 0
 			end do
 		end do
 
