@@ -12,9 +12,10 @@ implicit none
 		Real(8), Allocatable :: h_height(:, :, :)
 		Real(8), Allocatable :: u_vel(:, :, :)
 		Real(8), Allocatable :: v_vel(:, :, :)
-		Real(8), Allocatable :: f_cor(:, :, :)
-		Real(8), Allocatable :: alpha(:, :, :)
-		Real(8), Allocatable :: beta(:, :, :)
+		Real(8), Allocatable :: distance_grid(:, :, :, :)
+		Real(8), Allocatable :: f_cor(:, :)
+		Real(8), Allocatable :: alpha(:, :)
+		Real(8), Allocatable :: beta(:, :)
 		integer(4) dim
 
 		CONTAINS
@@ -27,33 +28,38 @@ implicit none
 
 CONTAINS
 
-	subroutine init(this, grid_points, dim, omega_cor, r_sphere, g)
+	subroutine init(this, grid_points, dim, step, omega_cor, r_sphere, g)
 
 		Class(variables) :: this
-		integer(4), intent(in) :: dim ! dimension
+		integer(4), intent(in) :: dim, step ! dimension
 		real(8), intent(in) :: grid_points(1:6, -dim:dim, -dim:dim, 1:2), omega_cor, r_sphere, g
 
 		integer(4) face_idx, x, y
 
-		this.dim = dim
+		this.dim = dim+step
 
-		Allocate(this.h_height(1:6, -dim:dim, -dim:dim))
-		Allocate(this.u_vel(1:6, -dim:dim, -dim:dim))
-		Allocate(this.v_vel(1:6, -dim:dim, -dim:dim))
-		Allocate(this.f_cor(1:6, -dim:dim, -dim:dim))
-		Allocate(this.alpha(1:6, -dim:dim, -dim:dim))
-		Allocate(this.beta(1:6, -dim:dim, -dim:dim))
+		Allocate(this.h_height(1:6, -this.dim:this.dim, -this.dim:this.dim))
+		Allocate(this.u_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
+		Allocate(this.v_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
+
+		Allocate(this.distance_grid(1:6, -this.dim:this.dim, -this.dim:this.dim, 4*step))
+
+		Allocate(this.f_cor(1:6, -this.dim:this.dim)) ! Only longitude
+		Allocate(this.alpha(1:6, -this.dim:this.dim))
+		Allocate(this.beta(1:6, -this.dim:this.dim))
 
 
 		do face_idx = 1, 6
-			do y = -dim, dim
-				do x = -dim, dim
-				this.f_cor(face_idx, y, x)= 2*omega_cor*dsin(grid_points(face_idx, y, x, 1))
-				this.alpha(face_idx, y, x) = 1d0/(r_sphere*dcos(grid_points(face_idx, y, x, 1)))
-				this.beta(face_idx, y, x) = dtan(grid_points(face_idx, y, x, 1))/r_sphere
-				end do
+			do y = -this.dim, this.dim ! Only longitude
+				this.f_cor(face_idx, y)= 2*omega_cor*dsin(grid_points(face_idx, y, 1, 1))
+				this.alpha(face_idx, y) = 1d0/(r_sphere*dcos(grid_points(face_idx, y, 1, 1)))
+				this.beta(face_idx, y) = dtan(grid_points(face_idx, y, 1, 1))/r_sphere
 			end do
 		end do
+
+
+
+
 
 	end subroutine
 
