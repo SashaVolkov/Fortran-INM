@@ -1,6 +1,6 @@
 module special_variables
 
-! use 
+! use geometry
 
 implicit none
 
@@ -16,10 +16,11 @@ implicit none
 		Real(8), Allocatable :: f_cor(:, :)
 		Real(8), Allocatable :: alpha(:, :)
 		Real(8), Allocatable :: beta(:, :)
-		integer(4) dim
+		integer(4) dim, step
 
 		CONTAINS
 		Procedure, Public :: init => init
+		Procedure, Private :: alloc => alloc
 		Procedure, Public :: deinit => deinit
 		Procedure, Public :: eq => equal
 		Procedure, Public :: start_conditions => start_conditions
@@ -27,6 +28,24 @@ implicit none
 
 
 CONTAINS
+
+
+	subroutine alloc(this)
+
+		Class(variables) :: this
+
+		Allocate(this.h_height(1:6, -this.dim:this.dim, -this.dim:this.dim))
+		Allocate(this.u_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
+		Allocate(this.v_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
+
+		Allocate(this.distance_grid(1:6, -this.dim:this.dim, -this.dim:this.dim, 4*this.step))
+
+		Allocate(this.f_cor(1:6, -this.dim:this.dim)) ! Only longitude
+		Allocate(this.alpha(1:6, -this.dim:this.dim))
+		Allocate(this.beta(1:6, -this.dim:this.dim))
+
+	end subroutine
+
 
 	subroutine init(this, grid_points, dim, step, omega_cor, r_sphere, g)
 
@@ -37,17 +56,9 @@ CONTAINS
 		integer(4) face_idx, x, y
 
 		this.dim = dim+step
+		this.step = step
 
-		Allocate(this.h_height(1:6, -this.dim:this.dim, -this.dim:this.dim))
-		Allocate(this.u_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
-		Allocate(this.v_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
-
-		Allocate(this.distance_grid(1:6, -this.dim:this.dim, -this.dim:this.dim, 4*step))
-
-		Allocate(this.f_cor(1:6, -this.dim:this.dim)) ! Only longitude
-		Allocate(this.alpha(1:6, -this.dim:this.dim))
-		Allocate(this.beta(1:6, -this.dim:this.dim))
-
+		call this.alloc()
 
 		do face_idx = 1, 6
 			do y = -this.dim, this.dim ! Only longitude
@@ -59,6 +70,18 @@ CONTAINS
 
 
 
+		do face_idx = 1, 6
+			do y = -dim, dim
+				do x = -dim, dim
+
+this.distance_grid(face_idx, y, x, 1) = abs(grid_points(face_idx, y+1, x, 1) - grid_points(face_idx, y, x, 1))*r_sphere
+this.distance_grid(face_idx, y, x, 2) = abs(grid_points(face_idx, y, x+1, 2) - grid_points(face_idx, y, x, 2))*r_sphere
+this.distance_grid(face_idx, y, x, 3) = abs(grid_points(face_idx, y, x, 1) - grid_points(face_idx, y-1, x, 1))*r_sphere
+this.distance_grid(face_idx, y, x, 4) = abs(grid_points(face_idx, y, x, 2) - grid_points(face_idx, y, x-1, 2))*r_sphere
+
+				end do
+			end do
+		end do
 
 
 	end subroutine
