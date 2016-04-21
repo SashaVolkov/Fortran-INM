@@ -33,7 +33,7 @@ CONTAINS
 		integer face_index, j, k, status, index, x_min, x_max, y_min, y_max, channel
 
 		real(8) matr_of_rots(3,3,48), rot(1:3,1:3), r_vector(1:3),  t(2)
-		real(8) x_face,y_face, x_octant, y_octant, x_tan, y_tan, radius, theta, phi
+		real(8) x_face,y_face, x_octant, y_octant, x_tan, y_tan, radius, longitude, latitude
 		complex*16 w
 
 		Type(projection) :: projection
@@ -61,9 +61,11 @@ CONTAINS
 
 					r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 
-					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, theta, phi)
-					grid_points(face_index, j, k, 1) = theta
-					grid_points(face_index, j, k, 2) = phi
+					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, longitude, latitude)
+
+						grid_points(face_index, j, k, 1) = latitude
+						grid_points(face_index, j, k, 2) = longitude
+
 				end do
 			end do
 		end do

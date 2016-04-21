@@ -1,41 +1,37 @@
 module spherical
 	implicit none
-		!	radiusius, theta, phi
-		!	theta is [-pi/2, pi/2]
-		!	phi is [-pi, pi]
+		!	radiusius, longitude, latitude
+		!	longitude is [-pi/2, pi/2]
+		!	latitude is [-pi, pi]
 CONTAINS
 
-	subroutine cart2sphere(x, y, z, radius, theta, phi)
+	subroutine cart2sphere(x, y, z, radius, longitude, latitude)
 
 		real(8), intent(in) :: x, y, z 
-		real(8), intent(out) :: radius, theta, phi
+		real(8), intent(out) :: radius, longitude, latitude
 
 		radius = sqrt(x*x+y*y+z*z)
 
-		if(radius == 0d0) then
-			theta= 0d0
-			phi= 0d0
-		else
-			theta = dasin(z / radius)
+
+			longitude = dasin(z / radius)
 			
 			if( (y == 0d0).and.(x == 0d0) ) then
-				phi=0
+				latitude=0
 			else 
-				phi = datan2(y,x)
+				latitude = datan2(y,x)
 			end if
-		end if
-		
+
 	end subroutine Cart2sphere
 
 
-	subroutine sphere2cart(x, y, z, radius, theta, phi)
+	subroutine sphere2cart(x, y, z, radius, longitude, latitude)
 
-		real(8), intent(in) :: radius, theta, phi
+		real(8), intent(in) :: radius, longitude, latitude
 		real(8), intent(out) :: x, y, z 
 
-		x = radius * dcos(theta) * dcos(phi)
-		y = radius * dcos(theta) * dsin(phi)
-		z = radius * dsin(theta)
+		x = radius * dcos(longitude) * dcos(latitude)
+		y = radius * dcos(longitude) * dsin(latitude)
+		z = radius * dsin(longitude)
 
 	end subroutine Sphere2cart
 

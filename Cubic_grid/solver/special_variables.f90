@@ -61,10 +61,10 @@ CONTAINS
 		call this.alloc()
 
 		do face_idx = 1, 6
-			do y = -this.dim, this.dim ! Only longitude
-				this.f_cor(face_idx, y)= 2*omega_cor*dsin(grid_points(face_idx, y, 1, 1))
-				this.alpha(face_idx, y) = 1d0/(r_sphere*dcos(grid_points(face_idx, y, 1, 1)))
-				this.beta(face_idx, y) = dtan(grid_points(face_idx, y, 1, 1))/r_sphere
+			do x = -this.dim, this.dim ! Only longitude
+				this.f_cor(face_idx, x)= 2*omega_cor*dsin(grid_points(face_idx, 0, x, 2))
+				this.alpha(face_idx, x) = 1d0/(r_sphere*dcos(grid_points(face_idx, 0, x, 2)))
+				this.beta(face_idx, x) = dtan(grid_points(face_idx, 0, x, 2))/r_sphere
 			end do
 		end do
 
@@ -74,14 +74,35 @@ CONTAINS
 			do y = -dim, dim
 				do x = -dim, dim
 
-this.distance_grid(face_idx, y, x, 1) = abs(grid_points(face_idx, y+1, x, 1) - grid_points(face_idx, y, x, 1))*r_sphere
-this.distance_grid(face_idx, y, x, 2) = abs(grid_points(face_idx, y, x+1, 2) - grid_points(face_idx, y, x, 2))*r_sphere
-this.distance_grid(face_idx, y, x, 3) = abs(grid_points(face_idx, y, x, 1) - grid_points(face_idx, y-1, x, 1))*r_sphere
-this.distance_grid(face_idx, y, x, 4) = abs(grid_points(face_idx, y, x, 2) - grid_points(face_idx, y, x-1, 2))*r_sphere
+if(y+1 > dim)then ! latitude
+this.distance_grid(face_idx, y, x, 1) = abs(grid_points(face_idx, y, x, 1)*r_sphere - grid_points(face_idx, y-1, x, 1)*r_sphere)
+else
+this.distance_grid(face_idx, y, x, 1) = abs(grid_points(face_idx, y+1, x, 1)*r_sphere - grid_points(face_idx, y, x, 1)*r_sphere)
+end if
+
+if(x+1 > dim)then ! longitude
+this.distance_grid(face_idx, y, x, 2) = abs(grid_points(face_idx, y, x, 2)*r_sphere - grid_points(face_idx, y, x-1, 2)*r_sphere)
+else
+this.distance_grid(face_idx, y, x, 2) = abs(grid_points(face_idx, y, x+1, 2)*r_sphere - grid_points(face_idx, y, x, 2)*r_sphere)
+end if
+
+if(y-1 < -dim)then ! latitude
+this.distance_grid(face_idx, y, x, 3) = abs(grid_points(face_idx, y+1, x, 1)*r_sphere - grid_points(face_idx, y, x, 1)*r_sphere)
+else
+this.distance_grid(face_idx, y, x, 3) = abs(grid_points(face_idx, y, x, 1)*r_sphere - grid_points(face_idx, y-1, x, 1)*r_sphere)
+end if
+
+if(x-1 < -dim)then ! longitude
+this.distance_grid(face_idx, y, x, 4) = abs(grid_points(face_idx, y, x+1, 2)*r_sphere - grid_points(face_idx, y, x, 2)*r_sphere)
+else
+this.distance_grid(face_idx, y, x, 4) = abs(grid_points(face_idx, y, x, 2)*r_sphere - grid_points(face_idx, y, x-1, 2)*r_sphere)
+end if
 
 				end do
 			end do
 		end do
+
+	print '("  Grid step real = ", f10.2, " m")', this.distance_grid(2, 300, 300, 4)
 
 
 	end subroutine
