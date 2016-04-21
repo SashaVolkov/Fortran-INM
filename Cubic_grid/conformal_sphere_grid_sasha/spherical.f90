@@ -3,7 +3,7 @@ module spherical
 
 CONTAINS
 
-	integer function cart2sphere(x, y, z, r, t, p)
+	subroutine cart2sphere(x, y, z, r, t, p)
 		implicit none
 
 		real*8, intent(in) :: x, y, z 
@@ -21,20 +21,20 @@ CONTAINS
 			 t= 0d0
 			 p= 0d0
 		else
-			 t = asin(z / r)
+			 t = dasin(z / r)
 			 
 			 if( (y == 0d0).and.(x == 0d0) ) then
 					p=0
 			 else 
-					p = atan2(y,x)
+					p = datan2(y,x)
 			 end if
 		end if
 		
-		cart2sphere = 1d0
-	end function Cart2sphere
+! 		cart2sphere = 1d0
+	end subroutine Cart2sphere
 
 
-	real*8 function sphere2cart(x, y, z, r, t, p)
+	subroutine sphere2cart(x, y, z, r, t, p)
 		implicit none
 
 		real*8, intent(in) :: r, t, p
@@ -50,8 +50,8 @@ CONTAINS
 		y = r * cos(t) * sin(p)
 		z = r * sin(t)
 		
-		sphere2cart = 1
+! 		sphere2cart = 1
 
-	end function Sphere2cart
+	end subroutine Sphere2cart
 
 end module spherical

@@ -93,11 +93,11 @@ CONTAINS
 
 
 
-	subroutine start_conditions(this, grid_points, dim, omega_cor)
+	subroutine start_conditions(this, grid_points, dim)
 
 		Class(variables) :: this
 		integer(4), intent(in) :: dim ! dimension
-		real(8), intent(in) :: grid_points(1:6, -dim:dim, -dim:dim, 1:2), omega_cor
+		real(8), intent(in) :: grid_points(1:6, -dim:dim, -dim:dim, 1:2)
 
 		integer(4) face_idx, x, y
 

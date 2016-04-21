@@ -25,11 +25,14 @@ implicit none
 
 	call var.init(grid_points, dim, omega_cor, r_sphere, g)
 	call var_prev.init(grid_points, dim, omega_cor, r_sphere, g)
-	call var_prev.start_conditions(grid_points, dim, omega_cor)
+	call var_prev.start_conditions(grid_points, dim)
 
 
 
-	print '(" Theta = ", f6.3, " Phi = ", f6.3)', grid_points(6, 0, 0, :)
+	print '(" Theta = ", f7.4, " Phi = ", f7.4)', grid_points(6, 0, 0, :)
+	print '(" Theta = ", f7.4, " Phi = ", f7.4)', grid_points(4, 0, 0, :)
+	print '(" Theta = ", f7.4, " Phi = ", f7.4)', grid_points(2, 0, 0, :)
+	print '(" Theta = ", f7.4, " Phi = ", f7.4)', grid_points(1, 0, 0, :)
 	print '(" Grid step = ", f10.2, " m")', step
 
 

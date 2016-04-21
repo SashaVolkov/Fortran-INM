@@ -2,6 +2,7 @@ module grid_generator
 
 use projections, Only: projection
 use matrix_rotation, Only: matrix
+use spherical
 
 implicit none
 
@@ -26,7 +27,8 @@ CONTAINS
 		integer face_index, j, k, status, index, x_min, x_max, y_min, y_max, channel
 
 		real(8) matr_of_rots(3,3,48), rot(1:3,1:3), r_vector(1:3)
-		real(8) x_face,y_face, x_octant, y_octant, r_sphere, x_tan, y_tan
+		real(8) x_face,y_face, x_octant, y_octant, r_sphere, x_tan, y_tan, theta, phi, theta1, phi1
+		real(8) pi
 		complex*16 w
 
 		Type(projection) :: projection
@@ -35,6 +37,7 @@ CONTAINS
 		call matr.compute_matr_of_rot(matr_of_rots) ! matr_of_rots - 48 2dim matrices (3*3). You can find them in grid/matrices_of_rotations.dat
 		x_min = -x_dimension; x_max = x_dimension; y_min = -y_dimension; y_max = y_dimension
 		r_sphere = 1d0
+		pi = 314159265358979323846d-20
 
 
 		do face_index= 1, 6
@@ -57,6 +60,11 @@ CONTAINS
 					call projection.inverse( dreal(w), dimag(w), r_sphere, r_vector, status)	! out :: r_vector, status  !! Baiburin p.17 (6) !! Rancic p.978 (v)
 
 					r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
+
+					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), r_sphere, theta, phi)
+					theta = 2*theta/pi; phi = phi/pi
+					call this.Adcroft_tan(theta, phi, theta1, phi1)
+					call sphere2cart(r_vector(1), r_vector(2), r_vector(3), r_sphere, pi*theta1/2, pi*phi1)
 					write(channel,*) r_vector(1),r_vector(2),r_vector(3)			! x, y, z
 
 				end do

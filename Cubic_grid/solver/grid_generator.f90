@@ -94,7 +94,7 @@ CONTAINS
 
 
 
-	subroutine Adcroft_tan(this, x, y, x_tan, y_tan)
+	subroutine Adcroft_tan(this, x, y, x_tan, y_tan) ! x, y must be from 1 to -1
 		Class(grid) :: this
 		real(8), intent(in) :: x, y
 		real(8), intent(out) :: x_tan, y_tan

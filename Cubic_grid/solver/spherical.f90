@@ -1,7 +1,7 @@
 module spherical
 	implicit none
 		!	radiusius, theta, phi
-		!	theta is [0, pi]
+		!	theta is [-pi/2, pi/2]
 		!	phi is [-pi, pi]
 CONTAINS
 
@@ -16,12 +16,12 @@ CONTAINS
 			theta= 0d0
 			phi= 0d0
 		else
-			theta = asin(z / radius)
+			theta = dasin(z / radius)
 			
 			if( (y == 0d0).and.(x == 0d0) ) then
 				phi=0
 			else 
-				phi = atan2(y,x)
+				phi = datan2(y,x)
 			end if
 		end if
 		
@@ -33,9 +33,9 @@ CONTAINS
 		real(8), intent(in) :: radius, theta, phi
 		real(8), intent(out) :: x, y, z 
 
-		x = radius * cos(theta) * cos(phi)
-		y = radius * cos(theta) * sin(phi)
-		z = radius * sin(theta)
+		x = radius * dcos(theta) * dcos(phi)
+		y = radius * dcos(theta) * dsin(phi)
+		z = radius * dsin(theta)
 
 	end subroutine Sphere2cart
 
