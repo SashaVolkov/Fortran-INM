@@ -23,7 +23,6 @@ module printer_ncdf
 		Class(printer) :: this
 		integer(4) dim, Tmax, time, Wid, latitude, longitude, ncid
 
-
 		integer(4) status
 		character(40) name
 

@@ -26,7 +26,7 @@ CONTAINS
 		Class(grid) :: this
 		integer, intent(in) :: x_dimension, y_dimension
 		real(8), intent(in) :: r_sphere
-		real(8), intent(out) :: grid_points(1:6, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:2) ! face_id, j, k, r_vector
+		real(8), intent(out) :: grid_points(1:2, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:6) ! face_id, j, k, r_vector
 
 		character*14 filename
 		character istring
@@ -63,8 +63,8 @@ CONTAINS
 
 					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, longitude, latitude)
 
-						grid_points(face_index, j, k, 1) = latitude
-						grid_points(face_index, j, k, 2) = longitude
+						grid_points(1, j, k, face_index) = latitude
+						grid_points(2, j, k, face_index) = longitude
 
 				end do
 			end do
