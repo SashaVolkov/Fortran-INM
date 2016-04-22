@@ -1,6 +1,6 @@
 module special_variables
 
-! use geometry
+use geometry
 
 implicit none
 
@@ -13,14 +13,16 @@ implicit none
 		Real(8), Allocatable :: u_vel(:, :, :)
 		Real(8), Allocatable :: v_vel(:, :, :)
 		Real(8), Allocatable :: distance_grid(:, :, :, :)
-		Real(8), Allocatable :: f_cor(:, :)
-		Real(8), Allocatable :: alpha(:, :)
-		Real(8), Allocatable :: beta(:, :)
+		Real(8), Allocatable :: f_cor(:, :, :)
+		Real(8), Allocatable :: alpha(:, :, :)
+		Real(8), Allocatable :: beta(:, :, :)
+		real(8) g, height
 		integer(4) dim, step
 
 		CONTAINS
 		Procedure, Public :: init => init
 		Procedure, Private :: alloc => alloc
+		Procedure, Private :: const_def => const_def
 		Procedure, Public :: deinit => deinit
 		Procedure, Public :: eq => equal
 		Procedure, Public :: start_conditions => start_conditions
@@ -30,83 +32,102 @@ implicit none
 CONTAINS
 
 
-	subroutine alloc(this)
+
+	subroutine init(this, grid_points, dim, step, omega_cor, r_sphere, g, height)
 
 		Class(variables) :: this
+		integer(4), intent(in) :: dim, step ! dimension
+		real(8), intent(in) :: grid_points(1:6, -dim:dim, -dim:dim, 1:2), omega_cor, r_sphere, g, height
 
-		Allocate(this.h_height(1:6, -this.dim:this.dim, -this.dim:this.dim))
-		Allocate(this.u_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
-		Allocate(this.v_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
+		this.dim = dim+step;  this.step = step;  this.g = g;  this.height = height
 
-		Allocate(this.distance_grid(1:6, -this.dim:this.dim, -this.dim:this.dim, 4*this.step))
+		call this.alloc()
+		call this.const_def(grid_points, dim, step, omega_cor, r_sphere)
 
-		Allocate(this.f_cor(1:6, -this.dim:this.dim)) ! Only longitude
-		Allocate(this.alpha(1:6, -this.dim:this.dim))
-		Allocate(this.beta(1:6, -this.dim:this.dim))
+	print '("  Grid step real = ", f10.3, " m")', this.distance_grid(2, 200, 200, 3)
 
 	end subroutine
 
 
-	subroutine init(this, grid_points, dim, step, omega_cor, r_sphere, g)
 
-		Class(variables) :: this
-		integer(4), intent(in) :: dim, step ! dimension
-		real(8), intent(in) :: grid_points(1:6, -dim:dim, -dim:dim, 1:2), omega_cor, r_sphere, g
+		subroutine alloc(this)
 
-		integer(4) face_idx, x, y
+			Class(variables) :: this
 
-		this.dim = dim+step
-		this.step = step
+			Allocate(this.h_height(1:6, -this.dim:this.dim, -this.dim:this.dim))
+			Allocate(this.u_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
+			Allocate(this.v_vel(1:6, -this.dim:this.dim, -this.dim:this.dim))
 
-		call this.alloc()
+			Allocate(this.distance_grid(1:6, -this.dim:this.dim, -this.dim:this.dim, 4*this.step))
 
-		do face_idx = 1, 6
-			do x = -this.dim, this.dim ! Only longitude
-				this.f_cor(face_idx, x)= 2*omega_cor*dsin(grid_points(face_idx, 0, x, 2))
-				this.alpha(face_idx, x) = 1d0/(r_sphere*dcos(grid_points(face_idx, 0, x, 2)))
-				this.beta(face_idx, x) = dtan(grid_points(face_idx, 0, x, 2))/r_sphere
+			Allocate(this.f_cor(1:6, -this.dim:this.dim, -this.dim:this.dim))
+			Allocate(this.alpha(1:6, -this.dim:this.dim, -this.dim:this.dim))
+			Allocate(this.beta(1:6, -this.dim:this.dim, -this.dim:this.dim))
+
+		end subroutine
+
+
+
+		subroutine const_def(this, grid_points, dim, step, omega_cor, r_sphere)
+			Class(variables) :: this
+			integer(4), intent(in) :: dim, step ! dimension
+			real(8), intent(in) :: grid_points(1:6, -dim:dim, -dim:dim, 1:2), omega_cor, r_sphere
+			real(8) dist
+			integer(4) face_idx, x, y
+
+
+			do face_idx = 1, 6 ! Only longitude
+				do y = -this.dim, this.dim
+					do x = -this.dim, this.dim
+						this.f_cor(face_idx, y, x)= 2*omega_cor*dsin(grid_points(face_idx, y, x, 2))
+						this.alpha(face_idx, y, x) = 1d0/(r_sphere*dcos(grid_points(face_idx, y, x, 2)))
+						this.beta(face_idx, y, x) = dtan(grid_points(face_idx, y, x, 2))/r_sphere
+					end do
+				end do
 			end do
-		end do
 
 
-
-		do face_idx = 1, 6
+		do face_idx = 1, 6 ! calculate all distances between points
 			do y = -dim, dim
 				do x = -dim, dim
 
 if(y+1 > dim)then ! latitude
-this.distance_grid(face_idx, y, x, 1) = abs(grid_points(face_idx, y, x, 1)*r_sphere - grid_points(face_idx, y-1, x, 1)*r_sphere)
+call distance_sphere(r_sphere, grid_points(face_idx, y, x, :), grid_points(face_idx, y-1, x, :), dist)
+this.distance_grid(face_idx, y, x, 1) = dist
 else
-this.distance_grid(face_idx, y, x, 1) = abs(grid_points(face_idx, y+1, x, 1)*r_sphere - grid_points(face_idx, y, x, 1)*r_sphere)
+call distance_sphere(r_sphere, grid_points(face_idx, y+1, x, :), grid_points(face_idx, y, x, :), dist)
+this.distance_grid(face_idx, y, x, 1) = dist
 end if
 
 if(x+1 > dim)then ! longitude
-this.distance_grid(face_idx, y, x, 2) = abs(grid_points(face_idx, y, x, 2)*r_sphere - grid_points(face_idx, y, x-1, 2)*r_sphere)
+call distance_sphere(r_sphere, grid_points(face_idx, y, x, :), grid_points(face_idx, y, x-1, :), dist)
+this.distance_grid(face_idx, y, x, 2) = dist
 else
-this.distance_grid(face_idx, y, x, 2) = abs(grid_points(face_idx, y, x+1, 2)*r_sphere - grid_points(face_idx, y, x, 2)*r_sphere)
+call distance_sphere(r_sphere, grid_points(face_idx, y, x+1, :), grid_points(face_idx, y, x, :), dist)
+this.distance_grid(face_idx, y, x, 2) = dist
 end if
 
 if(y-1 < -dim)then ! latitude
-this.distance_grid(face_idx, y, x, 3) = abs(grid_points(face_idx, y+1, x, 1)*r_sphere - grid_points(face_idx, y, x, 1)*r_sphere)
+call distance_sphere(r_sphere, grid_points(face_idx, y+1, x, :), grid_points(face_idx, y, x, :), dist)
+this.distance_grid(face_idx, y, x, 3) = dist
 else
-this.distance_grid(face_idx, y, x, 3) = abs(grid_points(face_idx, y, x, 1)*r_sphere - grid_points(face_idx, y-1, x, 1)*r_sphere)
+call distance_sphere(r_sphere, grid_points(face_idx, y, x, :), grid_points(face_idx, y-1, x, :), dist)
+this.distance_grid(face_idx, y, x, 3) = dist
 end if
 
 if(x-1 < -dim)then ! longitude
-this.distance_grid(face_idx, y, x, 4) = abs(grid_points(face_idx, y, x+1, 2)*r_sphere - grid_points(face_idx, y, x, 2)*r_sphere)
+call distance_sphere(r_sphere, grid_points(face_idx, y, x+1, :), grid_points(face_idx, y, x, :), dist)
+this.distance_grid(face_idx, y, x, 4) = dist
 else
-this.distance_grid(face_idx, y, x, 4) = abs(grid_points(face_idx, y, x, 2)*r_sphere - grid_points(face_idx, y, x-1, 2)*r_sphere)
+call distance_sphere(r_sphere, grid_points(face_idx, y, x, :), grid_points(face_idx, y, x-1, :), dist)
+this.distance_grid(face_idx, y, x, 4) = dist
 end if
 
 				end do
 			end do
 		end do
 
-	print '("  Grid step real = ", f10.2, " m")', this.distance_grid(2, 300, 300, 4)
-
-
-	end subroutine
-
+		end subroutine
 
 
 	subroutine deinit(this)
@@ -146,11 +167,13 @@ end if
 	subroutine start_conditions(this, grid_points, dim)
 
 		Class(variables) :: this
-		integer(4), intent(in) :: dim ! dimension
+		integer(4), intent(in) :: dim
 		real(8), intent(in) :: grid_points(1:6, -dim:dim, -dim:dim, 1:2)
+		real(8) h0
 
 		integer(4) face_idx, x, y
 
+		h0 = this.height
 
 		do face_idx = 1, 6
 			do y = -dim, dim
@@ -165,7 +188,7 @@ end if
 		face_idx = 2
 		do y = -dim, dim
 			do x = -dim, dim
-				this.h_height(face_idx, y, x) = 0
+this.h_height(face_idx, y, x) = h0*exp(-((((10.0/dim)*(x-dim*0.5))**2)+(((10.0/dim)*(y-dim*0.5))**2)))
 			end do
 		end do
 

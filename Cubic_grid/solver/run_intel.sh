@@ -4,7 +4,7 @@ rm -rf *.o *.mod *.out *.file analyze grid *~ 2>/dev/null
 
 Files="geometry.f90 matmul.f90 simple_rotations.f90 spherical.f90"
 Files=$Files" projections.f90 matrix_rotation.f90"
-Files=$Files" grid_generator.f90 special_variables.f90"
+Files=$Files" grid_generator.f90 special_variables.f90 printer.f90"
 Files=$Files" Solver_shallow_water.f90"
 
 mpiifort $Files 2> err.file
