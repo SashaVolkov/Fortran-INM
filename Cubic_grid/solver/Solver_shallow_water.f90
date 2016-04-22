@@ -30,6 +30,7 @@ implicit none
 	call var_prev.start_conditions(grid_points, dim)
 
 	call printer_nc.init()
+	call printer_nc.to_print()
 
 
 
@@ -44,5 +45,6 @@ implicit none
 
 	call var.deinit()
 	call var_prev.deinit()
+	call printer_nc.deinit()
 
 end program

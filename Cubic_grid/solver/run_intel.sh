@@ -7,7 +7,9 @@ Files=$Files" projections.f90 matrix_rotation.f90"
 Files=$Files" grid_generator.f90 special_variables.f90 printer.f90"
 Files=$Files" Solver_shallow_water.f90"
 
-mpiifort $Files 2> err.file
+netcdf="/home/sasha/netcdf"
+
+mpiifort $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	echo "compilation status" $?
 
