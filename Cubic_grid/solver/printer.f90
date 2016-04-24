@@ -1,6 +1,7 @@
 module printer_ncdf
 
-	Use netcdf
+	use special_variables, Only: variables
+	use netcdf
 
 	implicit none
 
@@ -18,25 +19,30 @@ module printer_ncdf
 
 
 
-	subroutine init(this)
+	subroutine init(this, dim, Tmax, time, Wid, latitude, longitude, ncid)
 
 		Class(printer) :: this
-		integer(4) dim, Tmax, time, Wid, latitude, longitude, ncid
+		integer(4), intent(in) :: dim, Tmax
+		integer(4), intent(out) :: time, Wid, latitude, longitude, ncid(1:6)
 
-		integer(4) status
-		character(40) name
+		integer(4) status, face_index
+		character(40) istring
 
-		name = "one.nc"
 
-			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/'//name), &
-	cmode = NF90_CLOBBER, ncid = ncid)
+		do face_index = 1, 6
+		write(istring(1:1), '(i1.1)') face_index
+		istring = istring//'.nc'
 
-			status = nf90_def_dim (ncid, "latitude", dim, latitude)
-			status = nf90_def_dim (ncid, "longitude", dim, longitude)
-			status = nf90_def_dim (ncid, "time", Tmax, time)
+			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/'//"face"//istring), &
+	cmode = NF90_CLOBBER, ncid = ncid(face_index))
 
-			status = nf90_def_var (ncid, "water", NF90_REAL, (/ latitude, longitude, time/), Wid)
-			status = nf90_enddef (ncid)
+			status = nf90_def_dim (ncid(face_index), "latitude", 2*dim+1, latitude)
+			status = nf90_def_dim (ncid(face_index), "longitude", 2*dim+1, longitude)
+			status = nf90_def_dim (ncid(face_index), "time", Tmax, time)
+
+			status = nf90_def_var (ncid(face_index), "water", NF90_DOUBLE, (/ latitude, longitude, time/), Wid)
+			status = nf90_enddef (ncid(face_index))
+			end do
 
 	end subroutine
 
@@ -45,30 +51,34 @@ module printer_ncdf
 	! 		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, time, ncid)
 
 
-		subroutine to_print(this)
+	subroutine to_print(this, var, dim, time, Wid, ncid)
 
-			Class(printer) :: this
+		Class(printer) :: this
+		Class(variables) :: var
+		integer(4), intent(in) :: dim, time, Wid, ncid(1:6)
 
-	! 		Integer x, y, i, j
-	! 		Integer status 
-	! 		Integer(4), Intent(In) :: t, Tmax, Wid, xid, yid, time, ncid
-	! 		character(40), Intent(In) :: name
-
-	! 		Real(8) W_mass(g.ns_y:g.nf_y, g.ns_x:g.nf_x)
-
-	! 		do j = g.ns_x, g.nf_x
-	! 			do i = g.ns_y, g.nf_y
-	! 				W_mass(i, j) = f.d(i, j)
-	! 			end do
-	! 		end do
+		integer(4) i, j, face_index
+		integer(4) status
 
 
-	! 		! ! указатель на первый элемент массива varval , число элементов
-	! 		  status = nf90_put_var (ncid, Wid, W_mass, (/ g.ns_y, g.ns_x, t/), (/ g.nf_y - g.ns_y + 1, g.nf_x - g.ns_x + 1, 1/) )
+		Real(8) W_mass( -dim:dim, -dim:dim)
 
-			end subroutine
+		do face_index = 1, 6
+			do j = -dim, dim
+				do i = -dim, dim
+					W_mass(i, j) = var.h_height(i, j, face_index)
+				end do
+			end do
 
-	! function nf90_put_var(ncid, varid, values, start, count, stride, map)
+			status = nf90_put_var(ncid(face_index), Wid, W_mass, start = (/ 1, 1, time/), count = (/ 2*dim+1, 2*dim+1, 1/))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		end do
+
+			! print '("  h = ", f10.2, " m")', W_mass(0, 0)
+
+		end subroutine
+
+
 
 	subroutine deinit(this)
 		Class(printer) :: this

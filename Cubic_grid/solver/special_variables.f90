@@ -17,15 +17,13 @@ implicit none
 		Real(8), Allocatable :: alpha(:, :, :)
 		Real(8), Allocatable :: beta(:, :, :)
 		real(8) g, height
-		integer(4) dim, step
+		integer(4) dim, step, dim_st
 
 		CONTAINS
 		Procedure, Public :: init => init
 		Procedure, Private :: alloc => alloc
 		Procedure, Private :: const_def => const_def
 		Procedure, Public :: deinit => deinit
-		Procedure, Public :: eq => equal
-		Procedure, Public :: start_conditions => start_conditions
 	End Type
 
 
@@ -39,12 +37,13 @@ CONTAINS
 		integer(4), intent(in) :: dim, step ! dimension
 		real(8), intent(in) :: grid_points(1:2, -dim:dim, -dim:dim, 1:6), omega_cor, r_sphere, g, height
 
-		this.dim = dim+step;  this.step = step;  this.g = g;  this.height = height
+		this.dim = dim;  this.step = step;  this.g = g;
+		this.height = height;  this.dim_st = dim + step
 
 		call this.alloc()
 		call this.const_def(grid_points, dim, step, omega_cor, r_sphere)
 
-	print '("  Grid step real = ", f10.3, " m")', this.distance_grid(3, 300, 200, 2)
+	! print '("  Grid step real = ", f10.3, " m")', this.distance_grid(3, 300, 200, 2)
 
 	end subroutine
 
@@ -54,15 +53,15 @@ CONTAINS
 
 			Class(variables) :: this
 
-			Allocate(this.h_height(-this.dim:this.dim, -this.dim:this.dim, 1:6))
-			Allocate(this.u_vel(-this.dim:this.dim, -this.dim:this.dim, 1:6))
-			Allocate(this.v_vel(-this.dim:this.dim, -this.dim:this.dim, 1:6))
+			Allocate(this.h_height(-this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
+			Allocate(this.u_vel(-this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
+			Allocate(this.v_vel(-this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
 
-			Allocate(this.distance_grid(4*this.step, -this.dim:this.dim, -this.dim:this.dim, 1:6))
+			Allocate(this.distance_grid(4*this.step, -this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
 
-			Allocate(this.f_cor(-this.dim:this.dim, -this.dim:this.dim, 1:6))
-			Allocate(this.alpha(-this.dim:this.dim, -this.dim:this.dim, 1:6))
-			Allocate(this.beta(-this.dim:this.dim, -this.dim:this.dim, 1:6))
+			Allocate(this.f_cor(-this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
+			Allocate(this.alpha(-this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
+			Allocate(this.beta(-this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
 
 		end subroutine
 
@@ -77,8 +76,8 @@ CONTAINS
 
 
 			do face_idx = 1, 6 ! Only longitude
-				do y = -this.dim, this.dim
-					do x = -this.dim, this.dim
+				do y = -this.dim_st, this.dim_st
+					do x = -this.dim_st, this.dim_st
 						this.f_cor(x, y, face_idx)= 2*omega_cor*dsin(grid_points(2, x, y, face_idx))
 						this.alpha(x, y, face_idx) = 1d0/(r_sphere*dcos(grid_points(2, x, y, face_idx)))
 						this.beta(x, y, face_idx) = dtan(grid_points(2, x, y, face_idx))/r_sphere
@@ -141,58 +140,5 @@ end if
 		if (Allocated(this.beta)) Deallocate(this.beta)
 
 	end subroutine
-
-
-
-	subroutine equal(this, that)
-
-		Class(variables) :: this, that
-		integer(4) dim, face_idx, x, y
-		dim = this.dim
-
-		do face_idx = 1, 6
-			do y = -dim, dim
-				do x = -dim, dim
-				this.h_height(x, y, face_idx)=that.h_height(x, y, face_idx)
-				this.u_vel(x, y, face_idx)=that.u_vel(x, y, face_idx)
-				this.v_vel(x, y, face_idx)=that.v_vel(x, y, face_idx)
-				end do
-			end do
-		end do
-
-	end subroutine
-
-
-
-	subroutine start_conditions(this, dim)
-
-		Class(variables) :: this
-		integer(4), intent(in) :: dim
-		real(8) h0
-
-		integer(4) face_idx, x, y
-
-		h0 = this.height
-
-		do face_idx = 1, 6
-			do y = -dim, dim
-				do x = -dim, dim
-					this.h_height(x, y, face_idx) = 0
-					this.u_vel(x, y, face_idx) = 0
-					this.v_vel(x, y, face_idx) = 0
-				end do
-			end do
-		end do
-
-		face_idx = 2
-		do y = -dim, dim
-			do x = -dim, dim
-this.h_height(x, y, face_idx) = h0*exp(-((((10.0/dim)*(x-dim*0.5))**2)+(((10.0/dim)*(y-dim*0.5))**2)))
-			end do
-		end do
-
-	end subroutine
-
-
 
 end module
