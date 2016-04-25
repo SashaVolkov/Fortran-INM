@@ -65,6 +65,7 @@ CONTAINS
 		do y = -dim, dim
 			do x = -dim, dim
 				var_pr.h_height(x, y, 2) = h0*exp(-((((10.0/dim)*(x*0.5))**2)+(((10.0/dim)*(y*0.5))**2)))
+				var_pr.h_height(x, y, 4) = h0*exp(-((((10.0/dim)*(x*0.5))**2)+(((10.0/dim)*(y*0.5))**2)))
 				! var_pr.h_height(x, y, 2) = 0
 			end do
 		end do
@@ -104,6 +105,7 @@ CONTAINS
 		end do
 	end do
 
+
 	do y = -dim, dim
 		do x = 1, step
 
@@ -123,6 +125,54 @@ CONTAINS
 			var_grey.h_height(dim + x, y, 2) = var.h_height(-dim + x, y, 3)
 			var_grey.u_vel(dim + x, y, 2) = var.u_vel(-dim + x, y, 3)
 			var_grey.v_vel(dim + x, y, 2) = var.v_vel(-dim + x, y, 3)
+
+		end do
+	end do
+
+
+! 	do y = 1, step
+! 		do x = -dim, dim
+
+! 			var_grey.h_height(x, dim + y, 4) = var.h_height(-x, dim - y, 1)
+! 			var_grey.u_vel(x, dim + y, 4) = var.u_vel(-x, dim - y, 1)
+! 			var_grey.v_vel(x, dim + y, 4) = var.v_vel(-x, dim - y, 1)
+
+! 			var_grey.h_height(-x, dim + y, 1) = var.h_height(x, dim - y, 4)
+! 			var_grey.u_vel(-x, dim + y, 1) = var.u_vel(x, dim - y, 4)
+! 			var_grey.v_vel(-x, dim + y, 1) = var.v_vel(x, dim - y, 4)
+
+
+! 			var_grey.h_height(-x, -dim - y, 6) = var.h_height(x, -dim + y, 4)
+! 			var_grey.u_vel(-x, -dim - y, 6) = var.u_vel(x, -dim + y, 4)
+! 			var_grey.v_vel(-x, -dim - y, 6) = var.v_vel(x, -dim + y, 4)
+
+! 			var_grey.h_height(x, -dim - y, 4) = var.h_height(-x, -dim + y, 6)
+! 			var_grey.u_vel(x, -dim - y, 4) = var.u_vel(-x, -dim + y, 6)
+! 			var_grey.v_vel(x, -dim - y, 4) = var.v_vel(-x, -dim + y, 6)
+
+! 		end do
+! 	end do
+
+
+	do y = -dim, dim
+		do x = 1, step
+
+			var_grey.h_height(-dim - x, y, 4) = var.h_height(dim - x, y, 3)
+			var_grey.u_vel(-dim - x, y, 4) = var.u_vel(dim - x, y, 3)
+			var_grey.v_vel(-dim - x, y, 4) = var.v_vel(dim - x, y, 3)
+
+			var_grey.h_height(dim + x, y, 3) = var.h_height(-dim + x, y, 4)
+			var_grey.u_vel(dim + x, y, 3) = var.u_vel(-dim + x, y, 4)
+			var_grey.v_vel(dim + x, y, 3) = var.v_vel(-dim + x, y, 4)
+
+
+			var_grey.h_height(-dim - x, y, 5) = var.h_height(dim - x, y, 4)
+			var_grey.u_vel(-dim - x, y, 5) = var.u_vel(dim - x, y, 4)
+			var_grey.v_vel(-dim - x, y, 5) = var.v_vel(dim - x, y, 4)
+
+			var_grey.h_height(dim + x, y, 4) = var.h_height(-dim + x, y, 5)
+			var_grey.u_vel(dim + x, y, 4) = var.u_vel(-dim + x, y, 5)
+			var_grey.v_vel(dim + x, y, 4) = var.v_vel(-dim + x, y, 5)
 
 		end do
 	end do

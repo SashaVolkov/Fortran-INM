@@ -46,7 +46,7 @@ module schemes
 					var.h_height(x, y, face_idx) = var_pr.h_height(x, y, face_idx) - height*(partial(1) + partial(2))
 
 
-					if(var.h_height(x, y, face_idx) > height+10) var.h_height(x, y, face_idx) = 0
+					if(abs(var.h_height(x, y, face_idx)) > height+10) var.h_height(x, y, face_idx) = 0
 
 				end do
 			end do

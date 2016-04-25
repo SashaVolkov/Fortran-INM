@@ -35,13 +35,18 @@ module printer_ncdf
 
 			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/'//"face"//istring), &
 	cmode = NF90_CLOBBER, ncid = ncid(face_index))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
 
 			status = nf90_def_dim (ncid(face_index), "latitude", 2*dim+1, latitude)
 			status = nf90_def_dim (ncid(face_index), "longitude", 2*dim+1, longitude)
 			status = nf90_def_dim (ncid(face_index), "time", Tmax, time)
+			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 			status = nf90_def_var (ncid(face_index), "water", NF90_DOUBLE, (/ latitude, longitude, time/), Wid)
+			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 			status = nf90_enddef (ncid(face_index))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 			end do
 
 	end subroutine
