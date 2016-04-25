@@ -131,13 +131,41 @@ CONTAINS
 	do i = -dim, dim
 		do j = 1, step
 
-			var_grey.h_height(-dim - j, i, 1) = var.h_height(i, dim - j, 5)
-			var_grey.u_vel(-dim - j, i, 1) = var.u_vel(i, dim - j, 5)
-			var_grey.v_vel(-dim - j, i, 1) = var.v_vel(i, dim - j, 5)
+			var_grey.h_height(-dim - j, -i, 1) = var.h_height(i, dim - j, 5)
+			var_grey.u_vel(-dim - j, -i, 1) = var.u_vel(i, dim - j, 5)
+			var_grey.v_vel(-dim - j, -i, 1) = var.v_vel(i, dim - j, 5)
 
-			var_grey.h_height(dim + j, i, 5) = var.h_height(i, -dim + j, 1)
-			var_grey.u_vel(dim + j, i, 5) = var.u_vel(i, -dim + j, 1)
-			var_grey.v_vel(dim + j, i, 5) = var.v_vel(i, -dim + j, 1)
+			var_grey.h_height(i, dim + j, 5) = var.h_height(-dim + j, -i, 1)
+			var_grey.u_vel(i, dim + j, 5) = var.u_vel(-dim + j, -i, 1)
+			var_grey.v_vel(i, dim + j, 5) = var.v_vel(-dim + j, -i, 1)
+
+
+			var_grey.h_height(-dim - j, i, 6) = var.h_height(i, -dim + j, 5)
+			var_grey.u_vel(-dim - j, i, 6) = var.u_vel(i, -dim + j, 5)
+			var_grey.v_vel(-dim - j, i, 6) = var.v_vel(i, -dim + j, 5)
+
+			var_grey.h_height(i, -dim - j, 5) = var.h_height(-dim + j, i, 6)
+			var_grey.u_vel(i, -dim - j, 5) = var.u_vel(-dim + j, i, 6)
+			var_grey.v_vel(i, -dim - j, 5) = var.v_vel(-dim + j, i, 6)
+
+
+
+			var_grey.h_height(dim + j, i, 1) = var.h_height(i, dim - j, 3)
+			var_grey.u_vel(dim + j, i, 1) = var.u_vel(i, dim - j, 3)
+			var_grey.v_vel(dim + j, i, 1) = var.v_vel(i, dim - j, 3)
+
+			var_grey.h_height(i, dim + j, 3) = var.h_height(dim - j, i, 1)
+			var_grey.u_vel(i, dim + j, 3) = var.u_vel(dim - j, i, 1)
+			var_grey.v_vel(i, dim + j, 3) = var.v_vel(dim - j, i, 1)
+
+
+			var_grey.h_height(dim + j, -i, 6) = var.h_height(i, -dim + j, 3)
+			var_grey.u_vel(dim + j, -i, 6) = var.u_vel(i, -dim + j, 3)
+			var_grey.v_vel(dim + j, -i, 6) = var.v_vel(i, -dim + j, 3)
+
+			var_grey.h_height(i, -dim - j, 3) = var.h_height(dim - j, -i, 6)
+			var_grey.u_vel(i, -dim - j, 3) = var.u_vel(dim - j, -i, 6)
+			var_grey.v_vel(i, -dim - j, 3) = var.v_vel(dim - j, -i, 6)
 
 		end do
 	end do
