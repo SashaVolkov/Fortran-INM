@@ -12,6 +12,7 @@ implicit none
 		Procedure, Public :: equal => equal
 		Procedure, Public :: start_conditions => start_conditions
 		Procedure, Public :: borders => borders
+		Procedure, Public :: corner_zero => corner_zero
 	End Type
 
 
@@ -77,9 +78,9 @@ CONTAINS
 	subroutine borders(f, var, var_grey)
 	Class(func) :: f
 	Class(variables) :: var, var_grey
-	integer(4) dim, step, x, y, i, j
+	integer(4) dim, step, dim_st, x, y, i, j
 
-	dim = var.dim;  step = var.step
+	dim = var.dim;  step = var.step;  dim_st = var.dim_st
 
 
 	do y = 1, step
@@ -130,28 +131,28 @@ CONTAINS
 	end do
 
 
-! 	do y = 1, step
-! 		do x = -dim, dim
+	do y = 1, step
+		do x = -dim, dim
 
-! 			var_grey.h_height(x, dim + y, 4) = var.h_height(-x, dim - y, 1)
-! 			var_grey.u_vel(x, dim + y, 4) = var.u_vel(-x, dim - y, 1)
-! 			var_grey.v_vel(x, dim + y, 4) = var.v_vel(-x, dim - y, 1)
+		var_grey.h_height(-x, dim + y, 1) = var.h_height(x, dim - y, 4)
+		var_grey.u_vel(-x, dim + y, 1) = var.u_vel(x, dim - y, 4)
+		var_grey.v_vel(-x, dim + y, 1) = var.v_vel(x, dim - y, 4)
 
-! 			var_grey.h_height(-x, dim + y, 1) = var.h_height(x, dim - y, 4)
-! 			var_grey.u_vel(-x, dim + y, 1) = var.u_vel(x, dim - y, 4)
-! 			var_grey.v_vel(-x, dim + y, 1) = var.v_vel(x, dim - y, 4)
+			var_grey.h_height(x, dim + y, 4) = var.h_height(-x, dim - y, 1)
+			var_grey.u_vel(x, dim + y, 4) = var.u_vel(-x, dim - y, 1)
+			var_grey.v_vel(x, dim + y, 4) = var.v_vel(-x, dim - y, 1)
 
 
-! 			var_grey.h_height(-x, -dim - y, 6) = var.h_height(x, -dim + y, 4)
-! 			var_grey.u_vel(-x, -dim - y, 6) = var.u_vel(x, -dim + y, 4)
-! 			var_grey.v_vel(-x, -dim - y, 6) = var.v_vel(x, -dim + y, 4)
+			var_grey.h_height(-x, -dim - y, 6) = var.h_height(x, -dim + y, 4)
+			var_grey.u_vel(-x, -dim - y, 6) = var.u_vel(x, -dim + y, 4)
+			var_grey.v_vel(-x, -dim - y, 6) = var.v_vel(x, -dim + y, 4)
 
-! 			var_grey.h_height(x, -dim - y, 4) = var.h_height(-x, -dim + y, 6)
-! 			var_grey.u_vel(x, -dim - y, 4) = var.u_vel(-x, -dim + y, 6)
-! 			var_grey.v_vel(x, -dim - y, 4) = var.v_vel(-x, -dim + y, 6)
+			var_grey.h_height(x, -dim - y, 4) = var.h_height(-x, -dim + y, 6)
+			var_grey.u_vel(x, -dim - y, 4) = var.u_vel(-x, -dim + y, 6)
+			var_grey.v_vel(x, -dim - y, 4) = var.v_vel(-x, -dim + y, 6)
 
-! 		end do
-! 	end do
+		end do
+	end do
 
 
 	do y = -dim, dim
@@ -220,6 +221,35 @@ CONTAINS
 		end do
 	end do
 
+
+	end subroutine
+
+
+
+	subroutine corner_zero(f, var)
+	Class(func) :: f
+	Class(variables) :: var
+	integer(4) dim, step, dim_st, face_idx
+
+	dim = var.dim;  step = var.step;  dim_st = var.dim_st
+
+	do face_idx = 1,6
+		var.h_height(dim_st, dim_st, face_idx) = 0
+		var.u_vel(dim_st, dim_st, face_idx) = 0
+		var.v_vel(dim_st, dim_st, face_idx) = 0
+
+		var.h_height(-dim_st, dim_st, face_idx) = 0
+		var.u_vel(-dim_st, dim_st, face_idx) = 0
+		var.v_vel(-dim_st, dim_st, face_idx) = 0
+
+		var.h_height(dim_st, -dim_st, face_idx) = 0
+		var.u_vel(dim_st, -dim_st, face_idx) = 0
+		var.v_vel(dim_st, -dim_st, face_idx) = 0
+
+		var.h_height(-dim_st, -dim_st, face_idx) = 0
+		var.u_vel(-dim_st, -dim_st, face_idx) = 0
+		var.v_vel(-dim_st, -dim_st, face_idx) = 0
+	end do
 
 	end subroutine
 
