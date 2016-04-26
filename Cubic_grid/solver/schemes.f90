@@ -24,7 +24,7 @@ module schemes
 		Class(func) :: f
 
 		real(8) g, height, dt, partial(1:2)
-		integer(4) face_idx, x, y, dim
+		integer(4) face_idx, x, y, dim, i, j
 
 		g = var_pr.g;  height = var_pr.height;  dim = var_pr.dim
 
@@ -45,15 +45,30 @@ module schemes
 					partial(2) = partial_c_y(var_pr.v_vel(x, y-1:y+1, face_idx), var_pr.distance_grid(:, y, x, face_idx))
 					var.h_height(x, y, face_idx) = var_pr.h_height(x, y, face_idx) - height*(partial(1) + partial(2))
 
-					if(face_idx == 2 .or. face_idx == 4) then
-						if(abs(var.h_height(x, y, face_idx)) > height+10) var.h_height(x, y, face_idx) = 0
-					else
-						if(abs(var.h_height(x, y, face_idx)) > 1) var.h_height(x, y, face_idx) = 0
-					end if
+! 					if(face_idx == 2 .or. face_idx == 4) then
+! 						if(abs(var.h_height(x, y, face_idx)) > height+10) var.h_height(x, y, face_idx) = 0
+! 					else
+! 						if(abs(var.h_height(x, y, face_idx)) > 50) var.h_height(x, y, face_idx) = 0
+! 					end if
 
 
 				end do
 			end do
+
+			do y = -dim, dim, 2*dim+1
+				do x = -dim, dim, 2*dim+1
+					do i = 1, var.step
+						do j = 1, var.step
+
+					var.u_vel(x, y, face_idx) = (var_pr.u_vel(x+i, y+j, face_idx) + var_pr.u_vel(x-i, y+j, face_idx) + var_pr.u_vel(x+i, y-j, face_idx) + var_pr.u_vel(x-i, y-j, face_idx))/4
+					var.v_vel(x, y, face_idx) = (var_pr.v_vel(x+i, y+j, face_idx) + var_pr.v_vel(x-i, y+j, face_idx) + var_pr.v_vel(x+i, y-j, face_idx) + var_pr.v_vel(x-i, y-j, face_idx))/4
+					var.h_height(x, y, face_idx) = (var_pr.h_height(x+i, y+j, face_idx) + var_pr.h_height(x-i, y+j, face_idx) + var_pr.h_height(x+i, y-j, face_idx) + var_pr.h_height(x-i, y-j, face_idx))/4
+
+						end do
+					end do
+				end do
+			end do
+
 		end do
 
 		call f.equal(var_pr, var)
