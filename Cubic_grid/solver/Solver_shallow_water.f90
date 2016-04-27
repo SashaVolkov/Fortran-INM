@@ -26,7 +26,7 @@ implicit none
 	dim = 100;  gr_step = 1;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 800
+	Tmax = 900
 
 	Allocate(grid_points(1:2, -dim:dim, -dim:dim, 1:6)) ! latitude & longitude, 2dim*2dim, face_id
 

@@ -73,7 +73,7 @@ module schemes
 
 		call f.equal(var_pr, var)
 		call f.borders(var_pr, var_pr)
-		! call f.corner_zero(var_pr)
+		call f.corner_zero(var_pr)
 
 
 	end subroutine

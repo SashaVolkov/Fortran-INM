@@ -66,7 +66,7 @@ CONTAINS
 		do y = -dim, dim
 			do x = -dim, dim
 				var_pr.h_height(x, y, 2) = h0*exp(-((((10.0/dim)*(x*0.5))**2)+(((10.0/dim)*(y*0.5))**2)))
-				var_pr.h_height(x, y, 4) = h0*exp(-((((10.0/dim)*(x*0.5))**2)+(((10.0/dim)*(y*0.5))**2)))
+! 				var_pr.h_height(x, y, 4) = h0*exp(-((((10.0/dim)*(x*0.5))**2)+(((10.0/dim)*(y*0.5))**2)))
 				! var_pr.h_height(x, y, 2) = 0
 			end do
 		end do
@@ -229,26 +229,19 @@ CONTAINS
 	subroutine corner_zero(f, var)
 	Class(func) :: f
 	Class(variables) :: var
-	integer(4) dim, step, dim_st, face_idx
+	integer(4) dim_st, face_idx, x,y
 
-	dim = var.dim;  step = var.step;  dim_st = var.dim_st
+	dim_st = var.dim_st
 
 	do face_idx = 1,6
-		var.h_height(dim_st, dim_st, face_idx) = 0
-		var.u_vel(dim_st, dim_st, face_idx) = 0
-		var.v_vel(dim_st, dim_st, face_idx) = 0
+		do y = -dim_st, dim_st, 2*dim_st+1
+			do x = -dim_st, dim_st, 2*dim_st+1
+		var.h_height(x, y, face_idx) = 0
+		var.u_vel(x, y, face_idx) = 0
+		var.v_vel(x, y, face_idx) = 0
 
-		var.h_height(-dim_st, dim_st, face_idx) = 0
-		var.u_vel(-dim_st, dim_st, face_idx) = 0
-		var.v_vel(-dim_st, dim_st, face_idx) = 0
-
-		var.h_height(dim_st, -dim_st, face_idx) = 0
-		var.u_vel(dim_st, -dim_st, face_idx) = 0
-		var.v_vel(dim_st, -dim_st, face_idx) = 0
-
-		var.h_height(-dim_st, -dim_st, face_idx) = 0
-		var.u_vel(-dim_st, -dim_st, face_idx) = 0
-		var.v_vel(-dim_st, -dim_st, face_idx) = 0
+			end do
+		end do
 	end do
 
 	end subroutine
