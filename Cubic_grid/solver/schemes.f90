@@ -26,7 +26,7 @@ module schemes
 		real(8) g, height, dt, partial(1:2)
 		integer(4) face_idx, x, y, dim, i, j
 
-		g = var_pr.g;  height = var_pr.height;  dim = var_pr.dim
+		g = grid.g;  height = var_pr.height;  dim = var_pr.dim
 
 		dt = 10000d0
 
@@ -44,6 +44,10 @@ module schemes
 					partial(1) = grid.partial_c1_x(var_pr.u_vel(x-1:x+1, y, face_idx), x, y)
 					partial(2) = grid.partial_c1_y(var_pr.v_vel(x, y-1:y+1, face_idx), x, y)
 					var.h_height(x, y, face_idx) = var_pr.h_height(x, y, face_idx) - height*(partial(1) + partial(2))
+
+
+		! print '(" step = ", f10.2)', partial(1)
+		! print '(" step = ", f10.2)', partial(1)
 
 
 				end do

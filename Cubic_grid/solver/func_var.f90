@@ -13,7 +13,7 @@ implicit none
 		Real(8), Allocatable :: u_vel(:, :, :)
 		Real(8), Allocatable :: v_vel(:, :, :)
 		! Real(8), Allocatable :: distance_grid(:, :, :, :)
-		real(8) g, height
+		real(8) height
 		integer(4) dim, step, dim_st
 
 		CONTAINS
@@ -31,19 +31,16 @@ CONTAINS
 
 
 
-	subroutine init(this, grid_points, dim, step, omega_cor, r_sphere, g, height)
+	subroutine init(this, dim, step, height)
 
 		Class(f_var) :: this
 		integer(4), intent(in) :: dim, step ! dimension
-		real(8), intent(in) :: grid_points(1:2, -dim:dim, -dim:dim, 1:6), omega_cor, r_sphere, g, height
+		real(8), intent(in) :: height
 
-		this.dim = dim;  this.step = step;  this.g = g;
+		this.dim = dim;  this.step = step;
 		this.height = height;  this.dim_st = dim + step
 
 		call this.alloc()
-		! call this.const_def(grid_points, dim, step, omega_cor, r_sphere)
-
-	! print '("  Grid step real = ", f10.3, " m")', this.distance_grid(3, 300, 200, 2)
 
 	end subroutine
 
@@ -57,8 +54,6 @@ CONTAINS
 			Allocate(this.u_vel(-this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
 			Allocate(this.v_vel(-this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
 
-			! Allocate(this.distance_grid(4*this.step, -this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
-
 		end subroutine
 
 
@@ -66,7 +61,6 @@ CONTAINS
 	subroutine deinit(this)
 		Class(f_var) :: this
 
-		! if (Allocated(this.distance_grid)) Deallocate(this.distance_grid)
 		if (Allocated(this.h_height)) Deallocate(this.h_height)
 		if (Allocated(this.u_vel)) Deallocate(this.u_vel)
 		if (Allocated(this.v_vel)) Deallocate(this.v_vel)

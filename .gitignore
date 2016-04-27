@@ -21,3 +21,4 @@ datFiles
 *.json
 *.png
 err.file
+out.file

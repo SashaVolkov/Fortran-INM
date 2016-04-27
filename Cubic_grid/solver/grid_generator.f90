@@ -22,11 +22,12 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere_grid_generation(this, x_dimension,y_dimension, r_sphere, grid_points)
+	subroutine conformal_cubed_sphere_grid_generation(this, x_dimension,y_dimension, r_sphere, grid_points_ll)
 		Class(generator) :: this
 		integer, intent(in) :: x_dimension, y_dimension
 		real(8), intent(in) :: r_sphere
-		real(8), intent(out) :: grid_points(1:2, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:6) ! face_id, j, k, r_vector
+		real(8), intent(out) :: grid_points_ll(1:2, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:6) ! face_id, j, k, r_vector
+		! real(8), intent(out) :: grid_points_xyz(1:3, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:6) ! face_id, j, k, r_vector
 
 		character*14 filename
 		character istring
@@ -60,11 +61,12 @@ CONTAINS
 					call projection.inverse( dreal(w), dimag(w), r_sphere, r_vector, status)	! out :: r_vector, status  !! Baiburin p.17 (6) !! Rancic p.978 (v)
 
 					r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
+					! grid_points_xyz(:, j, k, face_index) = r_vector
 
 					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, longitude, latitude)
 
-						grid_points(1, j, k, face_index) = latitude
-						grid_points(2, j, k, face_index) = longitude
+						grid_points_ll(1, j, k, face_index) = latitude
+						grid_points_ll(2, j, k, face_index) = longitude
 
 				end do
 			end do

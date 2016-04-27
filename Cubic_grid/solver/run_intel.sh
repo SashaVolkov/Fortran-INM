@@ -24,5 +24,3 @@ else
 	time mpiexec -n 1 ./a.out
 
 fi
-
-

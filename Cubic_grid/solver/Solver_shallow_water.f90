@@ -1,6 +1,5 @@
 program solver
 
-	use grid_generator_solver, Only: generator
 	use grid_var, Only: g_var
 	use func_var, Only: f_var
 	use printer_ncdf, Only: printer
@@ -11,9 +10,8 @@ implicit none
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height
 	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6)
-	real(8), Allocatable :: grid_points(:, :, :, :)
+	! real(8), Allocatable :: grid_points(:, :, :, :)
 
-	Type(generator) :: generate
 	Type(f_var) :: var, var_prev
 	Type(g_var) :: grid
 	Type(printer) :: printer_nc
@@ -23,20 +21,19 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 980616d-5
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 100;  gr_step = 1;  height = 100.0
+	dim = 50;  gr_step = 1;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
 	Tmax = 1100;  speedup = 4
 
-	Allocate(grid_points(1:2, -dim:dim, -dim:dim, 1:6)) ! latitude & longitude, 2dim*2dim, face_id
+	! Allocate(grid_points(1:2, -dim:dim, -dim:dim, 1:6)) ! latitude & longitude, 2dim*2dim, face_id
 
 
 !subroutines calls
-	call generate.conformal_cubed_sphere(dim,dim, r_sphere, grid_points)
 
-	call grid.init(grid_points, dim, gr_step, omega_cor, r_sphere, g)
-	call var.init(grid_points, dim, gr_step, omega_cor, r_sphere, g, height)
-	call var_prev.init(grid_points, dim, gr_step, omega_cor, r_sphere, g, height)
+	call grid.init(dim, gr_step, omega_cor, r_sphere, g)
+	call var.init(dim, gr_step, height)
+	call var_prev.init(dim, gr_step, height)
 	call var_prev.start_conditions()
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid)
@@ -53,6 +50,7 @@ implicit none
 	! print '(" Coriolis = ", f10.2)', var.f_cor(-90, -100, 1)
 
 
+	call grid.deinit()
 	call var.deinit()
 	call var_prev.deinit()
 	call printer_nc.deinit()

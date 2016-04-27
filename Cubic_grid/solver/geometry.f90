@@ -10,8 +10,8 @@ CONTAINS
 		real(8), intent(out) :: dist
 		real(8) r1(1:3), r2(1:3)
 
-		call sphere2car(radius, angl1(1), angl1(2), r1)
-		call sphere2car(radius, angl2(1), angl2(2), r2)
+		call sphere2car(radius, angl1, r1)
+		call sphere2car(radius, angl2, r2)
 		dist = dist_r(r1, r2)
 
 	end subroutine
@@ -22,14 +22,14 @@ CONTAINS
 		dist_r = dsqrt(sum((r2-r1)*(r2-r1)))
 	end function dist_r
 
-	subroutine sphere2car(radius, latitude, longitude, r_vec)
+	subroutine sphere2car(radius, lat_lon, r_vec)
 
-		real(8), intent(in) :: radius, longitude, latitude
+		real(8), intent(in) :: radius, lat_lon(1:2)
 		real(8), intent(out) :: r_vec(1:3)
 
-		r_vec(1) = radius * dcos(longitude) * dcos(latitude)
-		r_vec(2) = radius * dcos(longitude) * dsin(latitude)
-		r_vec(3) = radius * dsin(longitude)
+		r_vec(1) = radius * dcos(lat_lon(2)) * dcos(lat_lon(1))
+		r_vec(2) = radius * dcos(lat_lon(2)) * dsin(lat_lon(1))
+		r_vec(3) = radius * dsin(lat_lon(2))
 
 	end subroutine Sphere2car
 
