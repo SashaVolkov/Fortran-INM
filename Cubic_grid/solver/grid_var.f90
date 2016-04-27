@@ -104,22 +104,22 @@ this.h_dist(2, y, x) = dist
 end if
 
 if(y-1 < -dim)then ! y
-call distance_sphere(r_sphere, grid_points(:, y+1, x, face_idx), grid_points(:, y, x, face_idx), dist)
-this.h_dist(3, y, x) = dist
+! call distance_sphere(r_sphere, grid_points(:, y+1, x, face_idx), grid_points(:, y, x, face_idx), dist)
+this.h_dist(3, y, x) = this.h_dist(1, y, x)
 else
 call distance_sphere(r_sphere, grid_points(:, y, x, face_idx), grid_points(:, y-1, x, face_idx), dist)
 this.h_dist(3, y, x) = dist
 end if
 
 if(x-1 < -dim)then ! x
-call distance_sphere(r_sphere, grid_points(:, y, x+1, face_idx), grid_points(:, y, x, face_idx), dist)
-this.h_dist(4, y, x) = dist
+! call distance_sphere(r_sphere, grid_points(:, y, x+1, face_idx), grid_points(:, y, x, face_idx), dist)
+this.h_dist(4, y, x) = this.h_dist(2, y, x)
 else
 call distance_sphere(r_sphere, grid_points(:, y, x, face_idx), grid_points(:, y, x-1, face_idx), dist)
 this.h_dist(4, y, x) = dist
 end if
 
-				print '(" step = ", f12.2, f12.2, f12.2, f12.2)', this.h_dist(:, y, x)
+				! print '(" step = ", f12.2, f12.2, f12.2, f12.2)', this.h_dist(:, y, x)
 
 			end do
 		end do

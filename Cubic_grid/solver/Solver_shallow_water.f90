@@ -21,10 +21,10 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 980616d-5
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 50;  gr_step = 1;  height = 100.0
+	dim = 40;  gr_step = 1;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 1100;  speedup = 4
+	Tmax = 8000;  speedup = 4
 
 	! Allocate(grid_points(1:2, -dim:dim, -dim:dim, 1:6)) ! latitude & longitude, 2dim*2dim, face_id
 

@@ -157,13 +157,13 @@ CONTAINS
 		do y = -dim, dim
 			do x = 0, step
 
-				var_grey.h_height(dim - x, y, 5) = var.h_height(-dim + x, y, 2)
-				var_grey.u_vel(dim - x, y, 5) = var.u_vel(-dim + x, y, 2)
-				var_grey.v_vel(dim - x, y, 5) = var.v_vel(-dim + x, y, 2)
+				var_grey.h_height(dim + x, y, 5) = var.h_height(-dim + x, y, 2)
+				var_grey.u_vel(dim + x, y, 5) = var.u_vel(-dim + x, y, 2)
+				var_grey.v_vel(dim + x, y, 5) = var.v_vel(-dim + x, y, 2)
 
-				var_grey.h_height(-dim - x, y, 2) = var.h_height(dim + x, y, 5)
-				var_grey.u_vel(-dim - x, y, 2) = var.u_vel(dim + x, y, 5)
-				var_grey.v_vel(-dim - x, y, 2) = var.v_vel(dim + x, y, 5)
+				var_grey.h_height(-dim - x, y, 2) = var.h_height(dim - x, y, 5)
+				var_grey.u_vel(-dim - x, y, 2) = var.u_vel(dim - x, y, 5)
+				var_grey.v_vel(-dim - x, y, 2) = var.v_vel(dim - x, y, 5)
 
 
 				var_grey.h_height(-dim - x, y, 3) = var.h_height(dim - x, y, 2)
