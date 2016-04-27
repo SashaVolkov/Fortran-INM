@@ -1,6 +1,6 @@
 module printer_ncdf
 
-	use special_variables, Only: variables
+	use func_var, Only: f_var
 	use netcdf
 
 	implicit none
@@ -19,11 +19,11 @@ module printer_ncdf
 
 
 
-	subroutine init(this, dim, Tmax, time, Wid, latitude, longitude, ncid)
+	subroutine init(this, dim, Tmax, speedup, time, Wid, xid, yid, ncid)
 
 		Class(printer) :: this
-		integer(4), intent(in) :: dim, Tmax
-		integer(4), intent(out) :: time, Wid, latitude, longitude, ncid(1:6)
+		integer(4), intent(in) :: dim, Tmax, speedup
+		integer(4), intent(out) :: time, Wid, xid, yid, ncid(1:6)
 
 		integer(4) status, face_index
 		character(40) istring
@@ -38,12 +38,12 @@ module printer_ncdf
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 
-			status = nf90_def_dim (ncid(face_index), "latitude", 2*dim+1, latitude)
-			status = nf90_def_dim (ncid(face_index), "longitude", 2*dim+1, longitude)
-			status = nf90_def_dim (ncid(face_index), "time", Tmax, time)
+			status = nf90_def_dim (ncid(face_index), "x", 2*dim+1, xid)
+			status = nf90_def_dim (ncid(face_index), "y", 2*dim+1, yid)
+			status = nf90_def_dim (ncid(face_index), "time", Tmax/speedup + 1, time)
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-			status = nf90_def_var (ncid(face_index), "water", NF90_DOUBLE, (/ latitude, longitude, time/), Wid)
+			status = nf90_def_var (ncid(face_index), "water", NF90_DOUBLE, (/ xid, yid, time/), Wid)
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 			status = nf90_enddef (ncid(face_index))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
@@ -56,11 +56,11 @@ module printer_ncdf
 	! 		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, time, ncid)
 
 
-	subroutine to_print(this, var, dim, time, Wid, ncid)
+	subroutine to_print(this, var, dim, time, speedup, Wid, ncid)
 
 		Class(printer) :: this
-		Class(variables) :: var
-		integer(4), intent(in) :: dim, time, Wid, ncid(1:6)
+		Class(f_var) :: var
+		integer(4), intent(in) :: dim, time, speedup, Wid, ncid(1:6)
 
 		integer(4) i, j, face_index
 		integer(4) status
@@ -75,7 +75,7 @@ module printer_ncdf
 				end do
 			end do
 
-			status = nf90_put_var(ncid(face_index), Wid, W_mass, start = (/ 1, 1, time/), count = (/ 2*dim+1, 2*dim+1, 1/))
+			status = nf90_put_var(ncid(face_index), Wid, W_mass, start = (/ 1, 1, 1+time/speedup/), count = (/ 2*dim+1, 2*dim+1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		end do
 

@@ -11,9 +11,9 @@ use spherical
 implicit none
 
 Private
-Public :: grid
+Public :: generator
 
-Type grid
+Type generator
 	CONTAINS
 	Procedure, Public :: conformal_cubed_sphere => conformal_cubed_sphere_grid_generation
 	Procedure, Private :: face_to_octant => face_to_octant
@@ -23,7 +23,7 @@ End Type
 CONTAINS
 
 	subroutine conformal_cubed_sphere_grid_generation(this, x_dimension,y_dimension, r_sphere, grid_points)
-		Class(grid) :: this
+		Class(generator) :: this
 		integer, intent(in) :: x_dimension, y_dimension
 		real(8), intent(in) :: r_sphere
 		real(8), intent(out) :: grid_points(1:2, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:6) ! face_id, j, k, r_vector
@@ -80,7 +80,7 @@ CONTAINS
 
 	subroutine face_to_octant(this, x_face, y_face, x_octant, y_octant)
 	!x_octant >= 0; y_octant >= 0 and x_octant > y_octant - first octant
-		Class(grid) :: this
+		Class(generator) :: this
 		real(8), intent(out) :: x_octant, y_octant
 		real(8), intent(in) :: x_face, y_face
 
@@ -97,7 +97,7 @@ CONTAINS
 
 
 	subroutine Adcroft_tan(this, x, y, x_tan, y_tan) ! x, y must be from 1 to -1
-		Class(grid) :: this
+		Class(generator) :: this
 		real(8), intent(in) :: x, y
 		real(8), intent(out) :: x_tan, y_tan
 

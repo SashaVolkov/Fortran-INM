@@ -1,8 +1,8 @@
 program solver
 
-	use grid_generator_solver, Only: grid
-	use special_variables, Only: variables
-	use var_func, Only: func
+	use grid_generator_solver, Only: generator
+	use grid_var, Only: g_var
+	use func_var, Only: f_var
 	use printer_ncdf, Only: printer
 	use schemes, Only: schema
 
@@ -10,12 +10,12 @@ implicit none
 
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height
-	integer(4) dim, gr_step, Tmax, time, Wid, latitude, longitude, ncid(1:6)
+	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6)
 	real(8), Allocatable :: grid_points(:, :, :, :)
 
-	Type(grid) :: generator
-	Type(variables) :: var, var_prev
-	Type(func) :: f
+	Type(generator) :: generate
+	Type(f_var) :: var, var_prev
+	Type(g_var) :: grid
 	Type(printer) :: printer_nc
 	Type(schema) :: sch
 
@@ -26,25 +26,26 @@ implicit none
 	dim = 100;  gr_step = 1;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 900
+	Tmax = 1100;  speedup = 4
 
 	Allocate(grid_points(1:2, -dim:dim, -dim:dim, 1:6)) ! latitude & longitude, 2dim*2dim, face_id
 
 
 !subroutines calls
-	call generator.conformal_cubed_sphere(dim,dim, r_sphere, grid_points)
+	call generate.conformal_cubed_sphere(dim,dim, r_sphere, grid_points)
 
+	call grid.init(grid_points, dim, gr_step, omega_cor, r_sphere, g)
 	call var.init(grid_points, dim, gr_step, omega_cor, r_sphere, g, height)
 	call var_prev.init(grid_points, dim, gr_step, omega_cor, r_sphere, g, height)
-	call f.start_conditions(var_prev)
+	call var_prev.start_conditions()
 
-	call printer_nc.init(dim, Tmax, time, Wid, latitude, longitude, ncid)
-	call printer_nc.to_print(var_prev, dim, 1, Wid, ncid)
+	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid)
+	call printer_nc.to_print(var_prev, dim, 0, speedup, Wid, ncid)
 
 	! Main cycle
-	do time = 2, Tmax
-		call sch.Linear(var, var_prev, f)
-		call printer_nc.to_print(var_prev, dim, time, Wid, ncid)
+	do time = 1, Tmax
+		call sch.Linear(var, var_prev, grid)
+		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, dim, time, speedup, Wid, ncid)
 	end do
 	! End of cycle
 
