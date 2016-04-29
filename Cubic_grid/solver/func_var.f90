@@ -23,7 +23,6 @@ implicit none
 		Procedure, Public :: equal => equal
 		Procedure, Public :: start_conditions => start_conditions
 		Procedure, Public :: borders => borders
-		Procedure, Public :: corner_zero => corner_zero
 	End Type
 
 
@@ -214,13 +213,13 @@ CONTAINS
 				var_grey.v_vel(-dim - x, y, 4) = var.v_vel(dim - x, y, 3)
 
 
-				var_grey.h_height(-dim - x, y, 5) = var.h_height(dim - x, y, 4)
-				var_grey.u_vel(-dim - x, y, 5) = var.u_vel(dim - x, y, 4)
-				var_grey.v_vel(-dim - x, y, 5) = var.v_vel(dim - x, y, 4)
-
 				var_grey.h_height(dim + x, y, 4) = var.h_height(-dim + x, y, 5)
 				var_grey.u_vel(dim + x, y, 4) = var.u_vel(-dim + x, y, 5)
 				var_grey.v_vel(dim + x, y, 4) = var.v_vel(-dim + x, y, 5)
+
+				var_grey.h_height(-dim - x, y, 5) = var.h_height(dim - x, y, 4)
+				var_grey.u_vel(-dim - x, y, 5) = var.u_vel(dim - x, y, 4)
+				var_grey.v_vel(-dim - x, y, 5) = var.v_vel(dim - x, y, 4)
 
 			end do
 		end do
@@ -268,28 +267,6 @@ CONTAINS
 			end do
 		end do
 
-
-		end subroutine
-
-
-
-		subroutine corner_zero(var)
-
-		Class(f_var) :: var
-		integer(4) dim_st, face_idx, x,y
-
-		dim_st = var.dim_st
-
-		do face_idx = 1,6
-			do y = -dim_st, dim_st, 2*dim_st+1
-				do x = -dim_st, dim_st, 2*dim_st+1
-			var.h_height(x, y, face_idx) = 0
-			var.u_vel(x, y, face_idx) = 0
-			var.v_vel(x, y, face_idx) = 0
-
-				end do
-			end do
-		end do
 
 		end subroutine
 

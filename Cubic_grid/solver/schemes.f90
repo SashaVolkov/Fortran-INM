@@ -27,8 +27,7 @@ module schemes
 		integer(4) face_idx, x, y, dim, i, j
 
 		g = grid.g;  height = var_pr.height;  dim = var_pr.dim
-
-		dt = 10000d0
+		dt = grid.dt
 
 
 		do face_idx = 1, 6
@@ -71,7 +70,6 @@ module schemes
 
 		call var_pr.equal(var)
 		call var_pr.borders(var_pr)
-		call var_pr.corner_zero()
 
 
 	end subroutine

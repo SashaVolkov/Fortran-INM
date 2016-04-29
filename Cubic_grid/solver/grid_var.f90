@@ -14,7 +14,7 @@ implicit none
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: grid_points_ll(:, :, :, :)
 		Real(8), Allocatable :: grid_points_xyz(:, :, :, :)
-		real(8)  omega_cor, r_sphere, g
+		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min
 		integer(4) dim, step, dim_st
 
 		CONTAINS
@@ -22,6 +22,7 @@ implicit none
 		Procedure, Private :: alloc => alloc
 		Procedure, Private :: const_def => const_def
 		Procedure, Public :: deinit => deinit
+		Procedure, Private :: step_min => step_min
 		Procedure, Public :: partial_c1_x => partial_c1_x
 		Procedure, Public :: partial_c1_y => partial_c1_y
 	End Type
@@ -31,20 +32,21 @@ CONTAINS
 
 
 
-	subroutine init(this, dim, step, omega_cor, r_sphere, g)
+	subroutine init(this, dim, step, omega_cor, r_sphere, g, dt)
 
 		Class(g_var) :: this
 		integer(4), intent(in) :: dim, step ! dimension
-		real(8), intent(in) :: omega_cor, r_sphere, g
+		real(8), intent(in) :: omega_cor, r_sphere, g, dt
 		real(8) grid_points(1:2, -dim:dim, -dim:dim, 1:6)
 		Type(generator) :: generate
 
 		this.dim = dim;  this.step = step;  this.g = g;  this.dim_st = dim + step
-		this.omega_cor = omega_cor;  this.r_sphere = r_sphere
+		this.omega_cor = omega_cor;  this.r_sphere = r_sphere;  this.dt = dt
 
 		call this.alloc()
 		call generate.conformal_cubed_sphere(dim, dim, r_sphere, grid_points)
 		call this.const_def(grid_points)
+		call this.step_min()
 
 	end subroutine
 
@@ -68,10 +70,10 @@ CONTAINS
 		! integer(4), intent(in) :: dim, step ! dimension
 		real(8), intent(in) :: grid_points(1:2, -this.dim:this.dim, -this.dim:this.dim, 1:6)
 		real(8) dist, omega_cor, r_sphere
-		integer(4) face_idx, x, y, dim, step
+		integer(4) face_idx, x, y, dim, step, dim_st
 
 		omega_cor = this.omega_cor;  r_sphere = this.r_sphere
-		dim = this.dim;  step = this.step
+		dim = this.dim;  step = this.step;  dim_st = this.dim_st
 
 
 		do face_idx = 1, 6 ! Only longitude
@@ -157,6 +159,20 @@ end if
 		partial_c1_y = (fun(3) - fun(1))/(this.h_dist(3, x, y) + this.h_dist(1, x, y))
 
 	end function
+
+
+
+subroutine step_min(this)
+	Class(g_var) :: this
+	real(8) dim
+
+	dim = this.dim
+	this.dx_min = MINVAL(this.h_dist(2,-dim:dim,-dim:dim))
+	this.dy_min = MINVAL(this.h_dist(1,-dim:dim,-dim:dim))
+
+
+end subroutine
+
 
 
 end module
