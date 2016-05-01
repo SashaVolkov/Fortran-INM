@@ -61,10 +61,10 @@ CONTAINS
 
 					r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 
-					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), r_sphere, theta, phi)
-					theta = 2*theta/pi; phi = phi/pi
-					call this.Adcroft_tan(theta, phi, theta1, phi1)
-					call sphere2cart(r_vector(1), r_vector(2), r_vector(3), r_sphere, pi*theta1/2, pi*phi1)
+! 					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), r_sphere, theta, phi)
+! 					theta = 2*theta/pi; phi = phi/pi
+! 					call this.Adcroft_tan(theta, phi, theta1, phi1)
+! 					call sphere2cart(r_vector(1), r_vector(2), r_vector(3), r_sphere, pi*theta1/2, pi*phi1)
 					write(channel,*) r_vector(1),r_vector(2),r_vector(3)			! x, y, z
 
 				end do
@@ -104,6 +104,7 @@ CONTAINS
 		real(8), intent(in) :: x, y
 		real(8), intent(out) :: x_tan, y_tan
 
+		if ( abs(x) > 1d0 .or. abs(y) > 1 ) print *, x, y
 		x_tan = (1/datan(2d0/3d0)) * datan(x*2d0/3d0) ! DATAN like atan, but real(8)
 		y_tan = (1/datan(2d0/3d0)) * datan(y*2d0/3d0)
 

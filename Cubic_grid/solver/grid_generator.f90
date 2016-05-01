@@ -31,14 +31,16 @@ CONTAINS
 
 		character*14 filename
 		character istring
-		integer face_index, j, k, status, index, x_min, x_max, y_min, y_max, channel
+		integer(4) face_index, j, k, status, index, x_min, x_max, y_min, y_max, channel
 
-		real(8) matr_of_rots(3,3,48), rot(1:3,1:3), r_vector(1:3),  t(2)
+		real(8) matr_of_rots(3,3,48), rot(1:3,1:3), r_vector(1:3),  t(2),  pi
 		real(8) x_face,y_face, x_octant, y_octant, x_tan, y_tan, radius, longitude, latitude
 		complex*16 w
 
 		Type(projection) :: projection
 		Type(matrix) :: matr
+
+		pi = 314159265358979323846d-20
 
 		call cpu_time(t(1)) ! Time start
 
@@ -64,6 +66,10 @@ CONTAINS
 					! grid_points_xyz(:, j, k, face_index) = r_vector
 
 					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, longitude, latitude)
+
+! 					call this.Adcroft_tan(2d0*longitude/pi, latitude/pi, x_tan, y_tan) ! x, y must be from 1 to -1
+! 						grid_points_ll(1, j, k, face_index) = pi*y_tan
+! 						grid_points_ll(2, j, k, face_index) = pi*x_tan/2d0
 
 						grid_points_ll(1, j, k, face_index) = latitude
 						grid_points_ll(2, j, k, face_index) = longitude
@@ -103,6 +109,7 @@ CONTAINS
 		real(8), intent(in) :: x, y
 		real(8), intent(out) :: x_tan, y_tan
 
+		if ( abs(x) > 1d0 .or. abs(y) > 1 ) print *, x, y
 		x_tan = (1/datan(2d0/3d0)) * datan(x*2d0/3d0) ! DATAN like atan, but real(8)
 		y_tan = (1/datan(2d0/3d0)) * datan(y*2d0/3d0)
 

@@ -79,8 +79,8 @@ CONTAINS
 			do y = -dim, dim
 				do x = -dim, dim
 
-					this.CFL_x(x, y, face_idx) = func.u_vel(x, y, face_idx)*grid.dt/grid.h_dist(2, y, x)
-					this.CFL_y(x, y, face_idx) = func.v_vel(x, y, face_idx)*grid.dt/grid.h_dist(3, y, x)
+					this.CFL_x(x, y, face_idx) = abs(func.u_vel(x, y, face_idx)*grid.dt/grid.h_dist(2, y, x))
+					this.CFL_y(x, y, face_idx) = abs(func.v_vel(x, y, face_idx)*grid.dt/grid.h_dist(3, y, x))
 
 				end do
 			end do
