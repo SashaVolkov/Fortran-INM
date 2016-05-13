@@ -47,9 +47,13 @@ CONTAINS
 			open (channel, file = filename)
 
 			do j= x_min, x_max
+				if ( abs(j) /=1 ) then
 				do k= y_min, y_max
+					if ( abs(k)/=1 ) then
 
 					x_face = j/dble(x_dimension); y_face = k/dble(y_dimension)		!normalized x coordinate
+
+					call this.Adcroft_tan(x_face, y_face, x_face, y_face)
 
 					call projection.stereographic_cube_to_sphere( r_vector, x_face, y_face, r_sphere, face_index, status) ! out :: r_vector, status !! Rancic p.978 (ii)
 					call matr.index_rotation( r_vector, index) ! out :: index = from 1 to 48  !! 48 - full group of symetries of the cube
@@ -61,20 +65,18 @@ CONTAINS
 
 					r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 
-! 					call cart2sphere(r_vector(1), r_vector(2), r_vector(3), r_sphere, theta, phi)
-! 					theta = 2*theta/pi; phi = phi/pi
-! 					call this.Adcroft_tan(theta, phi, theta1, phi1)
-! 					call sphere2cart(r_vector(1), r_vector(2), r_vector(3), r_sphere, pi*theta1/2, pi*phi1)
 					write(channel,*) r_vector(1),r_vector(2),r_vector(3)			! x, y, z
 
-				end do
-				write(channel,*)
+						end if
+					end do
+					write(channel,*)
+				end if
 			end do
 			close(channel)
 		end do
 
 		open(20, file = "grid/parameters.dat")
-		write(20,*) x_dimension, y_dimension
+		write(20,*) x_dimension-1, y_dimension-1
 		close(20)
 
 	end subroutine conformal_cubed_sphere_grid_generation
@@ -105,8 +107,11 @@ CONTAINS
 		real(8), intent(out) :: x_tan, y_tan
 
 		if ( abs(x) > 1d0 .or. abs(y) > 1 ) print *, x, y
-		x_tan = (1/datan(2d0/3d0)) * datan(x*2d0/3d0) ! DATAN like atan, but real(8)
-		y_tan = (1/datan(2d0/3d0)) * datan(y*2d0/3d0)
+! 		x_tan = (1/dtan(2d0/3d0)) * dtan(x*2d0/3d0) ! DATAN like atan, but real(8)
+! 		y_tan = (1/dtan(2d0/3d0)) * dtan(y*2d0/3d0)
+
+		x_tan = dsign(abs(x)**(4d0/3d0), x)
+		y_tan = dsign(abs(y)**(4d0/3d0), y)
 
 	end subroutine Adcroft_tan
 
