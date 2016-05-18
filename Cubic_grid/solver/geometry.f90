@@ -10,28 +10,17 @@ CONTAINS
 		real(8), intent(out) :: dist
 		real(8) r1(1:3), r2(1:3)
 
-		call sphere2car(radius, angl1, r1)
-		call sphere2car(radius, angl2, r2)
-		dist = dist_r(r1, r2)
+		dist = radius * dacos(dsin(angl1(1))*dsin(angl2(1)) + dcos(angl1(1))*dcos(angl2(1))*dcos(angl1(2) - angl2(2)))
+
+! 		Кратчайшее расстояние между двумя точками на земной поверхности (если принять ее за сферу) определяется зависимостью:
+! cos(d) = sin(φА)·sin(φB) + cos(φА)·cos(φB)·cos(λА − λB),
+ ! где φА и φB — широты, λА, λB — долготы данных пунктов, d — расстояние между пунктами, измеряемое в радианах длиной дуги большого круга земного шара. 
+
+! Расстояние между пунктами, измеряемое в километрах, определяется по формуле:
+! L = d·R,
+! где R = 6371 км — средний радиус земного шара.
 
 	end subroutine
-
-
-	real(8) function dist_r(r1,r2)
-		real(8), dimension(1:3) :: r1, r2
-		dist_r = dsqrt(sum((r2-r1)*(r2-r1)))
-	end function dist_r
-
-	subroutine sphere2car(radius, lat_lon, r_vec)
-
-		real(8), intent(in) :: radius, lat_lon(1:2)
-		real(8), intent(out) :: r_vec(1:3)
-
-		r_vec(1) = radius * dcos(lat_lon(2)) * dcos(lat_lon(1))
-		r_vec(2) = radius * dcos(lat_lon(2)) * dsin(lat_lon(1))
-		r_vec(3) = radius * dsin(lat_lon(2))
-
-	end subroutine Sphere2car
 
 
 end module geometry

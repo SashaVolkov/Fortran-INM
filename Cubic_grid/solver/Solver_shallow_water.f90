@@ -10,7 +10,7 @@ implicit none
 
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height, dt
-	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6)
+	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6), rescale
 
 	Type(f_var) :: var, var_prev
 	Type(g_var) :: grid
@@ -26,6 +26,7 @@ implicit none
 	step = 2*pi*r_sphere/(8d0*dim)
 
 	Tmax = 80000;  speedup = 80;  dt = 500d0
+	rescale = 1 ! 0-simple, 1-tan
 
 
 
@@ -34,16 +35,16 @@ implicit none
 	print '(" init")'
 
 
-	call grid.init(dim, gr_step, omega_cor, r_sphere, g, dt)
+	call grid.init(dim, gr_step, omega_cor, r_sphere, g, dt, rescale)
 	dim = grid.dim
 	call var.init(dim, gr_step, height)
 	call var_prev.init(dim, gr_step, height)
-	call diagn.init(grid, Tmax)
+	call diagn.init(grid, Tmax, rescale, pi)
 
 	call var_prev.start_conditions()
 
-		call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid)
-		call printer_nc.to_print(var_prev, dim, 0, speedup, Wid, ncid)
+	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid)
+	call printer_nc.to_print(var_prev, dim, 0, speedup, Wid, ncid)
 
 
 	do time = 1, Tmax

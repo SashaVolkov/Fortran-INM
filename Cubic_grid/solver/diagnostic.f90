@@ -12,6 +12,7 @@ module diagnostic_mod
 		Real(8), Allocatable :: CFL_x(:,:,:)
 		Real(8), Allocatable :: CFL_y(:,:,:)
 		integer(4) Tmax, dim, step
+		Real(8) radius, pi
 
 
 		CONTAINS
@@ -19,6 +20,8 @@ module diagnostic_mod
 			Procedure, Private :: alloc => alloc
 			Procedure, Public :: deinit => deinit
 			Procedure, Public :: CFL => CFL
+			Procedure, Private :: spherical_triangle => spherical_triangle
+			Procedure, Private :: spherical_triangle_area => spherical_triangle_area
 
 	End Type
 
@@ -27,17 +30,24 @@ CONTAINS
 
 
 
-	subroutine init(this, grid, Tmax)
+	subroutine init(this, grid, Tmax, rescale, pi)
 
 		Class(diagnostic) :: this
 		Class(g_var) :: grid
-		integer(4), intent(in) :: Tmax
+		integer(4), intent(in) :: Tmax, rescale
+		real(8), intent(in) :: pi
 
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
-		call this.alloc()
-		open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x.dat')
-		open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y.dat')
+		this.radius = grid.r_sphere;  this.pi = pi
 
+		call this.alloc()
+		if (rescale == 1) then
+			open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x.dat')
+			open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y.dat')
+		else
+			open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x_simple.dat')
+			open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y_simple.dat')
+		end if
 
 	end subroutine
 
@@ -91,6 +101,34 @@ CONTAINS
 
 
 ! 		print '(" CFL x = ", f6.4, "   CFL y = ", f6.4)', MAXVAL(this.CFL_x), MAXVAL(this.CFL_y)
+
+	end subroutine
+
+
+	!!!!Wiki article "Решение треугольников"
+	subroutine spherical_triangle(this, a, b, c, alpha, beta, gamma)
+
+		Class(diagnostic) :: this
+		real(8), intent(in) :: a, b, c  ! angles between radiuses
+		real(8), intent(out) :: alpha, beta, gamma  ! angles of spherical triangle
+
+		alpha = dacos( ( dcos(a) - dcos(b)*dcos(c) )/( dsin(b)*dsin(c) ) )
+		beta = dacos( ( dcos(b) - dcos(a)*dcos(c) )/( dsin(a)*dsin(c) ) )
+		gamma = dacos( ( dcos(c) - dcos(b)*dcos(a) )/( dsin(b)*dsin(a) ) )
+
+	end subroutine
+
+
+
+		subroutine spherical_triangle_area(this, alpha, beta, gamma, area)
+
+		Class(diagnostic) :: this
+		real(8), intent(in) :: alpha, beta, gamma  ! angles of spherical triangle
+		real(8), intent(out) :: area
+		real(8) eps
+
+		eps = alpha + beta + gamma - this.pi
+		area = this.radius * this.radius * eps
 
 	end subroutine
 

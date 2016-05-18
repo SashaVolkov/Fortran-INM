@@ -21,6 +21,12 @@ else
 	echo `grep -c error err.file` "errors"
 	echo `grep -c warning err.file` "warnings"
 
-	time mpiexec -n 1 ./a.out
+	if [[ $1 != "compile" ]]; then
+		time mpiexec -n 1 ./a.out
+
+		cd datFiles
+		./plotscript.sh
+	fi
+
 
 fi

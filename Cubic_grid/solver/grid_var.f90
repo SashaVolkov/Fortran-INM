@@ -35,10 +35,10 @@ CONTAINS
 
 
 
-	subroutine init(this, dim, step, omega_cor, r_sphere, g, dt)
+	subroutine init(this, dim, step, omega_cor, r_sphere, g, dt, rescale)
 
 		Class(g_var) :: this
-		integer(4), intent(in) :: dim, step ! dimension
+		integer(4), intent(in) :: dim, step, rescale
 		real(8), intent(in) :: omega_cor, r_sphere, g, dt
 		integer(4) face_idx, x, y
 		real(8) t(2), dist
@@ -50,11 +50,8 @@ CONTAINS
 
 		this.pi = 314159265358979323846d-20
 
-		print '(" allocate")'
 		call this.alloc()
-		print '(" generate")'
-		call generate.conformal_cubed_sphere(dim, r_sphere, this.grid_points_latlon)
-		print '(" define")'
+		call generate.conformal_cubed_sphere(dim, r_sphere, rescale, this.grid_points_latlon)
 		call this.const_def()
 		call this.step_minmax()
 
@@ -79,13 +76,13 @@ CONTAINS
 	subroutine const_def(this)
 		Class(g_var) :: this
 		! integer(4), intent(in) :: dim, step ! dimension
-		real(8) grid_points(1:2, -this.dim:this.dim, -this.dim:this.dim)
+		! real(8) grid_points(1:2, -this.dim:this.dim, -this.dim:this.dim)
 		real(8) dist, omega_cor, r_sphere
 		integer(4) face_idx, x, y, dim, step, dim_st
 
 		omega_cor = this.omega_cor;  r_sphere = this.r_sphere
 		dim = this.dim;  step = this.step;  dim_st = this.dim_st
-		grid_points = this.grid_points_latlon(:, :, :, 2)
+		! grid_points = this.grid_points_latlon(:, :, :, 2)
 
 		do face_idx = 1, 6 ! Only longitude
 			do y = -dim, dim
@@ -101,34 +98,34 @@ CONTAINS
 			do y = -dim, dim
 
 if(y+1 > dim)then ! y
-	call distance_sphere(r_sphere, grid_points(:, y, x), grid_points(:, y-1, x), dist)
+	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x, face_idx), this.grid_points_latlon(:, y-1, x, face_idx), dist)
 	this.h_dist(1, y, x) = dist
 else
-	call distance_sphere(r_sphere, grid_points(:, y+1, x), grid_points(:, y, x), dist)
+	call distance_sphere(r_sphere, this.grid_points_latlon(:, y+1, x, face_idx), this.grid_points_latlon(:, y, x, face_idx), dist)
 	this.h_dist(1, y, x) = dist
 end if
 
 if(x+1 > dim)then ! x
-	call distance_sphere(r_sphere, grid_points(:, y, x), grid_points(:, y, x-1), dist)
+	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x, face_idx), this.grid_points_latlon(:, y, x-1, face_idx), dist)
 	this.h_dist(2, y, x) = dist
 else
-	call distance_sphere(r_sphere, grid_points(:, y, x+1), grid_points(:, y, x), dist)
+	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x+1, face_idx), this.grid_points_latlon(:, y, x, face_idx), dist)
 	this.h_dist(2, y, x) = dist
 end if
 
 if(y-1 < -dim)then ! y
-	call distance_sphere(r_sphere, grid_points(:, y+1, x), grid_points(:, y, x), dist)
+	call distance_sphere(r_sphere, this.grid_points_latlon(:, y+1, x, face_idx), this.grid_points_latlon(:, y, x, face_idx), dist)
 	this.h_dist(3, y, x) = dist
 else
-	call distance_sphere(r_sphere, grid_points(:, y, x), grid_points(:, y-1, x), dist)
+	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x, face_idx), this.grid_points_latlon(:, y-1, x, face_idx), dist)
 	this.h_dist(3, y, x) = dist
 end if
 
 if(x-1 < -dim)then ! x
-	call distance_sphere(r_sphere, grid_points(:, y, x+1), grid_points(:, y, x), dist)
+	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x+1, face_idx), this.grid_points_latlon(:, y, x, face_idx), dist)
 	this.h_dist(4, y, x) = dist
 else
-	call distance_sphere(r_sphere, grid_points(:, y, x), grid_points(:, y, x-1), dist)
+	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x, face_idx), this.grid_points_latlon(:, y, x-1, face_idx), dist)
 	this.h_dist(4, y, x) = dist
 end if
 

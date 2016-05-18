@@ -23,9 +23,9 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere_grid_generation(this, dim, r_sphere, grid_points_latlon)
+	subroutine conformal_cubed_sphere_grid_generation(this, dim, r_sphere, rescale, grid_points_latlon)
 		Class(generator) :: this
-		integer, intent(in) :: dim
+		integer, intent(in) :: dim, rescale
 		real(8), intent(in) :: r_sphere
 		real(8), intent(out) :: grid_points_latlon(1:2, -dim:dim, -dim:dim, 1:6) ! face_id, j, k, r_vector
 		! real(8), intent(out) :: grid_points_xyz(1:3, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:6) ! face_id, j, k, r_vector
@@ -57,7 +57,9 @@ CONTAINS
 
 						x_face = j/dble(dim); y_face = k/dble(dim)		!normalized x coordinate
 
-						call this.rescale(x_face, y_face, x_face, y_face)
+						if (rescale == 1) then
+							call this.rescale(x_face, y_face, x_face, y_face)
+						end if
 
 						call projection.stereographic_cube_to_sphere( r_vector, x_face, y_face, r_sphere, face_index, status) ! out :: r_vector, status !! Rancic p.978 (ii)
 						call matr.index_rotation( r_vector, index) ! out :: index = from 1 to 48  !! 48 - full group of symetries of the cube
