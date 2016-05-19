@@ -1,6 +1,6 @@
 module grid_var
 
-	use geometry
+	use sphere_geometry, Only: geometry
 	use grid_generator_solver, Only: generator
 
 implicit none
@@ -12,10 +12,8 @@ implicit none
 
 		Real(8), Allocatable :: h_dist(:, :, :)
 		Real(8), Allocatable :: f_cor(:, :, :)
-		Real(8), Allocatable :: grid_points_latlon(:, :, :, :)
-! 		Real(8), Allocatable :: grid_points_xy(:, :, :, :)
-! 		Real(8), Allocatable :: grid_points_xy_tan(:, :, :, :)
-! 		Real(8), Allocatable :: grid_points_xyz(:, :, :, :)
+		Real(8), Allocatable :: points_latlon(:, :, :, :)
+		Real(8), Allocatable :: square(:, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
 		integer(4) dim, step, dim_st
 
@@ -34,25 +32,25 @@ implicit none
 CONTAINS
 
 
-
-	subroutine init(this, dim, step, omega_cor, r_sphere, g, dt, rescale)
+	subroutine init(this, geom, dim, step, omega_cor, g, dt, rescale)
 
 		Class(g_var) :: this
+		Class(geometry) :: geom
 		integer(4), intent(in) :: dim, step, rescale
-		real(8), intent(in) :: omega_cor, r_sphere, g, dt
-		integer(4) face_idx, x, y
+		real(8), intent(in) :: omega_cor, g, dt
+		integer(4) x, y
 		real(8) t(2), dist
 		Type(generator) :: generate
 
 		this.dim = dim;  this.step = step;  this.g = g;  this.dim_st = dim + step
-		this.omega_cor = omega_cor;  this.r_sphere = r_sphere;  this.dt = dt
+		this.omega_cor = omega_cor;  this.r_sphere = geom.radius;  this.dt = dt
+		this.pi = geom.pi
 
-
-		this.pi = 314159265358979323846d-20
+				print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
 
 		call this.alloc()
-		call generate.conformal_cubed_sphere(dim, r_sphere, rescale, this.grid_points_latlon)
-		call this.const_def()
+		call generate.conformal_cubed_sphere(dim, geom.radius, rescale, this.points_latlon)
+		call this.const_def(geom)
 		call this.step_minmax()
 
 	end subroutine
@@ -60,77 +58,85 @@ CONTAINS
 
 
 	subroutine alloc(this)
-
 		Class(g_var) :: this
-
-		Allocate(this.h_dist(1:4, -this.dim_st:this.dim_st, -this.dim_st:this.dim_st))
-		Allocate(this.f_cor(-this.dim:this.dim, -this.dim:this.dim, 1:6))
-		Allocate(this.grid_points_latlon(1:2, -this.dim:this.dim, -this.dim:this.dim, 1:6))
-! 		Allocate(this.grid_points_xy(1:2, -this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
-! 		Allocate(this.grid_points_xy_tan(1:2, -this.dim_st:this.dim_st, -this.dim_st:this.dim_st, 1:6))
-
+			Allocate(this.h_dist(1:4, -this.dim_st:this.dim_st, -this.dim_st:this.dim_st))
+			Allocate(this.f_cor(-this.dim:this.dim, -this.dim:this.dim, 1:6))
+			Allocate(this.points_latlon(1:2, -this.dim:this.dim, -this.dim:this.dim, 1:6))
+			Allocate(this.square(-this.dim:this.dim-1, -this.dim:this.dim-1))
 	end subroutine
 
 
 
-	subroutine const_def(this)
+	subroutine const_def(this, g)
 		Class(g_var) :: this
-		! integer(4), intent(in) :: dim, step ! dimension
-		! real(8) grid_points(1:2, -this.dim:this.dim, -this.dim:this.dim)
-		real(8) dist, omega_cor, r_sphere
-		integer(4) face_idx, x, y, dim, step, dim_st
+		Class(geometry) :: g
+		real(8) dist, omega_cor, S1, S2
+		integer(4) face, x, y, dim, step, dim_st
 
-		omega_cor = this.omega_cor;  r_sphere = this.r_sphere
+
+		omega_cor = this.omega_cor
 		dim = this.dim;  step = this.step;  dim_st = this.dim_st
-		! grid_points = this.grid_points_latlon(:, :, :, 2)
 
-		do face_idx = 1, 6 ! Only longitude
+
+		do face = 1, 6 ! Only longitude
 			do y = -dim, dim
 				do x = -dim, dim
-					this.f_cor(x, y, face_idx)= 2*omega_cor*dsin(this.grid_points_latlon(2, x, y, face_idx))
+					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.points_latlon(2, x, y, face))
 				end do
 			end do
 		end do
 
 
-		face_idx = 2
-		do x = -dim, dim
-			do y = -dim, dim
+		face = 2
+		do x = -dim_st + 1, dim_st - 1
+			do y = -dim_st + 1, dim_st - 1
 
-if(y+1 > dim)then ! y
-	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x, face_idx), this.grid_points_latlon(:, y-1, x, face_idx), dist)
+if(y >= dim)then ! y
+	call g.dist(this.points_latlon(:, 2*dim - y, x, face), this.points_latlon(:, 2*dim - y -1, x, face), dist)
 	this.h_dist(1, y, x) = dist
 else
-	call distance_sphere(r_sphere, this.grid_points_latlon(:, y+1, x, face_idx), this.grid_points_latlon(:, y, x, face_idx), dist)
+	call g.dist(this.points_latlon(:, y+1, x, face), this.points_latlon(:, y, x, face), dist)
 	this.h_dist(1, y, x) = dist
 end if
 
-if(x+1 > dim)then ! x
-	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x, face_idx), this.grid_points_latlon(:, y, x-1, face_idx), dist)
+if(x >= dim)then ! x
+	call g.dist(this.points_latlon(:, y, 2*dim - x, face), this.points_latlon(:, y, 2*dim - x - 1, face), dist)
 	this.h_dist(2, y, x) = dist
 else
-	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x+1, face_idx), this.grid_points_latlon(:, y, x, face_idx), dist)
+	call g.dist(this.points_latlon(:, y, x+1, face), this.points_latlon(:, y, x, face), dist)
 	this.h_dist(2, y, x) = dist
 end if
 
-if(y-1 < -dim)then ! y
-	call distance_sphere(r_sphere, this.grid_points_latlon(:, y+1, x, face_idx), this.grid_points_latlon(:, y, x, face_idx), dist)
+if(y <= -dim)then ! y
+	call g.dist(this.points_latlon(:, - 2*dim - y + 1, x, face), this.points_latlon(:,  - 2*dim - y, x, face), dist)
 	this.h_dist(3, y, x) = dist
 else
-	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x, face_idx), this.grid_points_latlon(:, y-1, x, face_idx), dist)
+	call g.dist(this.points_latlon(:, y, x, face), this.points_latlon(:, y-1, x, face), dist)
 	this.h_dist(3, y, x) = dist
 end if
 
-if(x-1 < -dim)then ! x
-	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x+1, face_idx), this.grid_points_latlon(:, y, x, face_idx), dist)
+if(x <= -dim)then ! x
+	call g.dist(this.points_latlon(:, y, - 2*dim - x + 1, face), this.points_latlon(:, y,  - 2*dim - x, face), dist)
 	this.h_dist(4, y, x) = dist
 else
-	call distance_sphere(r_sphere, this.grid_points_latlon(:, y, x, face_idx), this.grid_points_latlon(:, y, x-1, face_idx), dist)
+	call g.dist(this.points_latlon(:, y, x, face), this.points_latlon(:, y, x-1, face), dist)
 	this.h_dist(4, y, x) = dist
 end if
 
 			end do
 		end do
+
+
+		do x = -dim, dim-1
+			do y = -dim, dim-1
+
+				call g.triangle_area(this.points_latlon(:, y, x, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S1)
+				call g.triangle_area(this.points_latlon(:, y+1, x+1, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S2)
+				this.square(x, y) = S1 + S2
+
+			end do
+		end do
+
 
 	end subroutine
 
@@ -138,13 +144,10 @@ end if
 
 	subroutine deinit(this)
 		Class(g_var) :: this
-
-		if (Allocated(this.h_dist)) Deallocate(this.h_dist)
-		if (Allocated(this.f_cor)) Deallocate(this.f_cor)
-		if (Allocated(this.grid_points_latlon)) Deallocate(this.grid_points_latlon)
-! 		if (Allocated(this.grid_points_xy)) Deallocate(this.grid_points_xy)
-! 		if (Allocated(this.grid_points_xy_tan)) Deallocate(this.grid_points_xy_tan)
-
+			if (Allocated(this.h_dist)) Deallocate(this.h_dist)
+			if (Allocated(this.f_cor)) Deallocate(this.f_cor)
+			if (Allocated(this.points_latlon)) Deallocate(this.points_latlon)
+			if (Allocated(this.square)) Deallocate(this.square)
 	end subroutine
 
 

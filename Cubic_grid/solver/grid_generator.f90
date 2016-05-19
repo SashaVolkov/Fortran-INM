@@ -57,8 +57,8 @@ CONTAINS
 
 						x_face = j/dble(dim); y_face = k/dble(dim)		!normalized x coordinate
 
-						if (rescale == 1) then
-							call this.rescale(x_face, y_face, x_face, y_face)
+						if (rescale /= 0) then
+							call this.rescale(x_face, y_face, x_face, y_face, rescale)
 						end if
 
 						call projection.stereographic_cube_to_sphere( r_vector, x_face, y_face, r_sphere, face_index, status) ! out :: r_vector, status !! Rancic p.978 (ii)
@@ -110,16 +110,22 @@ CONTAINS
 
 
 
-	subroutine rescale(this, x, y, x_tan, y_tan) ! x, y must be from 1 to -1
+	subroutine rescale(this, x, y, x_tan, y_tan, rescale_type) ! x, y must be from 1 to -1
 		Class(generator) :: this
 		real(8), intent(in) :: x, y
+		integer(4), intent(in) :: rescale_type
 		real(8), intent(out) :: x_tan, y_tan
 
-		if ( abs(x) > 1d0 .or. abs(y) > 1d0 ) print *, x, y
-		x_tan = (1/dtan(2d0/3d0)) * dtan(x*2d0/3d0) ! DATAN like atan, but real(8)
-		y_tan = (1/dtan(2d0/3d0)) * dtan(y*2d0/3d0)
-! 		x_tan = dsign(abs(x)**(4d0/3d0), x)
-! 		y_tan = dsign(abs(y)**(4d0/3d0), y)
+		if ( abs(x) > 1d0 .or. abs(y) > 1d0 ) then
+			print *, x, y
+		else if(rescale_type == 1) then
+			x_tan = (1/dtan(2d0/3d0)) * dtan(x*2d0/3d0) ! DATAN like atan, but real(8)
+			y_tan = (1/dtan(2d0/3d0)) * dtan(y*2d0/3d0)
+		else if(rescale_type == 2) then
+			x_tan = dsign(abs(x)**(4d0/3d0), x)
+			y_tan = dsign(abs(y)**(4d0/3d0), y)
+		end if
+
 
 
 	end subroutine rescale

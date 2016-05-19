@@ -1,6 +1,5 @@
 module func_var
 
-use geometry
 
 implicit none
 
