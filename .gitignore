@@ -23,3 +23,7 @@ datFiles
 err.file
 out.file
 CUDA
+
+out
+Cubic_grid/conformal_sphere_grid_sasha/analyze_tan/
+Cubic_grid/conformal_sphere_grid_sasha/grid_tan/

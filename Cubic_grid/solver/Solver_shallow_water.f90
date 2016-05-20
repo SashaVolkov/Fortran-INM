@@ -28,7 +28,7 @@ implicit none
 	step = 2*pi*r_sphere/(8d0*dim)
 
 	Tmax = 80000;  speedup = 80;  dt = 500d0
-	rescale = 1 ! 0-simple, 1-tan, 2-pow(4/3)
+	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
 
@@ -51,11 +51,12 @@ implicit none
 
 	print '(" calc")'
 
-	! do time = 1, Tmax
-	! 	call sch.Linear(var, var_prev, grid)
-	! 	if(mod(time, speedup) == 0) call diagn.CFL(var_prev, grid, time)
-	! 	if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
-	! end do
+	do time = 1, Tmax
+		call sch.Linear(var, var_prev, grid)
+		if(mod(time, speedup) == 0) call diagn.CFL(var_prev, grid, time)
+		if(mod(time, speedup) == 0) call diagn.L_norm1(var_prev.h_height, grid, time)
+		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
+	end do
 
 
 	print '(" Grid step = ", f10.2, " m")', step

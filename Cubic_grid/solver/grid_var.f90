@@ -14,6 +14,7 @@ implicit none
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: points_latlon(:, :, :, :)
 		Real(8), Allocatable :: square(:, :)
+		Real(8), Allocatable :: triangle_area(:, :, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
 		integer(4) dim, step, dim_st
 
@@ -63,6 +64,7 @@ CONTAINS
 			Allocate(this.f_cor(-this.dim:this.dim, -this.dim:this.dim, 1:6))
 			Allocate(this.points_latlon(1:2, -this.dim:this.dim, -this.dim:this.dim, 1:6))
 			Allocate(this.square(-this.dim:this.dim-1, -this.dim:this.dim-1))
+			Allocate(this.triangle_area(1:2, -this.dim:this.dim-1, -this.dim:this.dim-1))
 	end subroutine
 
 
@@ -133,6 +135,8 @@ end if
 				call g.triangle_area(this.points_latlon(:, y, x, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S1)
 				call g.triangle_area(this.points_latlon(:, y+1, x+1, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S2)
 				this.square(x, y) = S1 + S2
+				this.triangle_area(1, x, y) = S1
+				this.triangle_area(2, x, y) = S2
 
 			end do
 		end do
@@ -148,6 +152,7 @@ end if
 			if (Allocated(this.f_cor)) Deallocate(this.f_cor)
 			if (Allocated(this.points_latlon)) Deallocate(this.points_latlon)
 			if (Allocated(this.square)) Deallocate(this.square)
+			if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
 	end subroutine
 
 

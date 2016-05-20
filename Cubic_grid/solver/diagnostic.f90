@@ -19,6 +19,7 @@ module diagnostic_mod
 			Procedure, Private :: alloc => alloc
 			Procedure, Public :: deinit => deinit
 			Procedure, Public :: CFL => CFL
+			Procedure, Public :: L_norm1 => L_norm1
 
 	End Type
 
@@ -37,15 +38,25 @@ CONTAINS
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
 
 		call this.alloc()
+
 		if (rescale == 1) then
 			open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x_tan.dat')
 			open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y_tan.dat')
+			open(11,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L1_tan.dat')
+			open(12,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L2_tan.dat')
+			open(13,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L_inf_tan.dat')
 		else if (rescale == 0) then
 			open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x_simple.dat')
 			open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y_simple.dat')
+			open(11,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L1_simple.dat')
+			open(12,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L2_simple.dat')
+			open(13,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L_inf_simple.dat')
 		else if (rescale == 2) then
 				open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x_4/3.dat')
 				open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y_4/3.dat')
+				open(11,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L1_4/3.dat')
+				open(12,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L2_4/3.dat')
+				open(13,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L_inf_4/3.dat')
 		end if
 
 	end subroutine
@@ -105,6 +116,36 @@ CONTAINS
 
 
 
+	subroutine L_norm1(this, func, grid, time)
+		Class(diagnostic) :: this
+		Class(g_var) :: grid
+		real(8), intent(in) :: func(-this.dim:this.dim, -this.dim:this.dim, 1:6)
+		integer(4), intent(in) :: time
+		integer(4) face_idx, x, y, dim
+		real(8) L1, L2, F1, F2
+
+		L1 = 0;  dim = this.dim
+
+		do face_idx = 1, 6
+			do y = -dim, dim
+				do x = -dim, dim
+
+					F1 = func(x, y, face_idx) + func(x+1, y, face_idx) + func(x, y+1, face_idx)
+					F2 = func(x+1, y+1, face_idx) + func(x+1, y, face_idx) + func(x, y+1, face_idx)
+					L1 = abs(F1)*grid.triangle_area(1, x, y) + abs(F2)*grid.triangle_area(2, x, y)
+					L2 = F1*F1*grid.triangle_area(1, x, y) + F2*F2*grid.triangle_area(2, x, y)
+
+				end do
+			end do
+		end do
+
+		L2 = dsqrt(L2)
+
+		write(11, FMT = "(I14, f10.4)"),time, L1
+		write(12, FMT = "(I14, f10.4)"),time, L2
+		write(13, FMT = "(I14, f10.4)"),time, MAXVAL(abs(func))
+
+	end subroutine
 
 
 end module
