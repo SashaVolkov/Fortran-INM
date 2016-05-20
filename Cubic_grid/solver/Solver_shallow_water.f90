@@ -65,10 +65,13 @@ implicit none
 	print '(" Y max/min = ", f10.2)', grid.dy_max/grid.dy_min
 
 	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,dim,dim)
-	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,dim,0)
+	print '(" ")'
+	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,12,0)
+	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,12)
+	print '(" ")'
 	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,0)
 
-	print '(" area = ", f16.2)', grid.square(0,0)
+	! print '(" area = ", f16.2)', grid.square(0,0)
 
 
 	call grid.deinit()

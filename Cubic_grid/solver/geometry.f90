@@ -14,7 +14,7 @@ implicit none
 		Procedure, Public :: dist => distance_sphere
 		Procedure, Public :: angle => angle_sphere
 		Procedure, Public :: triangle => spherical_triangle
-		Procedure, Public :: triangle_area => spherical_triangle_area
+		! Procedure, Public :: triangle_area => spherical_triangle_area
 	End Type
 
 CONTAINS
@@ -30,64 +30,46 @@ CONTAINS
 
 
 
-	subroutine distance_sphere(this, angl1, angl2, dist)
+	subroutine distance_sphere(this, latlon1, latlon2, dist)
 		Class(geometry) :: this
-		real(8), intent(in) :: angl1(1:2), angl2(1:2)
+		real(8), intent(in) :: latlon1(1:2), latlon2(1:2)
 		real(8), intent(out) :: dist
 
-		dist = this.radius * dacos(dsin(angl1(1))*dsin(angl2(1)) + dcos(angl1(1))*dcos(angl2(1))*dcos(angl1(2) - angl2(2)))
+		dist = this.radius * dacos(dsin(latlon1(2))*dsin(latlon2(2)) + dcos(latlon1(2))*dcos(latlon2(2))*dcos(latlon1(1) - latlon2(1)))
 
 	end subroutine
 
 
 
 
-	subroutine angle_sphere(this, angl1, angl2, angle)
+	subroutine angle_sphere(this, latlon1, latlon2, angle)
 		Class(geometry) :: this
-		real(8), intent(in) :: angl1(1:2),angl2(1:2)
+		real(8), intent(in) :: latlon1(1:2),latlon2(1:2)
 		real(8), intent(out) :: angle
 
-		angle = dacos(dsin(angl1(1))*dsin(angl2(1)) + dcos(angl1(1))*dcos(angl2(1))*dcos(angl1(2) - angl2(2)))
+		angle = dacos(dsin(latlon1(2))*dsin(latlon2(2)) + dcos(latlon1(2))*dcos(latlon2(2))*dcos(latlon1(1) - latlon2(1)))
 
 	end subroutine
 
 
 
-	!!!!Wiki article "Решение треугольников"
-	subroutine spherical_triangle(this, angl1, angl2, angl3, alpha, beta, gamma)
+		subroutine spherical_triangle(this, latlon1, latlon2, latlon3, area, triangle_angles)
 
 		Class(geometry) :: this
-		real(8), intent(in) :: angl1(1:2), angl2(1:2), angl3(1:2)  ! points_latlon
-		real(8), intent(out) :: alpha, beta, gamma  ! angles of spherical triangle
-		real(8) a, b, c  ! angles between radiuses
-
-		call this.angle(angl1, angl2, a)
-		call this.angle(angl2, angl3, b)
-		call this.angle(angl1, angl3, c)
-
-		alpha = dacos( ( dcos(a) - dcos(b)*dcos(c) )/( dsin(b)*dsin(c) ) )
-		beta = dacos( ( dcos(b) - dcos(a)*dcos(c) )/( dsin(a)*dsin(c) ) )
-		gamma = dacos( ( dcos(c) - dcos(b)*dcos(a) )/( dsin(b)*dsin(a) ) )
-
-	end subroutine
-
-
-
-		subroutine spherical_triangle_area(this, angl1, angl2, angl3, area)
-
-		Class(geometry) :: this
-		real(8), intent(in) :: angl1(1:2), angl2(1:2), angl3(1:2)  ! points_latlon
-		real(8), intent(out) :: area
+		real(8), intent(in) :: latlon1(1:2), latlon2(1:2), latlon3(1:2)  ! points_latlon
+		real(8), intent(out) :: area, triangle_angles(1:3)
 		real(8) a, b, c  ! angles between radiuses
 		real(8) alpha, beta, gamma, eps
 
-		call this.angle(angl1, angl2, a)
-		call this.angle(angl2, angl3, b)
-		call this.angle(angl1, angl3, c)
+		call this.angle(latlon1, latlon2, a)
+		call this.angle(latlon2, latlon3, b)
+		call this.angle(latlon1, latlon3, c)
 
 		alpha = dacos( ( dcos(a) - dcos(b)*dcos(c) )/( dsin(b)*dsin(c) ) )
 		beta = dacos( ( dcos(b) - dcos(a)*dcos(c) )/( dsin(a)*dsin(c) ) )
 		gamma = dacos( ( dcos(c) - dcos(b)*dcos(a) )/( dsin(b)*dsin(a) ) )
+
+		triangle_angles = (/alpha, beta, gamma/)
 
 		eps = alpha + beta + gamma - this.pi
 		area = this.radius * this.radius * eps

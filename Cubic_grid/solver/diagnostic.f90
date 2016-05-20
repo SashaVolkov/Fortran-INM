@@ -33,6 +33,7 @@ CONTAINS
 		Class(diagnostic) :: this
 		Class(g_var) :: grid
 		integer(4), intent(in) :: Tmax, rescale
+		character(8) istring
 
 
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
@@ -40,24 +41,18 @@ CONTAINS
 		call this.alloc()
 
 		if (rescale == 1) then
-			open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x_tan.dat')
-			open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y_tan.dat')
-			open(11,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L1_tan.dat')
-			open(12,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L2_tan.dat')
-			open(13,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L_inf_tan.dat')
+			istring = '_tan'
 		else if (rescale == 0) then
-			open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x_simple.dat')
-			open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y_simple.dat')
-			open(11,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L1_simple.dat')
-			open(12,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L2_simple.dat')
-			open(13,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L_inf_simple.dat')
+			istring = '_simple'
 		else if (rescale == 2) then
-				open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x_4/3.dat')
-				open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y_4/3.dat')
-				open(11,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L1_4/3.dat')
-				open(12,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L2_4/3.dat')
-				open(13,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L_inf_4/3.dat')
+			istring = '_exp'
 		end if
+
+		open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x'//trim(istring)//'.dat')
+		open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y'//trim(istring)//'.dat')
+		open(11,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L1'//trim(istring)//'.dat')
+		open(12,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L2'//trim(istring)//'.dat')
+		open(13,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/L_inf'//trim(istring)//'.dat')
 
 	end subroutine
 

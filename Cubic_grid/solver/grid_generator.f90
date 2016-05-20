@@ -122,8 +122,8 @@ CONTAINS
 			x_tan = (1/dtan(2d0/3d0)) * dtan(x*2d0/3d0) ! DATAN like atan, but real(8)
 			y_tan = (1/dtan(2d0/3d0)) * dtan(y*2d0/3d0)
 		else if(rescale_type == 2) then
-			x_tan = dsign(abs(x)**(4d0/3d0), x)
-			y_tan = dsign(abs(y)**(4d0/3d0), y)
+			x_tan = dsign(abs(x)**(65d0/51d0), x)
+			y_tan = dsign(abs(y)**(65d0/51d0), y)
 		end if
 
 

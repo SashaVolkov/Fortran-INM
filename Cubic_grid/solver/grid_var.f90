@@ -15,6 +15,8 @@ implicit none
 		Real(8), Allocatable :: points_latlon(:, :, :, :)
 		Real(8), Allocatable :: square(:, :)
 		Real(8), Allocatable :: triangle_area(:, :, :)
+		Real(8), Allocatable :: triangle_angles(:, :, :)
+		Real(8), Allocatable :: square_angles(:, :, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
 		integer(4) dim, step, dim_st
 
@@ -65,6 +67,8 @@ CONTAINS
 			Allocate(this.points_latlon(1:2, -this.dim:this.dim, -this.dim:this.dim, 1:6))
 			Allocate(this.square(-this.dim:this.dim-1, -this.dim:this.dim-1))
 			Allocate(this.triangle_area(1:2, -this.dim:this.dim-1, -this.dim:this.dim-1))
+			Allocate(this.triangle_angles(1:6, -this.dim:this.dim-1, -this.dim:this.dim-1))
+			Allocate(this.square_angles(1:4, -this.dim:this.dim-1, -this.dim:this.dim-1))
 	end subroutine
 
 
@@ -72,7 +76,7 @@ CONTAINS
 	subroutine const_def(this, g)
 		Class(g_var) :: this
 		Class(geometry) :: g
-		real(8) dist, omega_cor, S1, S2
+		real(8) dist, omega_cor, S1, S2, sphere_area
 		integer(4) face, x, y, dim, step, dim_st
 
 
@@ -89,7 +93,7 @@ CONTAINS
 		end do
 
 
-		face = 2
+		face = 3
 		do x = -dim_st + 1, dim_st - 1
 			do y = -dim_st + 1, dim_st - 1
 
@@ -128,19 +132,29 @@ end if
 			end do
 		end do
 
+		sphere_area = 0
 
 		do x = -dim, dim-1
 			do y = -dim, dim-1
 
-				call g.triangle_area(this.points_latlon(:, y, x, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S1)
-				call g.triangle_area(this.points_latlon(:, y+1, x+1, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S2)
+				call g.triangle(this.points_latlon(:, y, x, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S1, this.triangle_angles(1:3, y, x))
+				call g.triangle(this.points_latlon(:, y+1, x+1, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S2, this.triangle_angles(4:6, y, x))
+
 				this.square(x, y) = S1 + S2
 				this.triangle_area(1, x, y) = S1
 				this.triangle_area(2, x, y) = S2
 
+				sphere_area = sphere_area + this.square(x,y)
+
+				this.square_angles(1, x, y) = this.triangle_angles(2, y, x)
+				this.square_angles(2, x, y) = this.triangle_angles(3, y, x) + this.triangle_angles(6, y, x)
+				this.square_angles(3, x, y) = this.triangle_angles(4, y, x)
+				this.square_angles(4, x, y) = this.triangle_angles(1, y, x) + this.triangle_angles(4, y, x)
+
 			end do
 		end do
 
+		print '(" sphere_area = ", f20.2)', sphere_area*6d0
 
 	end subroutine
 
@@ -153,6 +167,8 @@ end if
 			if (Allocated(this.points_latlon)) Deallocate(this.points_latlon)
 			if (Allocated(this.square)) Deallocate(this.square)
 			if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
+			if (Allocated(this.triangle_angles)) Deallocate(this.triangle_angles)
+			if (Allocated(this.square_angles)) Deallocate(this.square_angles)
 	end subroutine
 
 
@@ -188,6 +204,42 @@ subroutine step_minmax(this)
 	this.dy_max = MAXVAL(this.h_dist(1,-dim:dim,-dim:dim))
 
 end subroutine
+
+
+
+  ! subroutine hist_generation(N, filename_output, x_coeff)
+  !   real*8 x_coeff
+  !   integer N
+  !   character (len=*) filename_output
+
+  !   max=-1d20;min=1d20
+  !   distribution = 0
+  !   allocate(dat(1: N))
+  !   do i =1, N
+  !      read(20,*) dat(i)
+  !      if (dat(i)> max) max = dat(i)
+  !      if (dat(i)< min) min = dat(i)
+  !   end do
+  !   close(20)
+
+  !   do i = 1, N
+  !      index = int(hist_points * (dat(i)-min) /(max-min) + 5d-1)
+  !      distribution(index) = distribution(index) + 1
+  !   end do
+
+  !   max_val = maxval(distribution)
+
+  !   open(21, file = filename_output)
+  !   do i = 1, hist_points
+  !      if (distribution(i)>0) then
+  !         write(21,*) x_coeff * (min + (max-min) * i /dble(hist_points)), &
+  !              distribution(i) / dble(max_val)
+  !      end if
+  !   end do
+  !   close(21)
+  !   deallocate(dat)
+  ! end subroutine
+
 
 
 end module
