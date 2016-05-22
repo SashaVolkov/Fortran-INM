@@ -19,10 +19,10 @@ module printer_ncdf
 
 
 
-	subroutine init(this, dim, Tmax, speedup, time, Wid, xid, yid, ncid)
+	subroutine init(this, dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
 
 		Class(printer) :: this
-		integer(4), intent(in) :: dim, Tmax, speedup
+		integer(4), intent(in) :: dim, Tmax, speedup, rescale
 		integer(4), intent(out) :: time, Wid, xid, yid, ncid(1:6)
 
 		integer(4) status, face_index
@@ -33,8 +33,17 @@ module printer_ncdf
 		write(istring(1:1), '(i1.1)') face_index
 		istring = istring//'.nc'
 
-			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/'//"face"//istring), &
+		if(rescale == 0) then
+			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/simple/'//"face"//istring), &
 	cmode = NF90_CLOBBER, ncid = ncid(face_index))
+		else if(rescale == 1) then
+			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/tan/'//"face"//istring), &
+	cmode = NF90_CLOBBER, ncid = ncid(face_index))
+		else if(rescale == 2) then
+			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/exp/'//"face"//istring), &
+	cmode = NF90_CLOBBER, ncid = ncid(face_index))
+		end if
+
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 

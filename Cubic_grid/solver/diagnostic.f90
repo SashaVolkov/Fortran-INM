@@ -20,6 +20,7 @@ module diagnostic_mod
 			Procedure, Public :: deinit => deinit
 			Procedure, Public :: CFL => CFL
 			Procedure, Public :: L_norm1 => L_norm1
+			Procedure, Public :: histogram => hist_generation
 
 	End Type
 
@@ -47,6 +48,8 @@ CONTAINS
 		else if (rescale == 2) then
 			istring = '_exp'
 		end if
+
+		call this.histogram(16*grid.dim*grid.dim, 'datFiles/angle'//trim(istring)//'.dat', 'datFiles/angle_distribution'//trim(istring)//'.dat')
 
 		open(9,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_x'//trim(istring)//'.dat')
 		open(10,file='/home/sasha/Fortran/Cubic_grid/solver/datFiles/CFL_y'//trim(istring)//'.dat')
@@ -141,6 +144,49 @@ CONTAINS
 		write(13, FMT = "(I14, f10.4)"),time, MAXVAL(abs(func))
 
 	end subroutine
+
+
+
+		subroutine hist_generation(this, N, filename_input, filename_output)
+	
+			Class(diagnostic) :: this
+			integer N
+			character (len=*) filename_input, filename_output
+
+			integer, parameter :: hist_points=1000
+			real(8), allocatable :: dat(:)
+			real(8) max, min, max_val
+			integer(4) distribution(1:hist_points), i, index
+
+			max=-1d20;min=1d20
+			distribution = 0
+			allocate(dat(1: N))
+			open(20, file = filename_input)
+			do i =1, N
+				read(20,*) dat(i)
+				if (dat(i)> max) then; max = dat(i); end if
+				if (dat(i)< min) then; min = dat(i); end if
+			end do
+			close(20)
+
+			do i = 1, N
+				index = int(hist_points * (dat(i)-min) /(max-min) + 5d-1)
+				distribution(index) = distribution(index) + 1
+			end do
+
+			max_val = maxval(distribution)
+
+			open(21, file = filename_output)
+			do i = 1, hist_points
+				 if (distribution(i)>0) then
+						write(21,*) (min + (max-min) * i /dble(hist_points)), &
+								 distribution(i) / dble(max_val)
+				 end if
+			end do
+			close(21)
+			deallocate(dat)
+		end subroutine
+
 
 
 end module

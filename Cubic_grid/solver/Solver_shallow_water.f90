@@ -31,8 +31,9 @@ implicit none
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
-
 !subroutines calls
+
+	do rescale = 0, 1
 
 	print '(" init")'
 
@@ -46,17 +47,17 @@ implicit none
 
 	call var_prev.start_conditions()
 
-	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid)
+	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
 	call printer_nc.to_print(var_prev, dim, 0, speedup, Wid, ncid)
 
 	print '(" calc")'
 
-	do time = 1, Tmax
-		call sch.Linear(var, var_prev, grid)
-		if(mod(time, speedup) == 0) call diagn.CFL(var_prev, grid, time)
-		if(mod(time, speedup) == 0) call diagn.L_norm1(var_prev.h_height, grid, time)
-		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
-	end do
+	! do time = 1, Tmax
+	! 	call sch.Linear(var, var_prev, grid)
+	! 	if(mod(time, speedup) == 0) call diagn.CFL(var_prev, grid, time)
+	! 	if(mod(time, speedup) == 0) call diagn.L_norm1(var_prev.h_height, grid, time)
+	! 	if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
+	! end do
 
 
 	print '(" Grid step = ", f10.2, " m")', step
@@ -71,8 +72,6 @@ implicit none
 	print '(" ")'
 	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,0)
 
-	! print '(" area = ", f16.2)', grid.square(0,0)
-
 
 	call grid.deinit()
 	call var.deinit()
@@ -80,6 +79,6 @@ implicit none
 	call printer_nc.deinit()
 	call diagn.deinit()
 
-
+	end do
 
 end program

@@ -18,7 +18,7 @@ implicit none
 		Real(8), Allocatable :: triangle_angles(:, :, :)
 		Real(8), Allocatable :: square_angles(:, :, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
-		integer(4) dim, step, dim_st
+		integer(4) dim, step, dim_st, rescale
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -47,7 +47,7 @@ CONTAINS
 
 		this.dim = dim;  this.step = step;  this.g = g;  this.dim_st = dim + step
 		this.omega_cor = omega_cor;  this.r_sphere = geom.radius;  this.dt = dt
-		this.pi = geom.pi
+		this.pi = geom.pi;  this.rescale = rescale
 
 				print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
 
@@ -77,7 +77,8 @@ CONTAINS
 		Class(g_var) :: this
 		Class(geometry) :: g
 		real(8) dist, omega_cor, S1, S2, sphere_area
-		integer(4) face, x, y, dim, step, dim_st
+		integer(4) face, x, y, dim, step, dim_st, k
+		character(8) istring
 
 
 		omega_cor = this.omega_cor
@@ -134,6 +135,18 @@ end if
 
 		sphere_area = 0
 
+
+
+		if (this.rescale == 1) then
+			istring = '_tan'
+		else if (this.rescale == 0) then
+			istring = '_simple'
+		else if (this.rescale == 2) then
+			istring = '_exp'
+		end if
+
+		open (20, file = '/home/sasha/Fortran/Cubic_grid/solver/datFiles/angle'//trim(istring)//'.dat')
+
 		do x = -dim, dim-1
 			do y = -dim, dim-1
 
@@ -148,11 +161,17 @@ end if
 
 				this.square_angles(1, x, y) = this.triangle_angles(2, y, x)
 				this.square_angles(2, x, y) = this.triangle_angles(3, y, x) + this.triangle_angles(6, y, x)
-				this.square_angles(3, x, y) = this.triangle_angles(4, y, x)
+				this.square_angles(3, x, y) = this.triangle_angles(5, y, x)
 				this.square_angles(4, x, y) = this.triangle_angles(1, y, x) + this.triangle_angles(4, y, x)
+
+				do k=1,4
+					write(20,*) this.square_angles(k, x, y)*180d0/this.pi
+				end do
 
 			end do
 		end do
+
+		close(20)
 
 		print '(" sphere_area = ", f20.2)', sphere_area*6d0
 
@@ -205,40 +224,6 @@ subroutine step_minmax(this)
 
 end subroutine
 
-
-
-  ! subroutine hist_generation(N, filename_output, x_coeff)
-  !   real*8 x_coeff
-  !   integer N
-  !   character (len=*) filename_output
-
-  !   max=-1d20;min=1d20
-  !   distribution = 0
-  !   allocate(dat(1: N))
-  !   do i =1, N
-  !      read(20,*) dat(i)
-  !      if (dat(i)> max) max = dat(i)
-  !      if (dat(i)< min) min = dat(i)
-  !   end do
-  !   close(20)
-
-  !   do i = 1, N
-  !      index = int(hist_points * (dat(i)-min) /(max-min) + 5d-1)
-  !      distribution(index) = distribution(index) + 1
-  !   end do
-
-  !   max_val = maxval(distribution)
-
-  !   open(21, file = filename_output)
-  !   do i = 1, hist_points
-  !      if (distribution(i)>0) then
-  !         write(21,*) x_coeff * (min + (max-min) * i /dble(hist_points)), &
-  !              distribution(i) / dble(max_val)
-  !      end if
-  !   end do
-  !   close(21)
-  !   deallocate(dat)
-  ! end subroutine
 
 
 

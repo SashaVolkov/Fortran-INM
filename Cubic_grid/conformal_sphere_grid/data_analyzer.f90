@@ -54,10 +54,10 @@ integer function analyze_data_generation()
         do k=1,4
            write(20,*) angle_cell(k)
            write(21,*) distance_cell(k)
-        enddo
+        end do
         write(22,*) square
-     enddo
-  enddo
+     end do
+  end do
 
   close(20);close(21);close(22)
 

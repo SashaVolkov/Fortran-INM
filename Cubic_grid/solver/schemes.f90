@@ -45,10 +45,6 @@ module schemes
 					var.h_height(x, y, face_idx) = var_pr.h_height(x, y, face_idx) - height*(partial(1) + partial(2))
 
 
-		! print '(" step = ", f10.2)', partial(1)
-		! print '(" step = ", f10.2)', partial(1)
-
-
 				end do
 			end do
 
