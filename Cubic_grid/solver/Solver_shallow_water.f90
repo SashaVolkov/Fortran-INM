@@ -27,7 +27,7 @@ implicit none
 	dim = 25;  gr_step = 1;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 80000;  speedup = 80;  dt = 500d0
+	Tmax = 80000;  speedup = 80;  dt = 400d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
@@ -52,14 +52,14 @@ implicit none
 
 	print '(" calc")'
 
-	! do time = 1, Tmax
-	! 	call sch.Linear(var, var_prev, grid)
-	! 	if(mod(time, speedup) == 0) call diagn.CFL(var_prev, grid, time)
-	! 	if(mod(time, speedup) == 0) call diagn.L_norm1(var_prev.h_height, grid, time)
-	! 	if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
-	! end do
+	do time = 1, Tmax
+		call sch.Linear(var, var_prev, grid)
+		if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
+		if(mod(time, speedup) == 0) call diagn.L_norm(var_prev.h_height, grid, time)
+		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
+	end do
 
-
+	print '(" ")'
 	print '(" Grid step = ", f10.2, " m")', step
 	print '(" X min step = ", f10.2, " m")', grid.dx_min
 	print '(" Y max step = ", f10.2, " m")', grid.dy_max
@@ -71,6 +71,7 @@ implicit none
 	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,12)
 	print '(" ")'
 	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,0)
+
 
 
 	call grid.deinit()

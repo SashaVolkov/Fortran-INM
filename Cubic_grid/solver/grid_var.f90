@@ -49,7 +49,7 @@ CONTAINS
 		this.omega_cor = omega_cor;  this.r_sphere = geom.radius;  this.dt = dt
 		this.pi = geom.pi;  this.rescale = rescale
 
-				print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
+				! print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
 
 		call this.alloc()
 		call generate.conformal_cubed_sphere(dim, geom.radius, rescale, this.points_latlon)
@@ -145,7 +145,9 @@ end if
 			istring = '_exp'
 		end if
 
-		open (20, file = '/home/sasha/Fortran/Cubic_grid/solver/datFiles/angle'//trim(istring)//'.dat')
+		open (20, file = 'datFiles/angle'//trim(istring)//'.dat')
+		open (21, file = 'datFiles/cell'//trim(istring)//'.dat')
+		open (22, file = 'datFiles/dist'//trim(istring)//'.dat')
 
 		do x = -dim, dim-1
 			do y = -dim, dim-1
@@ -166,14 +168,16 @@ end if
 
 				do k=1,4
 					write(20,*) this.square_angles(k, x, y)*180d0/this.pi
+					write(22,*) this.h_dist(k, y, x)
 				end do
+				write(21, *) this.square(x, y)
 
 			end do
 		end do
 
-		close(20)
+		close(20);  close(21);  close(22)
 
-		print '(" sphere_area = ", f20.2)', sphere_area*6d0
+		! print '(" sphere_area = ", f20.2)', sphere_area*6d0
 
 	end subroutine
 

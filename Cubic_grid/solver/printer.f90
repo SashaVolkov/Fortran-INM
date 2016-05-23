@@ -34,13 +34,13 @@ module printer_ncdf
 		istring = istring//'.nc'
 
 		if(rescale == 0) then
-			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/simple/'//"face"//istring), &
+			status = nf90_create (path = trim('datFiles/simple/'//"face"//istring), &
 	cmode = NF90_CLOBBER, ncid = ncid(face_index))
 		else if(rescale == 1) then
-			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/tan/'//"face"//istring), &
+			status = nf90_create (path = trim('datFiles/tan/'//"face"//istring), &
 	cmode = NF90_CLOBBER, ncid = ncid(face_index))
 		else if(rescale == 2) then
-			status = nf90_create (path = trim('/home/sasha/Fortran/Cubic_grid/solver/datFiles/exp/'//"face"//istring), &
+			status = nf90_create (path = trim('datFiles/exp/'//"face"//istring), &
 	cmode = NF90_CLOBBER, ncid = ncid(face_index))
 		end if
 

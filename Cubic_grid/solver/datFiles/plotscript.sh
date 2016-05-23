@@ -2,19 +2,10 @@
 
 gnuplot <<EOF
 set term png
-set output "CFL_x.png"
+set output "CFL.png"
 set xlabel "Time"
-plot "CFL_x_tan.dat" w l ti "CFL_x_tan", "CFL_x_simple.dat" w l ti "CFL_x_simple"
+plot "CFL_tan.dat" w l ti "CFL_tan", "CFL_simple.dat" w l ti "CFL_simple"
 EOF
-
-gnuplot <<EOF
-set term png
-set output "CFL_y.png"
-set xlabel "Time"
-plot "CFL_y_tan.dat" w l ti "CFL_y_tan", "CFL_y_simple.dat" w l ti "CFL_y_simple"
-EOF
-
-
 
 gnuplot <<EOF
 set term png
@@ -54,12 +45,37 @@ gnuplot <<EOF
 set xrange [89:91]
 set term png
 set output "angle_tan_zoom.png"
-plot "./angle_distribution_tan.dat" using 1:2 with impulses ti "Angle distribution"
+plot "angle_distribution_tan.dat" using 1:2 with impulses ti "Angle distribution"
 EOF
 
 gnuplot <<EOF
 set xrange [89:91]
 set term png
 set output "angle_simple_zoom.png"
-plot "./angle_distribution_simple.dat" using 1:2 with impulses ti "Angle distribution"
+plot "angle_distribution_simple.dat" using 1:2 with impulses ti "Angle distribution"
+EOF
+
+gnuplot <<EOF
+set term png
+set output "cell_simple.png"
+plot "cell_distribution_simple.dat" using 1:2 with impulses ti "Area distribution"
+EOF
+
+gnuplot <<EOF
+set term png
+set output "cell_tan.png"
+plot "cell_distribution_tan.dat" using 1:2 with impulses ti "Area distribution"
+EOF
+
+
+gnuplot <<EOF
+set term png
+set output "dist_simple.png"
+plot "dist_distribution_simple.dat" using 1:2 with impulses ti "Distance distribution"
+EOF
+
+gnuplot <<EOF
+set term png
+set output "dist_tan.png"
+plot "dist_distribution_tan.dat" using 1:2 with impulses ti "Distance distribution"
 EOF
