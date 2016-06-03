@@ -2,6 +2,7 @@ program solver
 
 	use sphere_geometry, Only: geometry
 	use grid_var, Only: g_var
+	use parallel_cubic, Only: parallel
 	use func_var, Only: f_var
 	use printer_ncdf, Only: printer
 	use schemes, Only: schema
@@ -9,13 +10,18 @@ program solver
 
 implicit none
 
+	include"mpif.h"
+
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height, dt
-	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6), rescale
+	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6), rescale, face
+
+	integer(4) status(MPI_STATUS_SIZE), ier, id, np
 
 	Type(geometry) :: geom
-	Type(f_var) :: var, var_prev
+	Type(f_var) :: var(1:6), var_prev(1:6)
 	Type(g_var) :: grid
+	Type(parallel) :: par
 	Type(printer) :: printer_nc
 	Type(schema) :: sch
 	Type(diagnostic) :: diagn
@@ -27,59 +33,66 @@ implicit none
 	dim = 25;  gr_step = 1;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 80000;  speedup = 80;  dt = 400d0
+	Tmax = 40000;  speedup = 40;  dt = 400d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
+	call MPI_Init(ier)
+	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
+	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
+
 !subroutines calls
-
-	do rescale = 0, 1
-
-	print '(" init")'
 
 
 	call geom.init(r_sphere, pi)
 	call grid.init(geom, dim, gr_step, omega_cor, g, dt, rescale)
 	dim = grid.dim
-	call var.init(dim, gr_step, height)
-	call var_prev.init(dim, gr_step, height)
-	call diagn.init(grid, Tmax, rescale)
 
-	call var_prev.start_conditions()
+	call par.init(dim, gr_step, np, id)
+
+	do face = 1, 6
+		call var(face).init(dim, gr_step, height, face)
+		call var_prev(face).init(dim, gr_step, height, face)
+		call var_prev(face).start_conditions()
+	end do
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
 	call printer_nc.to_print(var_prev, dim, 0, speedup, Wid, ncid)
+! 	diagn.init( grid, Tmax, rescale)
 
-	print '(" calc")'
+! 			print '(" calc")'
 
-	do time = 1, Tmax
-		call sch.Linear(var, var_prev, grid)
-		if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
-		if(mod(time, speedup) == 0) call diagn.L_norm(var_prev.h_height, grid, time)
-		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
-	end do
+! 			do time = 1, Tmax
+! 				call sch.Linear(var, var_prev, grid)
+! ! 				if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
+! 				if(mod(time, speedup) == 0) call diagn.L_norm(var_prev, grid, time)
+! 				if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
+! 			end do
 
-	print '(" ")'
-	print '(" Grid step = ", f10.2, " m")', step
-	print '(" X min step = ", f10.2, " m")', grid.dx_min
-	print '(" Y max step = ", f10.2, " m")', grid.dy_max
-	print '(" Y max/min = ", f10.2)', grid.dy_max/grid.dy_min
+! 			print *, np
+! 			print '(" Grid step = ", f10.2, " m")', step
+! 			print '(" X min step = ", f10.2, " m")', grid.dx_min
+! 			print '(" Y max step = ", f10.2, " m")', grid.dy_max
+! 			print '(" Y max/min = ", f10.2)', grid.dy_max/grid.dy_min
 
-	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,dim,dim)
-	print '(" ")'
-	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,12,0)
-	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,12)
-	print '(" ")'
-	print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,0)
+! 			print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,dim,dim)
+! 			print '(" ")'
+! 			print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,12,0)
+! 			print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,12)
+! 			print '(" ")'
+! 			print '(" step = ", f10.2, f10.2, f10.2, f10.2)', grid.h_dist(:,0,0)
 
 
 
 	call grid.deinit()
-	call var.deinit()
-	call var_prev.deinit()
+	do face = 1, 6
+		call var(face).deinit()
+		call var_prev(face).deinit()
+	end do
 	call printer_nc.deinit()
 	call diagn.deinit()
 
-	end do
+
+	call MPI_FINALIZE(ier)
 
 end program

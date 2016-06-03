@@ -4,6 +4,7 @@ module printer_ncdf
 	use netcdf
 
 	implicit none
+	include"mpif.h"
 
 	Private
 	Public :: printer
@@ -25,36 +26,36 @@ module printer_ncdf
 		integer(4), intent(in) :: dim, Tmax, speedup, rescale
 		integer(4), intent(out) :: time, Wid, xid, yid, ncid(1:6)
 
-		integer(4) status, face_index
+		integer(4) status, face
 		character(40) istring
 
 
-		do face_index = 1, 6
-		write(istring(1:1), '(i1.1)') face_index
+		do face = 1, 6
+		write(istring(1:1), '(i1.1)') face
 		istring = istring//'.nc'
 
 		if(rescale == 0) then
 			status = nf90_create (path = trim('datFiles/simple/'//"face"//istring), &
-	cmode = NF90_CLOBBER, ncid = ncid(face_index))
+	cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid(face))
 		else if(rescale == 1) then
 			status = nf90_create (path = trim('datFiles/tan/'//"face"//istring), &
-	cmode = NF90_CLOBBER, ncid = ncid(face_index))
+	cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid(face))
 		else if(rescale == 2) then
 			status = nf90_create (path = trim('datFiles/exp/'//"face"//istring), &
-	cmode = NF90_CLOBBER, ncid = ncid(face_index))
+	cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid(face))
 		end if
 
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 
-			status = nf90_def_dim (ncid(face_index), "x", 2*dim+1, xid)
-			status = nf90_def_dim (ncid(face_index), "y", 2*dim+1, yid)
-			status = nf90_def_dim (ncid(face_index), "time", Tmax/speedup + 1, time)
+			status = nf90_def_dim (ncid(face), "x", 2*dim+1, xid)
+			status = nf90_def_dim (ncid(face), "y", 2*dim+1, yid)
+			status = nf90_def_dim (ncid(face), "time", Tmax/speedup + 1, time)
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-			status = nf90_def_var (ncid(face_index), "water", NF90_DOUBLE, (/ xid, yid, time/), Wid)
+			status = nf90_def_var (ncid(face), "water", NF90_DOUBLE, (/ xid, yid, time/), Wid)
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
-			status = nf90_enddef (ncid(face_index))
+			status = nf90_enddef (ncid(face))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 			end do
 
@@ -68,23 +69,23 @@ module printer_ncdf
 	subroutine to_print(this, var, dim, time, speedup, Wid, ncid)
 
 		Class(printer) :: this
-		Class(f_var) :: var
+		Class(f_var) :: var(1:6)
 		integer(4), intent(in) :: dim, time, speedup, Wid, ncid(1:6)
 
-		integer(4) i, j, face_index
+		integer(4) i, j, face
 		integer(4) status
 
 
 		Real(8) W_mass( -dim:dim, -dim:dim)
 
-		do face_index = 1, 6
+		do face = 1, 6
 			do j = -dim, dim
 				do i = -dim, dim
-					W_mass(i, j) = var.h_height(i, j, face_index)
+					W_mass(i, j) = var(face).h_height(i, j)
 				end do
 			end do
 
-			status = nf90_put_var(ncid(face_index), Wid, W_mass, start = (/ 1, 1, 1+time/speedup/), count = (/ 2*dim+1, 2*dim+1, 1/))
+			status = nf90_put_var(ncid(face), Wid, W_mass, start = (/ 1, 1, 1+time/speedup/), count = (/ 2*dim+1, 2*dim+1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		end do
 

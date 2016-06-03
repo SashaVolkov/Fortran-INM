@@ -124,19 +124,15 @@ IMPLICIT NONE
 
 		call this.FRunge(this.ku1, this.kv1, this.kh1, fprev.du, fprev.dv, fprev.d, g)
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
-! 		call m.Message(this.ku1, g);call m.Message(this.kv1, g);call m.Message(this.kh1, g)
 
 		call this.FRunge(this.ku2, this.kv2, this.kh2, fprev.du, fprev.dv, fprev.d, g)
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
-! 		call m.Message(this.ku2, g);call m.Message(this.kv2, g);call m.Message(this.kh2, g)
 
 		call this.FRunge(this.ku3, this.kv3, this.kh3, fprev.du, fprev.dv, fprev.d, g)
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
-! 		call m.Message(this.ku3, g);call m.Message(this.kv3, g);call m.Message(this.kh3, g)
 
 		call this.FRunge(this.ku4, this.kv4, this.kh4, fprev.du, fprev.dv, fprev.d, g)
 		call MPI_Barrier(MPI_COMM_WORLD, ier)
-! 		call m.Message(this.ku4, g);call m.Message(this.kv4, g);call m.Message(this.kh4, g)
 
 		do y = g.ns_y, g.nf_y
 			do x=g.ns_x, g.nf_x

@@ -43,7 +43,7 @@ CONTAINS
 
 		pi = 314159265358979323846d-20
 
-		call cpu_time(t(1)) ! Time start
+! 		call cpu_time(t(1)) ! Time start
 
 		call matr.compute_matr_of_rot(matr_of_rots, r_sphere) ! matr_of_rots - 48 2dim matrices (3*3). You can find them in grid/matrices_of_rotations.dat
 		x_min = -dim; x_max = dim; y_min = -dim; y_max = dim
@@ -84,9 +84,9 @@ CONTAINS
 			end do
 		end do
 
-		call cpu_time(t(2)) ! Time stop
+! 		call cpu_time(t(2)) ! Time stop
 ! 		print '("")'
-		print '(" Time of generation = ", f6.3, " sec")', t(2) - t(1)
+! 		print '(" Time of generation = ", f6.3, " sec")', t(2) - t(1)
 
 	end subroutine conformal_cubed_sphere_grid_generation
 

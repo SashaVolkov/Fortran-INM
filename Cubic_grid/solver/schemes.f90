@@ -20,29 +20,29 @@ module schemes
 	subroutine Linear(this, var, var_pr, grid)
 
 		Class(schema) :: this
-		Class(f_var) :: var, var_pr
+		Class(f_var) :: var(1:6), var_pr(1:6)
 		Class(g_var) :: grid
 
 		real(8) g, height, dt, partial(1:2)
-		integer(4) face_idx, x, y, dim, i, j
+		integer(4) face, x, y, dim, i, j, stat
 
-		g = grid.g;  height = var_pr.height;  dim = var_pr.dim
+		g = grid.g;  height = var_pr(1).height;  dim = var_pr(1).dim
 		dt = grid.dt
 
 
-		do face_idx = 1, 6
+		do face = 1, 6
 			do y = -dim, dim
 				do x = -dim, dim
 
-					partial(1) = grid.partial_c1_x(var_pr.h_height(x-1:x+1, y, face_idx), x, y)
-					var.u_vel(x, y, face_idx) = var_pr.u_vel(x, y, face_idx) - dt*g*partial(1)
+					partial(1) = grid.partial_c1_x(var_pr(face).h_height(x-1:x+1, y), x, y)
+					var(face).u_vel(x, y) = var_pr(face).u_vel(x, y) - dt*g*partial(1)
 
-					partial(1) = grid.partial_c1_y(var_pr.h_height(x, y-1:y+1, face_idx), x, y)
-					var.v_vel(x, y, face_idx) = var_pr.v_vel(x, y, face_idx) - dt*g*partial(1)
+					partial(1) = grid.partial_c1_y(var_pr(face).h_height(x, y-1:y+1), x, y)
+					var(face).v_vel(x, y) = var_pr(face).v_vel(x, y) - dt*g*partial(1)
 
-					partial(1) = grid.partial_c1_x(var_pr.u_vel(x-1:x+1, y, face_idx), x, y)
-					partial(2) = grid.partial_c1_y(var_pr.v_vel(x, y-1:y+1, face_idx), x, y)
-					var.h_height(x, y, face_idx) = var_pr.h_height(x, y, face_idx) - height*(partial(1) + partial(2))
+					partial(1) = grid.partial_c1_x(var_pr(face).u_vel(x-1:x+1, y), x, y)
+					partial(2) = grid.partial_c1_y(var_pr(face).v_vel(x, y-1:y+1), x, y)
+					var(face).h_height(x, y) = var_pr(face).h_height(x, y) - height*(partial(1) + partial(2))
 
 
 				end do
@@ -50,22 +50,29 @@ module schemes
 
 			do y = -dim, dim, 2*dim+1
 				do x = -dim, dim, 2*dim+1
-					do i = 1, var.step
-						do j = 1, var.step
+					do i = 1, var(1).step
+						do j = 1, var(1).step
 
-					var.u_vel(x, y, face_idx) = (var_pr.u_vel(x+i, y+j, face_idx) + var_pr.u_vel(x-i, y+j, face_idx) + var_pr.u_vel(x+i, y-j, face_idx) + var_pr.u_vel(x-i, y-j, face_idx))/4
-					var.v_vel(x, y, face_idx) = (var_pr.v_vel(x+i, y+j, face_idx) + var_pr.v_vel(x-i, y+j, face_idx) + var_pr.v_vel(x+i, y-j, face_idx) + var_pr.v_vel(x-i, y-j, face_idx))/4
-					var.h_height(x, y, face_idx) = (var_pr.h_height(x+i, y+j, face_idx) + var_pr.h_height(x-i, y+j, face_idx) + var_pr.h_height(x+i, y-j, face_idx) + var_pr.h_height(x-i, y-j, face_idx))/4
+					var(face).u_vel(x, y) = (var_pr(face).u_vel(x+i, y+j) + var_pr(face).u_vel(x-i, y+j) +&
+					 var_pr(face).u_vel(x+i, y-j) + var_pr(face).u_vel(x-i, y-j))/4
+
+					var(face).v_vel(x, y) = (var_pr(face).v_vel(x+i, y+j) + var_pr(face).v_vel(x-i, y+j) +&
+					 var_pr(face).v_vel(x+i, y-j) + var_pr(face).v_vel(x-i, y-j))/4
+
+					var(face).h_height(x, y) = (var_pr(face).h_height(x+i, y+j) + var_pr(face).h_height(x-i, y+j) +&
+					 var_pr(face).h_height(x+i, y-j) + var_pr(face).h_height(x-i, y-j))/4
 
 						end do
 					end do
 				end do
 			end do
 
-		end do
 
-		call var_pr.equal(var)
-		call var_pr.borders(var_pr)
+		call var_pr(face).equal(var(face))
+
+		end do
+		stat = var(face).borders(var, var_pr)
+
 
 
 	end subroutine

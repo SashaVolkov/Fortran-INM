@@ -85,18 +85,19 @@ CONTAINS
 
 	subroutine Courant(this, func, grid, time)
 		Class(diagnostic) :: this
-		Class(f_var) :: func
+		Class(f_var) :: func(1:6)
 		Class(g_var) :: grid
 		integer(4), intent(in) :: time
-		integer(4) face_idx, x, y, dim
+		integer(4) face, x, y, dim
 
 		dim = this.dim
 
-		do face_idx = 1, 6
+		do face = 1, 6
 			do y = -dim, dim
 				do x = -dim, dim
 
-					this.CFL(x, y, face_idx) = abs(func.u_vel(x, y, face_idx)*grid.dt/grid.h_dist(2, y, x)) + abs(func.v_vel(x, y, face_idx)*grid.dt/grid.h_dist(3, y, x))
+					this.CFL(x, y, face) = abs(func(face).u_vel(x, y)*grid.dt/grid.h_dist(2, y, x)) +&
+					 abs(func(face).v_vel(x, y)*grid.dt/grid.h_dist(3, y, x))
 
 				end do
 			end do
@@ -114,21 +115,27 @@ CONTAINS
 	subroutine L_norm(this, func, grid, time)
 		Class(diagnostic) :: this
 		Class(g_var) :: grid
-		real(8), intent(in) :: func(-this.dim:this.dim, -this.dim:this.dim, 1:6)
+		Class(f_var) :: func(1:6)
+! 		real(8), intent(in) :: func(-this.dim:this.dim, -this.dim:this.dim, 1:6)
 		integer(4), intent(in) :: time
-		integer(4) face_idx, x, y, dim
-		real(8) L1, L2, F1, F2
+		integer(4) face, x, y, dim
+		real(8) L1, L2, F1, F2, L_inf
 
-		L1 = 0;  dim = this.dim
+		L1 = 0;  dim = this.dim;  L_inf = 0
 
-		do face_idx = 1, 6
+		do face = 1, 6
 			do y = -dim, dim
 				do x = -dim, dim
 
-					F1 = func(x, y, face_idx) + func(x+1, y, face_idx) + func(x, y+1, face_idx)
-					F2 = func(x+1, y+1, face_idx) + func(x+1, y, face_idx) + func(x, y+1, face_idx)
+					F1 = func(face).h_height(x, y) + func(face).h_height(x+1, y) + func(face).h_height(x, y+1)
+					F2 = func(face).h_height(x+1, y+1) + func(face).h_height(x+1, y) + func(face).h_height(x, y+1)
 					L1 = abs(F1)*grid.triangle_area(1, x, y) + abs(F2)*grid.triangle_area(2, x, y)
 					L2 = F1*F1*grid.triangle_area(1, x, y) + F2*F2*grid.triangle_area(2, x, y)
+
+					if ( L_inf < MAXVAL(abs(func(face).h_height)) ) then
+						L_inf = MAXVAL(abs(func(face).h_height))
+					end if
+
 
 				end do
 			end do
@@ -138,7 +145,7 @@ CONTAINS
 
 		write(11, FMT = "(f14.6, f10.4)"),time*this.convert_time, L1
 		write(12, FMT = "(f14.6, f10.4)"),time*this.convert_time, L2
-		write(13, FMT = "(f14.6, f10.4)"),time*this.convert_time, MAXVAL(abs(func))
+		write(13, FMT = "(f14.6, f10.4)"),time*this.convert_time, L_inf
 
 	end subroutine
 
