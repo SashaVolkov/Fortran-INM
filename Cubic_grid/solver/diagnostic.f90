@@ -11,6 +11,7 @@ module diagnostic_mod
 
 		Real(8), Allocatable :: CFL(:,:,:)
 		integer(4) Tmax, dim, step
+		real(8) convert_time
 
 
 		CONTAINS
@@ -37,6 +38,7 @@ CONTAINS
 
 
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
+		this.convert_time = grid.dt/3600d0/24d0
 
 		call this.alloc()
 
@@ -100,7 +102,7 @@ CONTAINS
 			end do
 		end do
 
-			write(9, FMT = "(I14, f10.4)"),time, MAXVAL(this.CFL)
+			write(9, FMT = "(f14.6, f10.4)"),dble(time)*this.convert_time, MAXVAL(this.CFL)
 
 
 ! 		print '(" CFL x = ", f6.4, "   CFL y = ", f6.4)', MAXVAL(this.CFL_x), MAXVAL(this.CFL_y)
@@ -134,9 +136,9 @@ CONTAINS
 
 		L2 = dsqrt(L2)
 
-		write(11, FMT = "(I14, f10.4)"),time, L1
-		write(12, FMT = "(I14, f10.4)"),time, L2
-		write(13, FMT = "(I14, f10.4)"),time, MAXVAL(abs(func))
+		write(11, FMT = "(f14.6, f10.4)"),time*this.convert_time, L1
+		write(12, FMT = "(f14.6, f10.4)"),time*this.convert_time, L2
+		write(13, FMT = "(f14.6, f10.4)"),time*this.convert_time, MAXVAL(abs(func))
 
 	end subroutine
 
