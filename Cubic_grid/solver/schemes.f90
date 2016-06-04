@@ -71,7 +71,7 @@ module schemes
 		call var_pr(face).equal(var(face))
 
 		end do
-		stat = var(face).borders(var, var_pr)
+		! stat = var(face).borders(var, var_pr)
 
 
 

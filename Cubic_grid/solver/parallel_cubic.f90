@@ -1,6 +1,6 @@
 module parallel_cubic
 
-	use grid_var, Only: g_var
+	! use grid_var, Only: g_var
 
 implicit none
 
@@ -11,7 +11,7 @@ implicit none
 
 	Type parallel
 		integer(4) Neighbour(1:6, 1:4), Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y
-		integer(4) ns_xy(1:2), nf_xy(1:2)
+		integer(4) ns_xy(1:2), nf_xy(1:2), step
 		CONTAINS
 			Procedure :: init => parallel_init
 	End Type
@@ -30,6 +30,7 @@ CONTAINS
 		integer dims(2)
 
 		k=1; i = 0; j = 0; p = 1
+		this.step = step
 
 
 		do while ( np > k )
@@ -61,8 +62,8 @@ CONTAINS
 
 
 
-		this.ns_xy(1) = 1 + this.Xsize*(this.block_x - 1); this.nf_xy(1) = this.Xsize*this.block_x
-		this.ns_xy(2) = 1 + this.Ysize*(this.block_y - 1); this.nf_xy(2) = this.Ysize*this.block_y
+		this.ns_xy(1) = 1 + this.Xsize*(this.block_x - 1) - dim; this.nf_xy(1) = this.Xsize*this.block_x - dim
+		this.ns_xy(2) = 1 + this.Ysize*(this.block_y - 1) - dim; this.nf_xy(2) = this.Ysize*this.block_y - dim
 ! 		first_xy() = ns_xy(1) - step; last_xy = nf_xy(1) + step
 ! 		first_xy = ns_xy(2) - step; last_xy = nf_xy(2) + step
 
@@ -72,6 +73,7 @@ CONTAINS
 		if (this.block_x < this.Xdim_block) then  ! right
 			this.Neighbour(face, 2) = this.Ydim_block + id
 		else
+			this.nf_xy(1) = dim
 			this.Neighbour(face, 2) = this.block_y - 1
 			if ( face == 1 ) then
 				this.Neighbour(1, 2) = this.Ydim_block*(this.block_y - 1) + this.block_x - 1
@@ -83,6 +85,7 @@ CONTAINS
 		if (this.block_x > 1) then  ! left
 			this.Neighbour(face, 4) = id - this.Ydim_block
 		else
+			this.ns_xy(1) = -dim
 			this.Neighbour(face, 4) = this.Ydim_block*(this.Xdim_block - 1) + this.block_y - 1
 						if ( face == 1 ) then
 							this.Neighbour(1, 4) = (this.Ydim_block - this.block_y+1)*this.Xdim_block - 1
@@ -95,6 +98,7 @@ CONTAINS
 		if (this.block_y < this.Ydim_block) then  ! bottom
 			this.Neighbour(face, 3) = 1 + id
 		else
+			this.nf_xy(2) = dim
 			this.Neighbour(face, 3) = this.Ydim_block*(this.block_x-1)
 			if ( face == 3 ) then
 				this.Neighbour(3, 3) = this.Ydim_block*(this.Xdim_block - 1) + this.block_x - 1
@@ -108,6 +112,7 @@ CONTAINS
 		if (this.block_y > 1) then  ! top
 			this.Neighbour(face, 1) = id - 1
 		else
+			this.ns_xy(2) = -dim
 			this.Neighbour(face, 1) = id + this.Ydim_block - 1
 			if ( face == 3 ) then
 				this.Neighbour(3, 1) = this.Ydim_block*this.Xdim_block - this.block_x
@@ -119,9 +124,15 @@ CONTAINS
 		end if
 	end do
 
-	if ( id == 11) then
-		print *, this.Neighbour(4, :)
-	end if
+
+	this.Xsize = 1 + this.nf_xy(1) - this.ns_xy(1)
+	this.Ysize = 1 + this.nf_xy(2) - this.ns_xy(2)
+
+	! if ( id == 3) then
+	! 	print *, this.Neighbour(4, :)
+	! 	print *, this.ns_xy, this.nf_xy
+	! 	print *, this.Xsize, this.Ysize
+	! end if
 
 
 	End Subroutine

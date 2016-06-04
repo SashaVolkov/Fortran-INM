@@ -66,27 +66,38 @@ module printer_ncdf
 	! 		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, time, ncid)
 
 
-	subroutine to_print(this, var, dim, time, speedup, Wid, ncid)
+	subroutine to_print(this, var, dim, time, speedup, Wid, ncid, id)
 
 		Class(printer) :: this
 		Class(f_var) :: var(1:6)
-		integer(4), intent(in) :: dim, time, speedup, Wid, ncid(1:6)
+		integer(4), intent(in) :: dim, time, speedup, Wid, ncid(1:6), id
 
-		integer(4) i, j, face
-		integer(4) status
+		integer(4) i, j, face, ier
+		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
+		Real(8) W_mass(var(1).ns_x:var(1).nf_x, var(1).ns_y:var(1).nf_y)
 
+		ns_y = var(1).ns_y;  nf_y = var(1).nf_y
+		ns_x = var(1).ns_x;  nf_x = var(1).nf_x
+		Ysize = nf_y - ns_y + 1; Xsize = nf_x - ns_x + 1
 
-		Real(8) W_mass( -dim:dim, -dim:dim)
+		t = 1+time/speedup
+
 
 		do face = 1, 6
-			do j = -dim, dim
-				do i = -dim, dim
+			do j = ns_y, nf_y
+				do i = ns_x, nf_x
 					W_mass(i, j) = var(face).h_height(i, j)
 				end do
 			end do
 
-			status = nf90_put_var(ncid(face), Wid, W_mass, start = (/ 1, 1, 1+time/speedup/), count = (/ 2*dim+1, 2*dim+1, 1/))
-			if(status /= nf90_NoErr) print *, nf90_strerror(status)
+			! call MPI_Barrier(MPI_COMM_WORLD, ier)
+
+			status = nf90_put_var(ncid(face), Wid, W_mass,&
+			 start = (/ dim + 1 + ns_x, dim + 1 + ns_y, t/), count = (/ Xsize, Ysize, 1/))
+
+
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
+			! if(status == nf90_NoErr) print *, "Good", id
 		end do
 
 			! print '("  h = ", f10.2, " m")', W_mass(0, 0)

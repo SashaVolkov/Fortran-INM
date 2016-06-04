@@ -51,13 +51,13 @@ implicit none
 	call par.init(dim, gr_step, np, id)
 
 	do face = 1, 6
-		call var(face).init(dim, gr_step, height, face)
-		call var_prev(face).init(dim, gr_step, height, face)
+		call var(face).init(par, dim, gr_step, height, face)
+		call var_prev(face).init(par, dim, gr_step, height, face)
 		call var_prev(face).start_conditions()
 	end do
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
-	call printer_nc.to_print(var_prev, dim, 0, speedup, Wid, ncid)
+	call printer_nc.to_print(var_prev, dim, 0, speedup, Wid, ncid, id)
 ! 	diagn.init( grid, Tmax, rescale)
 
 ! 			print '(" calc")'
