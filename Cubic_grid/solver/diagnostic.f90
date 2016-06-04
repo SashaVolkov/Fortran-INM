@@ -151,44 +151,44 @@ CONTAINS
 
 
 
-		subroutine hist_generation(this, N, filename_input, filename_output)
-	
-			Class(diagnostic) :: this
-			integer N
-			character (len=*) filename_input, filename_output
+	subroutine hist_generation(this, N, filename_input, filename_output)
 
-			integer, parameter :: hist_points=1000
-			real(8), allocatable :: dat(:)
-			real(8) max, min, max_val
-			integer(4) distribution(1:hist_points), i, index
+		Class(diagnostic) :: this
+		integer N
+		character (len=*) filename_input, filename_output
 
-			max=-1d20;min=1d20
-			distribution = 0
-			allocate(dat(1: N))
-			open(20, file = filename_input)
-			do i =1, N
-				read(20,*) dat(i)
-				if (dat(i)> max) then; max = dat(i); end if
-				if (dat(i)< min) then; min = dat(i); end if
-			end do
-			close(20)
+		integer, parameter :: hist_points=1000
+		real(8), allocatable :: dat(:)
+		real(8) max, min, max_val
+		integer(4) distribution(1:hist_points), i, index
 
-			do i = 1, N
-				index = int(hist_points * (dat(i)-min) /(max-min) + 5d-1)
-				distribution(index) = distribution(index) + 1
-			end do
+		max=-1d20;min=1d20
+		distribution = 0
+		allocate(dat(1: N))
+		open(20, file = filename_input)
+		do i =1, N
+			read(20,*) dat(i)
+			if (dat(i)> max) then; max = dat(i); end if
+			if (dat(i)< min) then; min = dat(i); end if
+		end do
+		close(20)
 
-			max_val = maxval(distribution)
+		do i = 1, N
+			index = int(hist_points * (dat(i)-min) /(max-min) + 5d-1)
+			distribution(index) = distribution(index) + 1
+		end do
 
-			open(21, file = filename_output)
-			do i = 1, hist_points
-				 if (distribution(i)>0) then
-						write(21,*) (min + (max-min) * i /dble(hist_points)), distribution(i)
-				 end if
-			end do
-			close(21)
-			deallocate(dat)
-		end subroutine
+		max_val = maxval(distribution)
+
+		open(21, file = filename_output)
+		do i = 1, hist_points
+			 if (distribution(i)>0) then
+					write(21,*) (min + (max-min) * i /dble(hist_points)), distribution(i)
+			 end if
+		end do
+		close(21)
+		deallocate(dat)
+	end subroutine
 
 
 

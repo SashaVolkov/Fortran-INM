@@ -130,8 +130,8 @@ CONTAINS
 
 	! if ( id == 3) then
 	! 	print *, this.Neighbour(4, :)
-	! 	print *, this.ns_xy, this.nf_xy
-	! 	print *, this.Xsize, this.Ysize
+		! print *, this.ns_xy, this.nf_xy
+		! print *, this.Xsize, this.Ysize
 	! end if
 
 

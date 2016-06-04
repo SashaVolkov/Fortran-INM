@@ -74,35 +74,23 @@ module printer_ncdf
 
 		integer(4) i, j, face, ier
 		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
-		Real(8) W_mass(var(1).ns_x:var(1).nf_x, var(1).ns_y:var(1).nf_y)
 
 		ns_y = var(1).ns_y;  nf_y = var(1).nf_y
 		ns_x = var(1).ns_x;  nf_x = var(1).nf_x
-		Ysize = nf_y - ns_y + 1; Xsize = nf_x - ns_x + 1
+		Ysize = var(1).Ysize; Xsize = var(1).Xsize
 
 		t = 1+time/speedup
 
 
 		do face = 1, 6
-			do j = ns_y, nf_y
-				do i = ns_x, nf_x
-					W_mass(i, j) = var(face).h_height(i, j)
-				end do
-			end do
 
-			! call MPI_Barrier(MPI_COMM_WORLD, ier)
-
-			status = nf90_put_var(ncid(face), Wid, W_mass,&
+			status = nf90_put_var(ncid(face), Wid, var(face).h_height(:, :),&
 			 start = (/ dim + 1 + ns_x, dim + 1 + ns_y, t/), count = (/ Xsize, Ysize, 1/))
 
-
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
-			! if(status == nf90_NoErr) print *, "Good", id
 		end do
 
-			! print '("  h = ", f10.2, " m")', W_mass(0, 0)
-
-		end subroutine
+	end subroutine
 
 
 
