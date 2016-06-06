@@ -33,7 +33,7 @@ implicit none
 	dim = 25;  gr_step = 1;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 400;  speedup = 40;  dt = 400d0
+	Tmax = 6000;  speedup = 40;  dt = 400d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
@@ -71,7 +71,7 @@ implicit none
 ! ! 				if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
 ! 				if(mod(time, speedup) == 0) call diagn.L_norm(var_prev, grid, time)
 				if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid, id)
-				call MPI_Barrier(MPI_COMM_WORLD, ier)
+				! call MPI_Barrier(MPI_COMM_WORLD, ier)
 			end do
 
 ! 			print *, np
@@ -89,13 +89,13 @@ implicit none
 
 
 
-	! call grid.deinit()
-	! do face = 1, 6
-	! 	call var(face).deinit()
-	! 	call var_prev(face).deinit()
-	! end do
-	! call printer_nc.deinit()
-	! call diagn.deinit()
+	call grid.deinit()
+	do face = 1, 6
+		call var(face).deinit()
+		call var_prev(face).deinit()
+	end do
+	call printer_nc.deinit()
+	call diagn.deinit()
 
 
 	call MPI_FINALIZE(ier)
