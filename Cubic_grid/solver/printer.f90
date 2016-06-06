@@ -72,8 +72,9 @@ module printer_ncdf
 		Class(f_var) :: var(1:6)
 		integer(4), intent(in) :: dim, time, speedup, Wid, ncid(1:6), id
 
-		integer(4) i, j, face, ier
+		integer(4) x, y, face, ier
 		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
+		real(8) W_mass(var(1).ns_x:var(1).nf_x, var(1).ns_y:var(1).nf_y)
 
 		ns_y = var(1).ns_y;  nf_y = var(1).nf_y
 		ns_x = var(1).ns_x;  nf_x = var(1).nf_x
@@ -84,7 +85,13 @@ module printer_ncdf
 
 		do face = 1, 6
 
-			status = nf90_put_var(ncid(face), Wid, var(face).h_height(:, :),&
+			do y = ns_y, nf_y
+				do x = ns_x, nf_x
+					W_mass(x, y) = var(face).h_height(x, y)
+				end do
+			end do
+
+			status = nf90_put_var(ncid(face), Wid, W_mass,&
 			 start = (/ dim + 1 + ns_x, dim + 1 + ns_y, t/), count = (/ Xsize, Ysize, 1/))
 
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id

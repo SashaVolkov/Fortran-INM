@@ -43,7 +43,7 @@ CONTAINS
 		this.nf_x = paral.nf_xy(1);  this.nf_y = paral.nf_xy(2)
 
 		this.first_x = paral.ns_xy(1) - step;  this.first_y = paral.ns_xy(2) - step
-		this.last_x = paral.nf_xy(1) - step;  this.last_y = paral.nf_xy(2) - step
+		this.last_x = paral.nf_xy(1) + step;  this.last_y = paral.nf_xy(2) + step
 
 		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
 

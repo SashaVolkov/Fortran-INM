@@ -71,7 +71,7 @@ implicit none
 ! ! 				if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
 ! 				if(mod(time, speedup) == 0) call diagn.L_norm(var_prev, grid, time)
 				if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid, id)
-				! call MPI_Barrier(MPI_COMM_WORLD, ier)
+				call MPI_Barrier(MPI_COMM_WORLD, ier)
 			end do
 
 ! 			print *, np

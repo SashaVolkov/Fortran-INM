@@ -33,7 +33,7 @@ module schemes
 		nf_x = var(1).nf_x;  nf_y = var(1).nf_y
 
 
-		do face = 1, 1
+		do face = 1, 6
 			do y = ns_y, nf_y
 				do x = ns_x, nf_x
 
