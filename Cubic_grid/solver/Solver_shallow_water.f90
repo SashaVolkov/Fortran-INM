@@ -33,7 +33,7 @@ implicit none
 	dim = 25;  gr_step = 1;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 40000;  speedup = 40;  dt = 400d0
+	Tmax = 400;  speedup = 40;  dt = 400d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
@@ -56,18 +56,23 @@ implicit none
 		call var_prev(face).start_conditions()
 	end do
 
+	print *, var(1).ns_x, var(1).ns_y, var(1).nf_x, var(1).nf_y
+	print *, var_prev(1).ns_x, var_prev(1).ns_y, var_prev(1).nf_x, var_prev(1).nf_y
+	! print *, par.ns_xy, par.nf_xy
+
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
 	call printer_nc.to_print(var_prev, dim, 0, speedup, Wid, ncid, id)
 ! 	diagn.init( grid, Tmax, rescale)
 
 ! 			print '(" calc")'
 
-! 			do time = 1, Tmax
-! 				call sch.Linear(var, var_prev, grid)
+			do time = 1, Tmax
+				call sch.Linear(var, var_prev, grid)
 ! ! 				if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
 ! 				if(mod(time, speedup) == 0) call diagn.L_norm(var_prev, grid, time)
-! 				if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid)
-! 			end do
+				if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, grid.dim, time, speedup, Wid, ncid, id)
+				! call MPI_Barrier(MPI_COMM_WORLD, ier)
+			end do
 
 ! 			print *, np
 ! 			print '(" Grid step = ", f10.2, " m")', step
@@ -84,13 +89,13 @@ implicit none
 
 
 
-	call grid.deinit()
-	do face = 1, 6
-		call var(face).deinit()
-		call var_prev(face).deinit()
-	end do
-	call printer_nc.deinit()
-	call diagn.deinit()
+	! call grid.deinit()
+	! do face = 1, 6
+	! 	call var(face).deinit()
+	! 	call var_prev(face).deinit()
+	! end do
+	! call printer_nc.deinit()
+	! call diagn.deinit()
 
 
 	call MPI_FINALIZE(ier)

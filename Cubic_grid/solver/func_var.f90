@@ -42,8 +42,8 @@ CONTAINS
 		this.ns_x = paral.ns_xy(1);  this.ns_y = paral.ns_xy(2)
 		this.nf_x = paral.nf_xy(1);  this.nf_y = paral.nf_xy(2)
 
-		this.first_x = paral.ns_xy(1) - step;  this.first_y = paral.ns_xy(2) + step
-		this.last_x = paral.nf_xy(1) - step;  this.last_y = paral.nf_xy(2) + step
+		this.first_x = paral.ns_xy(1) - step;  this.first_y = paral.ns_xy(2) - step
+		this.last_x = paral.nf_xy(1) - step;  this.last_y = paral.nf_xy(2) - step
 
 		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
 
@@ -83,13 +83,13 @@ CONTAINS
 		Class(f_var) :: var_pr, var
 		integer(4) dim, x, y
 
-			do y = var_pr.first_y, var_pr.last_y
-				do x = var_pr.first_x, var_pr.last_x
-				var_pr.h_height(x, y)=var.h_height(x, y)
-				var_pr.u_vel(x, y)=var.u_vel(x, y)
-				var_pr.v_vel(x, y)=var.v_vel(x, y)
-				end do
-			end do
+			! do y = var_pr.first_y, var_pr.last_y
+			! 	do x = var_pr.first_x, var_pr.last_x
+				var_pr.h_height(:, :)=var.h_height(:, :)
+				var_pr.u_vel(:, :)=var.u_vel(:, :)
+				var_pr.v_vel(:, :)=var.v_vel(:, :)
+			! 	end do
+			! end do
 
 
 	end subroutine

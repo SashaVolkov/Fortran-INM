@@ -5,6 +5,8 @@ module schemes
 
 	implicit none
 
+	include"mpif.h"
+
 	Private
 	Public :: schema
 
@@ -24,15 +26,16 @@ module schemes
 		Class(g_var) :: grid
 
 		real(8) g, height, dt, partial(1:2)
-		integer(4) face, x, y, dim, i, j, stat
+		integer(4) face, x, y, dim, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier
 
 		g = grid.g;  height = var_pr(1).height;  dim = var_pr(1).dim
-		dt = grid.dt
+		dt = grid.dt;  ns_x = var(1).ns_x;  ns_y = var(1).ns_y
+		nf_x = var(1).nf_x;  nf_y = var(1).nf_y
 
 
-		do face = 1, 6
-			do y = -dim, dim
-				do x = -dim, dim
+		do face = 1, 1
+			do y = ns_y, nf_y
+				do x = ns_x, nf_x
 
 					partial(1) = grid.partial_c1_x(var_pr(face).h_height(x-1:x+1, y), x, y)
 					var(face).u_vel(x, y) = var_pr(face).u_vel(x, y) - dt*g*partial(1)
@@ -48,28 +51,28 @@ module schemes
 				end do
 			end do
 
-			do y = -dim, dim, 2*dim+1
-				do x = -dim, dim, 2*dim+1
-					do i = 1, var(1).step
-						do j = 1, var(1).step
+			! do y = -dim, dim, 2*dim+1
+			! 	do x = -dim, dim, 2*dim+1
+			! 		do i = 1, var(1).step
+			! 			do j = 1, var(1).step
 
-					var(face).u_vel(x, y) = (var_pr(face).u_vel(x+i, y+j) + var_pr(face).u_vel(x-i, y+j) +&
-					 var_pr(face).u_vel(x+i, y-j) + var_pr(face).u_vel(x-i, y-j))/4
+			! 		var(face).u_vel(x, y) = (var_pr(face).u_vel(x+i, y+j) + var_pr(face).u_vel(x-i, y+j) +&
+			! 		 var_pr(face).u_vel(x+i, y-j) + var_pr(face).u_vel(x-i, y-j))/4
 
-					var(face).v_vel(x, y) = (var_pr(face).v_vel(x+i, y+j) + var_pr(face).v_vel(x-i, y+j) +&
-					 var_pr(face).v_vel(x+i, y-j) + var_pr(face).v_vel(x-i, y-j))/4
+			! 		var(face).v_vel(x, y) = (var_pr(face).v_vel(x+i, y+j) + var_pr(face).v_vel(x-i, y+j) +&
+			! 		 var_pr(face).v_vel(x+i, y-j) + var_pr(face).v_vel(x-i, y-j))/4
 
-					var(face).h_height(x, y) = (var_pr(face).h_height(x+i, y+j) + var_pr(face).h_height(x-i, y+j) +&
-					 var_pr(face).h_height(x+i, y-j) + var_pr(face).h_height(x-i, y-j))/4
+			! 		var(face).h_height(x, y) = (var_pr(face).h_height(x+i, y+j) + var_pr(face).h_height(x-i, y+j) +&
+			! 		 var_pr(face).h_height(x+i, y-j) + var_pr(face).h_height(x-i, y-j))/4
 
-						end do
-					end do
-				end do
-			end do
+			! 			end do
+			! 		end do
+			! 	end do
+			! end do
 
+			! call MPI_Barrier(MPI_COMM_WORLD, ier)
 
 		call var_pr(face).equal(var(face))
-
 		end do
 		! stat = var(face).borders(var, var_pr)
 
