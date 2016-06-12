@@ -73,7 +73,7 @@ CONTAINS
 		if (this.block_x < this.Xdim_block) then  ! right
 			this.Neighbour(face, 2) = this.Ydim_block + id
 		else
-			this.nf_xy(1) = dim
+			this.nf_xy(1) = 2*dim
 			this.Neighbour(face, 2) = this.block_y - 1
 			if ( face == 1 ) then
 				this.Neighbour(1, 2) = this.Ydim_block*(this.block_y - 1) + this.block_x - 1
@@ -85,7 +85,7 @@ CONTAINS
 		if (this.block_x > 1) then  ! left
 			this.Neighbour(face, 4) = id - this.Ydim_block
 		else
-			this.ns_xy(1) = -dim
+			this.ns_xy(1) = 1
 			this.Neighbour(face, 4) = this.Ydim_block*(this.Xdim_block - 1) + this.block_y - 1
 						if ( face == 1 ) then
 							this.Neighbour(1, 4) = (this.Ydim_block - this.block_y+1)*this.Xdim_block - 1
@@ -98,7 +98,7 @@ CONTAINS
 		if (this.block_y < this.Ydim_block) then  ! bottom
 			this.Neighbour(face, 3) = 1 + id
 		else
-			this.nf_xy(2) = dim
+			this.nf_xy(2) = 2*dim
 			this.Neighbour(face, 3) = this.Ydim_block*(this.block_x-1)
 			if ( face == 3 ) then
 				this.Neighbour(3, 3) = this.Ydim_block*(this.Xdim_block - 1) + this.block_x - 1
@@ -112,7 +112,7 @@ CONTAINS
 		if (this.block_y > 1) then  ! top
 			this.Neighbour(face, 1) = id - 1
 		else
-			this.ns_xy(2) = -dim
+			this.ns_xy(2) = 1
 			this.Neighbour(face, 1) = id + this.Ydim_block - 1
 			if ( face == 3 ) then
 				this.Neighbour(3, 1) = this.Ydim_block*this.Xdim_block - this.block_x
@@ -128,11 +128,11 @@ CONTAINS
 	this.Xsize = 1 + this.nf_xy(1) - this.ns_xy(1)
 	this.Ysize = 1 + this.nf_xy(2) - this.ns_xy(2)
 
-	! if ( id == 3) then
+	if ( id == 0) then
 	! 	print *, this.Neighbour(4, :)
-		! print *, this.ns_xy, this.nf_xy
-		! print *, this.Xsize, this.Ysize
-	! end if
+		print *, this.ns_xy, this.nf_xy
+		print *, this.Xsize, this.Ysize
+	end if
 
 
 	End Subroutine

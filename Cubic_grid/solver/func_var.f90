@@ -81,7 +81,7 @@ CONTAINS
 	subroutine equal(var_pr, var)
 
 		Class(f_var) :: var_pr, var
-		integer(4) dim, x, y
+		integer(4) x, y
 
 			! do y = var_pr.first_y, var_pr.last_y
 			! 	do x = var_pr.first_x, var_pr.last_x
@@ -119,7 +119,7 @@ CONTAINS
 		do y = this.first_y, this.last_y
 			do x = this.first_x, this.last_x
 				this.h_height(x, y) =&
-				 h0*exp(-((((10.0/dim)*(x*0.5))**2)+(((10.0/dim)*(y*0.5))**2)))
+				 h0*exp(-((((10.0/dim)*((x-dim)*0.5))**2)+(((10.0/dim)*((y-dim)*0.5))**2)))
 			end do
 		end do
 		end if

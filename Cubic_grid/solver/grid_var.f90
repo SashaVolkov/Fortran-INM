@@ -62,13 +62,13 @@ CONTAINS
 
 	subroutine alloc(this)
 		Class(g_var) :: this
-			Allocate(this.h_dist(1:4, -this.dim_st:this.dim_st, -this.dim_st:this.dim_st))
-			Allocate(this.f_cor(-this.dim:this.dim, -this.dim:this.dim, 1:6))
-			Allocate(this.points_latlon(1:2, -this.dim:this.dim, -this.dim:this.dim, 1:6))
-			Allocate(this.square(-this.dim:this.dim-1, -this.dim:this.dim-1))
-			Allocate(this.triangle_area(1:2, -this.dim:this.dim-1, -this.dim:this.dim-1))
-			Allocate(this.triangle_angles(1:6, -this.dim:this.dim-1, -this.dim:this.dim-1))
-			Allocate(this.square_angles(1:4, -this.dim:this.dim-1, -this.dim:this.dim-1))
+			Allocate(this.h_dist(1:4, 1-this.step:2*this.dim + this.step, 1-this.step:2*this.dim + this.step))
+			Allocate(this.f_cor(1:2*this.dim, 1:2*this.dim, 1:6))
+			Allocate(this.points_latlon(1:2, 1:2*this.dim, 1:2*this.dim, 1:6))
+			Allocate(this.square(1:2*this.dim-1, 1:2*this.dim-1))
+			Allocate(this.triangle_area(1:2, 1:2*this.dim-1, 1:2*this.dim-1))
+			Allocate(this.triangle_angles(1:6, 1:2*this.dim-1, 1:2*this.dim-1))
+			Allocate(this.square_angles(1:4, 1:2*this.dim-1, 1:2*this.dim-1))
 	end subroutine
 
 
@@ -86,54 +86,56 @@ CONTAINS
 
 
 		do face = 1, 6 ! Only longitude
-			do y = -dim, dim
-				do x = -dim, dim
+			do y = 1, 2*dim
+				do x = 1, 2*dim
 					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.points_latlon(2, x, y, face))
 				end do
 			end do
 		end do
 
 
-		face = 3
-		do x = -dim_st + 1, dim_st - 1
-			do y = -dim_st + 1, dim_st - 1
+		face = 2
+		do x = 1 - this.step, 2*dim + this.step
+			do y = 1 - this.step, 2*dim + this.step
 
-if(y >= dim)then ! y
-	call g.dist(this.points_latlon(:, 2*dim - y, x, face), this.points_latlon(:, 2*dim - y -1, x, face), dist)
-	this.h_dist(1, y, x) = dist
-else
-	call g.dist(this.points_latlon(:, y+1, x, face), this.points_latlon(:, y, x, face), dist)
-	this.h_dist(1, y, x) = dist
-end if
-
-if(x >= dim)then ! x
-	call g.dist(this.points_latlon(:, y, 2*dim - x, face), this.points_latlon(:, y, 2*dim - x - 1, face), dist)
-	this.h_dist(2, y, x) = dist
-else
-	call g.dist(this.points_latlon(:, y, x+1, face), this.points_latlon(:, y, x, face), dist)
-	this.h_dist(2, y, x) = dist
-end if
-
-if(y <= -dim)then ! y
-	call g.dist(this.points_latlon(:, - 2*dim - y + 1, x, face), this.points_latlon(:,  - 2*dim - y, x, face), dist)
+if(y <= 1)then ! y
+	call g.dist(this.points_latlon(:, 2*dim + y - 1, x, face), this.points_latlon(:, 2*dim + y - 2, x, face), dist)
 	this.h_dist(3, y, x) = dist
 else
 	call g.dist(this.points_latlon(:, y, x, face), this.points_latlon(:, y-1, x, face), dist)
 	this.h_dist(3, y, x) = dist
 end if
 
-if(x <= -dim)then ! x
-	call g.dist(this.points_latlon(:, y, - 2*dim - x + 1, face), this.points_latlon(:, y,  - 2*dim - x, face), dist)
+if(x <= 1)then ! x
+	call g.dist(this.points_latlon(:, y, 2*dim + x - 1, face), this.points_latlon(:, y, 2*dim + x - 2, face), dist)
 	this.h_dist(4, y, x) = dist
 else
 	call g.dist(this.points_latlon(:, y, x, face), this.points_latlon(:, y, x-1, face), dist)
 	this.h_dist(4, y, x) = dist
 end if
 
+if(y >= 2*dim)then ! y
+	call g.dist(this.points_latlon(:, y + 1 - 2*dim, x, face), this.points_latlon(:, y + 2 - 2*dim, x, face), dist)
+	this.h_dist(1, y, x) = dist
+else
+	call g.dist(this.points_latlon(:, y+1, x, face), this.points_latlon(:, y, x, face), dist)
+	this.h_dist(1, y, x) = dist
+end if
+
+if(x >= 2*dim)then ! x
+	call g.dist(this.points_latlon(:, y, x + 1 - 2*dim, face), this.points_latlon(:, y, x + 2 - 2*dim, face), dist)
+	this.h_dist(2, y, x) = dist
+else
+	call g.dist(this.points_latlon(:, y, x+1, face), this.points_latlon(:, y, x, face), dist)
+	this.h_dist(2, y, x) = dist
+end if
+
 			end do
 		end do
 
+
 		sphere_area = 0
+
 
 
 
@@ -149,8 +151,8 @@ end if
 		open (21, file = 'datFiles/cell'//trim(istring)//'.dat')
 		open (22, file = 'datFiles/dist'//trim(istring)//'.dat')
 
-		do x = -dim, dim-1
-			do y = -dim, dim-1
+		do x = 1, 2*dim-1
+			do y = 1, 2*dim-1
 
 				call g.triangle(this.points_latlon(:, y, x, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S1, this.triangle_angles(1:3, y, x))
 				call g.triangle(this.points_latlon(:, y+1, x+1, face), this.points_latlon(:, y, x+1, face), this.points_latlon(:, y+1, x, face), S2, this.triangle_angles(4:6, y, x))
@@ -221,10 +223,10 @@ subroutine step_minmax(this)
 	real(8) dim
 
 	dim = this.dim
-	this.dx_min = MINVAL(this.h_dist(2,-dim:dim,-dim:dim))
-	this.dy_min = MINVAL(this.h_dist(1,-dim:dim,-dim:dim))
-	this.dx_max = MAXVAL(this.h_dist(2,-dim:dim,-dim:dim))
-	this.dy_max = MAXVAL(this.h_dist(1,-dim:dim,-dim:dim))
+	this.dx_min = MINVAL(this.h_dist(2,1:2*dim,1:2*dim))
+	this.dy_min = MINVAL(this.h_dist(1,1:2*dim,1:2*dim))
+	this.dx_max = MAXVAL(this.h_dist(2,1:2*dim,1:2*dim))
+	this.dy_max = MAXVAL(this.h_dist(1,1:2*dim,1:2*dim))
 
 end subroutine
 

@@ -27,7 +27,7 @@ CONTAINS
 		Class(generator) :: this
 		integer, intent(in) :: dim, rescale
 		real(8), intent(in) :: r_sphere
-		real(8), intent(out) :: grid_points_latlon(1:2, -dim:dim, -dim:dim, 1:6) ! face_id, j, k, r_vector
+		real(8), intent(out) :: grid_points_latlon(1:2, 1:2*dim, 1:2*dim, 1:6) ! face_id, j, k, r_vector
 		! real(8), intent(out) :: grid_points_xyz(1:3, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:6) ! face_id, j, k, r_vector
 
 		character*14 filename
@@ -46,16 +46,14 @@ CONTAINS
 ! 		call cpu_time(t(1)) ! Time start
 
 		call matr.compute_matr_of_rot(matr_of_rots, r_sphere) ! matr_of_rots - 48 2dim matrices (3*3). You can find them in grid/matrices_of_rotations.dat
-		x_min = -dim; x_max = dim; y_min = -dim; y_max = dim
+		x_min = -2*dim; x_max = 2*dim; y_min = -2*dim; y_max = 2*dim
 
 
 		do face_index= 1, 6
 			do j= x_min, x_max
-! 				if ( abs(j) /=1 ) then
 				do k= y_min, y_max
-! 					if ( abs(k)/=1 ) then
 
-						x_face = j/dble(dim); y_face = k/dble(dim)		!normalized x coordinate
+						x_face = j/dble(2*dim); y_face = k/dble(2*dim)		!normalized x coordinate
 
 						if (rescale /= 0) then
 							call this.rescale(x_face, y_face, x_face, y_face, rescale)
@@ -74,13 +72,12 @@ CONTAINS
 
 						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, longitude, latitude)
 
+						if(abs(dmod(j,2)) == 1 .and. abs(dmod(k,2)) == 1) then
+							grid_points_latlon(1, dim + (j+1)/2, dim + (k+1)/2, face_index) = latitude
+							grid_points_latlon(2, dim + (j+1)/2, dim + (k+1)/2, face_index) = longitude
+						end if
 
-						grid_points_latlon(1, j, k, face_index) = latitude
-						grid_points_latlon(2, j, k, face_index) = longitude
-
-! 						end if
 					end do
-! 				end if
 			end do
 		end do
 

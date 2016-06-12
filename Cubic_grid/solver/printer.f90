@@ -48,8 +48,8 @@ module printer_ncdf
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 
-			status = nf90_def_dim (ncid(face), "x", 2*dim+1, xid)
-			status = nf90_def_dim (ncid(face), "y", 2*dim+1, yid)
+			status = nf90_def_dim (ncid(face), "x", 2*dim, xid)
+			status = nf90_def_dim (ncid(face), "y", 2*dim, yid)
 			status = nf90_def_dim (ncid(face), "time", Tmax/speedup + 1, time)
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
@@ -66,11 +66,11 @@ module printer_ncdf
 	! 		call m.to_print(fprev, g, t, name, Tmax, Wid, xid, yid, time, ncid)
 
 
-	subroutine to_print(this, var, dim, time, speedup, Wid, ncid, id)
+	subroutine to_print(this, var, time, speedup, Wid, ncid, id)
 
 		Class(printer) :: this
 		Class(f_var) :: var(1:6)
-		integer(4), intent(in) :: dim, time, speedup, Wid, ncid(1:6), id
+		integer(4), intent(in) :: time, speedup, Wid, ncid(1:6), id
 
 		integer(4) x, y, face, ier
 		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
@@ -92,7 +92,7 @@ module printer_ncdf
 			! end do
 
 			status = nf90_put_var(ncid(face), Wid, var(face).h_height(ns_x:nf_x, ns_y:nf_y),&
-			 start = (/ dim + 1 + ns_x, dim + 1 + ns_y, t/), count = (/ Xsize, Ysize, 1/))
+			 start = (/ ns_x, ns_y, t/), count = (/ Xsize, Ysize, 1/))
 
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 		end do
