@@ -35,7 +35,7 @@ CONTAINS
 		real(8), intent(in) :: latlon1(1:2), latlon2(1:2)
 		real(8), intent(out) :: dist
 
-		dist = this.radius * dacos(dsin(latlon1(2))*dsin(latlon2(2)) + dcos(latlon1(2))*dcos(latlon2(2))*dcos(latlon1(1) - latlon2(1)))
+		dist = this.radius * dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
 
 	end subroutine
 
@@ -47,7 +47,7 @@ CONTAINS
 		real(8), intent(in) :: latlon1(1:2),latlon2(1:2)
 		real(8), intent(out) :: angle
 
-		angle = dacos(dsin(latlon1(2))*dsin(latlon2(2)) + dcos(latlon1(2))*dcos(latlon2(2))*dcos(latlon1(1) - latlon2(1)))
+		angle = dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
 
 	end subroutine
 

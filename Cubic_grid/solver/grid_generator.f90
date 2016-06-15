@@ -23,12 +23,12 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere_grid_generation(this, dim, r_sphere, rescale, grid_points_latlon)
+	subroutine conformal_cubed_sphere_grid_generation(this, dim, r_sphere, rescale, grid_points_latlon_c, grid_points_latlon)
 		Class(generator) :: this
 		integer, intent(in) :: dim, rescale
 		real(8), intent(in) :: r_sphere
-		real(8), intent(out) :: grid_points_latlon(1:2, 1:2*dim, 1:2*dim, 1:6) ! face_id, j, k, r_vector
-		! real(8), intent(out) :: grid_points_xyz(1:3, -x_dimension:x_dimension, -y_dimension:y_dimension, 1:6) ! face_id, j, k, r_vector
+		real(8), intent(out) :: grid_points_latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
+		real(8), intent(out) :: grid_points_latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)
 
 		character*14 filename
 		character istring
@@ -70,11 +70,14 @@ CONTAINS
 						r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 						! grid_points_xyz(:, j, k, face_index) = r_vector
 
-						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, longitude, latitude)
+						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, latitude, longitude)
 
 						if(abs(dmod(j,2)) == 1 .and. abs(dmod(k,2)) == 1) then
-							grid_points_latlon(1, dim + (j+1)/2, dim + (k+1)/2, face_index) = latitude
-							grid_points_latlon(2, dim + (j+1)/2, dim + (k+1)/2, face_index) = longitude
+							grid_points_latlon_c(1, dim + (j+1)/2, dim + (k+1)/2, face_index) = latitude
+							grid_points_latlon_c(2, dim + (j+1)/2, dim + (k+1)/2, face_index) = longitude
+						else if(abs(dmod(j,2)) == 0 .and. abs(dmod(k,2)) == 0) then
+							grid_points_latlon(1, dim + j/2 + 1, dim + k/2 + 1, face_index) = latitude
+							grid_points_latlon(2, dim + j/2 + 1, dim + k/2 + 1, face_index) = longitude
 						end if
 
 					end do

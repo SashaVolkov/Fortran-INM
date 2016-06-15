@@ -53,8 +53,7 @@ CONTAINS
 				p = p + 1
 			end do
 			this.block_x = p
-! 			print *,"table", this.block_x, this.block_y, id+1
-! 		end if
+
 
 
 		this.Xsize = (2*dim+1)/this.Xdim_block
@@ -62,8 +61,8 @@ CONTAINS
 
 
 
-		this.ns_xy(1) = 1 + this.Xsize*(this.block_x - 1) - dim; this.nf_xy(1) = this.Xsize*this.block_x - dim
-		this.ns_xy(2) = 1 + this.Ysize*(this.block_y - 1) - dim; this.nf_xy(2) = this.Ysize*this.block_y - dim
+		this.ns_xy(1) = 1 + this.Xsize*(this.block_x - 1); this.nf_xy(1) = this.Xsize*this.block_x
+		this.ns_xy(2) = 1 + this.Ysize*(this.block_y - 1); this.nf_xy(2) = this.Ysize*this.block_y
 ! 		first_xy() = ns_xy(1) - step; last_xy = nf_xy(1) + step
 ! 		first_xy = ns_xy(2) - step; last_xy = nf_xy(2) + step
 
