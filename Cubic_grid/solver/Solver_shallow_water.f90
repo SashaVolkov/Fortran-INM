@@ -34,7 +34,7 @@ implicit none
 	step = 2*pi*r_sphere/(8d0*dim)
 
 	Tmax = 8000;  speedup = 40;  dt = 400d0
-	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
+	rescale = 1 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
 	call MPI_Init(ier)
@@ -51,8 +51,8 @@ implicit none
 	call par.init(dim, gr_step, np, id)
 
 	do face = 1, 6
-		call var(face).init(par, dim, gr_step, height, face)
-		call var_prev(face).init(par, dim, gr_step, height, face)
+		call var(face).init(par, gr_step, height, face)
+		call var_prev(face).init(par, gr_step, height, face)
 		call var_prev(face).start_conditions()
 	end do
 
@@ -75,10 +75,9 @@ implicit none
 		print '(" Y max step = ", f10.2, " m")', grid.dy_max
 		print '(" Y max/min = ", f5.2)', grid.dy_max/grid.dy_min
 		print '(" X max/min = ", f5.2)', grid.dx_max/grid.dx_min
-		print '(" latlon = ", f10.2, f10.2)', grid.points_latlon_c(:, dim, 1, 4) * 180.0/pi
-		print '(" latlon = ", f10.2, f10.2)', grid.points_latlon_c(:, dim, 2*dim, 4) * 180.0/pi
+		! print '(" latlon = ", f10.2, f10.2)', grid.points_latlon(:, dim+1, 1, 4) * 180.0/pi
+		! print '(" latlon = ", f10.2, f10.2)', grid.points_latlon(:, dim+1, 2*dim+1, 4) * 180.0/pi
 		print '(" np = ", I7)', np
-		! print *, "np = ", np
 	end if
 
 

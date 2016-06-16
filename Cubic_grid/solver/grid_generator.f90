@@ -72,10 +72,10 @@ CONTAINS
 
 						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, latitude, longitude)
 
-						if(abs(dmod(j,2)) == 1 .and. abs(dmod(k,2)) == 1) then
+						if(abs(mod(j,2)) == 1 .and. abs(mod(k,2)) == 1) then
 							grid_points_latlon_c(1, dim + (j+1)/2, dim + (k+1)/2, face_index) = latitude
 							grid_points_latlon_c(2, dim + (j+1)/2, dim + (k+1)/2, face_index) = longitude
-						else if(abs(dmod(j,2)) == 0 .and. abs(dmod(k,2)) == 0) then
+						else if(abs(mod(j,2)) == 0 .and. abs(mod(k,2)) == 0) then
 							grid_points_latlon(1, dim + j/2 + 1, dim + k/2 + 1, face_index) = latitude
 							grid_points_latlon(2, dim + j/2 + 1, dim + k/2 + 1, face_index) = longitude
 						end if

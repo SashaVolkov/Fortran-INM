@@ -50,32 +50,11 @@ module schemes
 
 				end do
 			end do
-
-			! do y = -dim, dim, 2*dim+1
-			! 	do x = -dim, dim, 2*dim+1
-			! 		do i = 1, var(1).step
-			! 			do j = 1, var(1).step
-
-			! 		var(face).u_vel(x, y) = (var_pr(face).u_vel(x+i, y+j) + var_pr(face).u_vel(x-i, y+j) +&
-			! 		 var_pr(face).u_vel(x+i, y-j) + var_pr(face).u_vel(x-i, y-j))/4
-
-			! 		var(face).v_vel(x, y) = (var_pr(face).v_vel(x+i, y+j) + var_pr(face).v_vel(x-i, y+j) +&
-			! 		 var_pr(face).v_vel(x+i, y-j) + var_pr(face).v_vel(x-i, y-j))/4
-
-			! 		var(face).h_height(x, y) = (var_pr(face).h_height(x+i, y+j) + var_pr(face).h_height(x-i, y+j) +&
-			! 		 var_pr(face).h_height(x+i, y-j) + var_pr(face).h_height(x-i, y-j))/4
-
-			! 			end do
-			! 		end do
-			! 	end do
-			! end do
-
-			! call MPI_Barrier(MPI_COMM_WORLD, ier)
-
-		call var_pr(face).equal(var(face))
 		end do
-		! stat = var(face).borders(var, var_pr)
 
+		do face = 1, 6
+			call var_pr(face).equal(var(face))
+		end do
 
 
 	end subroutine

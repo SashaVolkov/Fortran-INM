@@ -31,11 +31,11 @@ CONTAINS
 
 
 
-	subroutine init(this, paral, dim, step, height, face)
+	subroutine init(this, paral, step, height, face)
 
 		Class(f_var) :: this
 		Class(parallel) :: paral
-		integer(4), intent(in) :: step, face, dim
+		integer(4), intent(in) :: step, face
 		real(8), intent(in) :: height
 
 
@@ -47,7 +47,7 @@ CONTAINS
 
 		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
 
-		this.step = step;  this.height = height;  this.face = face; this.dim = dim
+		this.step = step;  this.height = height;  this.face = face; this.dim = paral.dim
 
 		call this.alloc()
 
