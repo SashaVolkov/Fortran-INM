@@ -7,6 +7,7 @@ program solver
 	use printer_ncdf, Only: printer
 	use schemes, Only: schema
 	use diagnostic_mod, Only: diagnostic
+	use messenger, Only: message
 
 implicit none
 
@@ -19,12 +20,13 @@ implicit none
 	integer(4) status(MPI_STATUS_SIZE), ier, id, np
 
 	Type(geometry) :: geom
-	Type(f_var) :: var(1:6), var_prev(1:6)
+	Type(f_var) :: var, var_prev
 	Type(g_var) :: grid
-	Type(parallel) :: par
+	Type(parallel) :: paral
 	Type(printer) :: printer_nc
 	Type(schema) :: sch
 	Type(diagnostic) :: diagn
+	Type(message) :: msg
 
 
 !definition
@@ -48,13 +50,12 @@ implicit none
 	call grid.init(geom, dim, gr_step, omega_cor, g, dt, rescale)
 	dim = grid.dim
 
-	call par.init(dim, gr_step, np, id)
+	call paral.init(dim, gr_step, np, id)
 
-	do face = 1, 6
-		call var(face).init(par, gr_step, height, face)
-		call var_prev(face).init(par, gr_step, height, face)
-		call var_prev(face).start_conditions()
-	end do
+
+	call var.init(paral, gr_step, height)
+	call var_prev.init(paral, gr_step, height)
+	call var_prev.start_conditions()
 
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
@@ -62,10 +63,11 @@ implicit none
 ! 	diagn.init( grid, Tmax, rescale)
 
 
-	do time = 1, Tmax
+	do time = 1, 1
 		call sch.Linear(var, var_prev, grid)
 ! 				if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
 ! 				if(mod(time, speedup) == 0) call diagn.L_norm(var_prev, grid, time)
+		call msg.msg(var_prev, paral)
 		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
 	end do
 
@@ -83,10 +85,8 @@ implicit none
 
 
 	call grid.deinit()
-	do face = 1, 6
-		call var(face).deinit()
-		call var_prev(face).deinit()
-	end do
+	call var.deinit()
+	call var_prev.deinit()
 	call printer_nc.deinit()
 	call diagn.deinit()
 

@@ -9,12 +9,12 @@ implicit none
 
 	Type f_var
 
-		Real(8), Allocatable :: h_height(:, :)
-		Real(8), Allocatable :: u_vel(:, :)
-		Real(8), Allocatable :: v_vel(:, :)
+		Real(8), Allocatable :: h_height(:, :, :)
+		Real(8), Allocatable :: u_vel(:, :, :)
+		Real(8), Allocatable :: v_vel(:, :, :)
 		! Real(8), Allocatable :: distance_grid(:, :, :, :)
 		real(8) height
-		integer(4) step, face, dim, Xsize, Ysize
+		integer(4) step, dim, Xsize, Ysize
 		integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y
 
 		CONTAINS
@@ -31,11 +31,11 @@ CONTAINS
 
 
 
-	subroutine init(this, paral, step, height, face)
+	subroutine init(this, paral, step, height)
 
 		Class(f_var) :: this
 		Class(parallel) :: paral
-		integer(4), intent(in) :: step, face
+		integer(4), intent(in) :: step
 		real(8), intent(in) :: height
 
 
@@ -47,7 +47,8 @@ CONTAINS
 
 		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
 
-		this.step = step;  this.height = height;  this.face = face; this.dim = paral.dim
+		this.step = step;  this.height = height;  this.dim = paral.dim
+
 
 		call this.alloc()
 
@@ -59,9 +60,9 @@ CONTAINS
 
 		Class(f_var) :: this
 
-		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y))
-		Allocate(this.u_vel(this.first_x:this.last_x, this.first_y:this.last_y))
-		Allocate(this.v_vel(this.first_x:this.last_x, this.first_y:this.last_y))
+		Allocate(this.h_height(6, this.first_x:this.last_x, this.first_y:this.last_y))
+		Allocate(this.u_vel(6, this.first_x:this.last_x, this.first_y:this.last_y))
+		Allocate(this.v_vel(6, this.first_x:this.last_x, this.first_y:this.last_y))
 
 	end subroutine
 
@@ -85,9 +86,9 @@ CONTAINS
 
 			! do y = var_pr.first_y, var_pr.last_y
 			! 	do x = var_pr.first_x, var_pr.last_x
-				var_pr.h_height(:, :)=var.h_height(:, :)
-				var_pr.u_vel(:, :)=var.u_vel(:, :)
-				var_pr.v_vel(:, :)=var.v_vel(:, :)
+				var_pr.h_height(:, :, :)=var.h_height(:, :, :)
+				var_pr.u_vel(:, :, :)=var.u_vel(:, :, :)
+				var_pr.v_vel(:, :, :)=var.v_vel(:, :, :)
 			! 	end do
 			! end do
 
@@ -102,27 +103,30 @@ CONTAINS
 		integer(4) dim
 		real(8) h0
 
-		integer(4) x, y
+		integer(4) x, y, face
 
 		h0 = this.height;  dim = this.dim
 
+		do face = 1, 6
 
-		do y = this.first_y, this.last_y
-			do x = this.first_x, this.last_x
-				this.h_height(x, y) = 0
-				this.u_vel(x, y) = 0
-				this.v_vel(x, y) = 0
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
+					this.h_height(face, x, y) = 0
+					this.u_vel(face, x, y) = 0
+					this.v_vel(face, x, y) = 0
+				end do
 			end do
-		end do
 
-		if ( this.face == 2 ) then
-		do y = this.first_y, this.last_y
-			do x = this.first_x, this.last_x
-				this.h_height(x, y) =&
-				 h0*exp(-((((10.0/dim)*((x-dim)*0.5))**2)+(((10.0/dim)*((y-dim)*0.5))**2)))
+			if ( face == 2 ) then
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
+					this.h_height(face, x, y) =&
+					 h0*exp(-((((10.0/dim)*((x-dim)*0.5))**2)+(((10.0/dim)*((y-dim)*0.5))**2)))
+				end do
 			end do
+			end if
+
 		end do
-		end if
 
 
 	end subroutine

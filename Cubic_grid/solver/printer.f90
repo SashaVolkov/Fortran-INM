@@ -69,16 +69,16 @@ module printer_ncdf
 	subroutine to_print(this, var, time, speedup, Wid, ncid, id)
 
 		Class(printer) :: this
-		Class(f_var) :: var(1:6)
+		Class(f_var) :: var
 		integer(4), intent(in) :: time, speedup, Wid, ncid(1:6), id
 
 		integer(4) x, y, face, ier
 		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
-		real(8) W_mass(var(1).ns_x:var(1).nf_x, var(1).ns_y:var(1).nf_y)
+		real(8) W_mass(var.ns_x:var.nf_x, var.ns_y:var.nf_y)
 
-		ns_y = var(1).ns_y;  nf_y = var(1).nf_y
-		ns_x = var(1).ns_x;  nf_x = var(1).nf_x
-		Ysize = var(1).Ysize; Xsize = var(1).Xsize
+		ns_y = var.ns_y;  nf_y = var.nf_y
+		ns_x = var.ns_x;  nf_x = var.nf_x
+		Ysize = var.Ysize; Xsize = var.Xsize
 
 		t = 1+time/speedup
 
@@ -91,7 +91,7 @@ module printer_ncdf
 			! 	end do
 			! end do
 
-			status = nf90_put_var(ncid(face), Wid, var(face).h_height(ns_x:nf_x, ns_y:nf_y),&
+			status = nf90_put_var(ncid(face), Wid, var.h_height(face, ns_x:nf_x, ns_y:nf_y),&
 			 start = (/ ns_x, ns_y, t/), count = (/ Xsize, Ysize, 1/))
 
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id

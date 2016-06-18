@@ -85,7 +85,7 @@ CONTAINS
 
 	subroutine Courant(this, func, grid, time)
 		Class(diagnostic) :: this
-		Class(f_var) :: func(1:6)
+		Class(f_var) :: func
 		Class(g_var) :: grid
 		integer(4), intent(in) :: time
 		integer(4) face, x, y, dim
@@ -96,8 +96,8 @@ CONTAINS
 			do y = -dim, dim
 				do x = -dim, dim
 
-					this.CFL(x, y, face) = abs(func(face).u_vel(x, y)*grid.dt/grid.h_dist(2, 1, y, x)) +&
-					 abs(func(face).v_vel(x, y)*grid.dt/grid.h_dist(3, 1, y, x))
+					this.CFL(x, y, face) = abs(func.u_vel(face, x, y)*grid.dt/grid.h_dist(2, 1, y, x)) +&
+					 abs(func.v_vel(face, x, y)*grid.dt/grid.h_dist(3, 1, y, x))
 
 				end do
 			end do
@@ -111,13 +111,13 @@ CONTAINS
 	end subroutine
 
 
-
 	subroutine L_norm(this, func, grid, time)
 		Class(diagnostic) :: this
 		Class(g_var) :: grid
-		Class(f_var) :: func(1:6)
+		Class(f_var) :: func
 ! 		real(8), intent(in) :: func(-this.dim:this.dim, -this.dim:this.dim, 1:6)
 		integer(4), intent(in) :: time
+
 		integer(4) face, x, y, dim
 		real(8) L1, L2, F1, F2, L_inf
 
@@ -127,15 +127,11 @@ CONTAINS
 			do y = -dim, dim
 				do x = -dim, dim
 
-					F1 = func(face).h_height(x, y) + func(face).h_height(x+1, y) + func(face).h_height(x, y+1)
-					F2 = func(face).h_height(x+1, y+1) + func(face).h_height(x+1, y) + func(face).h_height(x, y+1)
+					F1 = func.h_height(face, x, y) + func.h_height(face, x+1, y) + func.h_height(face, x, y+1)
+					F2 = func.h_height(face, x+1, y+1) + func.h_height(face, x+1, y) + func.h_height(face, x, y+1)
 					L1 = abs(F1)*grid.triangle_area(1, x, y) + abs(F2)*grid.triangle_area(2, x, y)
 					L2 = F1*F1*grid.triangle_area(1, x, y) + F2*F2*grid.triangle_area(2, x, y)
-
-					if ( L_inf < MAXVAL(abs(func(face).h_height)) ) then
-						L_inf = MAXVAL(abs(func(face).h_height))
-					end if
-
+					L_inf = MAXVAL(abs(func.h_height))
 
 				end do
 			end do
