@@ -23,6 +23,14 @@ CONTAINS
 
 
 
+! For example, in C, a two-dimensional array with three rows and four columns will be stored in memory in the following sequence:
+! (1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),(3,4)
+
+! However, FORTRAN will store the same array in the following sequence:
+! (1,1),(2,1),(3,1),(1,2),(2,2),(3,2),(1,3),(2,3),(3,3),(1,4),(2,4),(3,4)
+
+
+
 	Subroutine parallel_init(this, dim, step, np, id)
 
 		Class(parallel) :: this
@@ -76,6 +84,8 @@ CONTAINS
 
 		call this.grey_zone()
 
+		print *, this.rcv_xy(3, :), id
+
 	End Subroutine
 
 
@@ -94,28 +104,36 @@ CONTAINS
 
 		mp_dp = MPI_DOUBLE
 
-		call MPI_TYPE_VECTOR(this.Xsize, this.step, y, mp_dp, this.grey(up), ier)
-		call MPI_TYPE_VECTOR(this.Xsize, this.step, y, mp_dp, this.grey(down), ier)
-		call MPI_TYPE_VECTOR(this.step, this.Ysize, x, mp_dp, this.grey(right), ier)
-		call MPI_TYPE_VECTOR(this.step, this.Ysize, x, mp_dp, this.grey(left), ier)
+		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.grey(up), ier)
+		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.grey(down), ier)
+		call MPI_TYPE_VECTOR(this.Ysize, this.Ysize, y, mp_dp, this.grey(right), ier)
+		call MPI_TYPE_VECTOR(this.Ysize, this.Ysize, y, mp_dp, this.grey(left), ier)
 		call MPI_TYPE_COMMIT(this.grey(up), ier)
 		call MPI_TYPE_COMMIT(this.grey(down), ier)
 		call MPI_TYPE_COMMIT(this.grey(right), ier)
 		call MPI_TYPE_COMMIT(this.grey(left), ier)
 
-		this.rcv_xy(left, 1) = this.ns_xy(1) - this.step; this.rcv_xy(left, 2) = this.ns_xy(2);
-		this.rcv_xy(right, 1) = this.nf_xy(1); this.rcv_xy(right, 2) = this.ns_xy(2);
+		this.rcv_xy(left, 1) = this.ns_xy(1) - this.step
+		this.rcv_xy(left, 2) = this.ns_xy(2);
+		this.rcv_xy(right, 1) = this.nf_xy(1) + 1
+		this.rcv_xy(right, 2) = this.ns_xy(2);
 
-		this.rcv_xy(down, 1) = this.ns_xy(1); this.rcv_xy(down, 2) = this.ns_xy(2) - this.step;
-		this.rcv_xy(up, 1) = this.ns_xy(1); this.rcv_xy(up, 2) = this.nf_xy(2);
+		this.rcv_xy(down, 1) = this.ns_xy(1)
+		this.rcv_xy(down, 2) = this.ns_xy(2) - this.step;
+		this.rcv_xy(up, 1) = this.ns_xy(1)
+		this.rcv_xy(up, 2) = this.nf_xy(2) + 1;
 
 
+		this.snd_xy(left, 1) = this.ns_xy(1)
+		this.snd_xy(left, 2) = this.ns_xy(2)
+		this.snd_xy(right, 1) = this.nf_xy(1) - this.step + 1
+		this.snd_xy(right, 2) = this.ns_xy(2)
 
-		this.snd_xy(left, 1) = this.ns_xy(1); this.snd_xy(left, 2) = this.ns_xy(2);
-		this.snd_xy(right, 1) = this.nf_xy(1) - this.step; this.snd_xy(right, 2) = this.ns_xy(2);
+		this.snd_xy(down, 1) = this.ns_xy(1)
+		this.snd_xy(down, 2) = this.ns_xy(2)
+		this.snd_xy(up, 1) = this.ns_xy(1)
+		this.snd_xy(up, 2) = this.nf_xy(2) - this.step + 1;
 
-		this.snd_xy(down, 1) = this.ns_xy(1); this.snd_xy(down, 2) = this.ns_xy(2)
-		this.snd_xy(up, 1) = this.ns_xy(1); this.snd_xy(up, 2) = this.nf_xy(2) - this.step;
 
 	End Subroutine
 
@@ -125,13 +143,12 @@ CONTAINS
 
 	Class(parallel) :: this
 	integer(4), Intent(In) :: id
-	integer(4) face, up, right, left, down
+	integer(4) face, up, right, left, down, i
 	
 	up = 1; right=2; down=3; left=4
 
 	! 			Neighbourhood
 	this.border(:, :) = 0 ! if 0 element in center, if "1": +pi/2 rotation, if "2": +pi, if "-1": -pi/2
-	this.Neighbours_face(:, :) = face
 	this.Neighbour_id(:, 1) = id + 1
 	this.Neighbour_id(:, 2) = this.Ydim_block + id
 	this.Neighbour_id(:, 3) = id - 1
@@ -189,7 +206,7 @@ CONTAINS
 
 		if (this.block_y == 0) then  ! down
 
-			this.Neighbour_id(face, down) = this.Ydim_block*(this.block_x - 1)
+			this.Neighbour_id(face, down) = this.block_x*this.Xdim_block + this.Ydim_block - 1
 			this.Neighbours_face(face, down) = 1
 
 			if ( face == 3 ) then
@@ -233,6 +250,9 @@ CONTAINS
 		end if
 	end do
 
+
+
+	! print *, id, this.Neighbour_id(2, 1), this.Neighbours_face(2, 1)
 
 
 	End Subroutine
