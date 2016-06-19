@@ -96,8 +96,8 @@ CONTAINS
 			do y = -dim, dim
 				do x = -dim, dim
 
-					this.CFL(x, y, face) = abs(func.u_vel(face, x, y)*grid.dt/grid.h_dist(2, 1, y, x)) +&
-					 abs(func.v_vel(face, x, y)*grid.dt/grid.h_dist(3, 1, y, x))
+					this.CFL(x, y, face) = abs(func.u_vel(x, y, face)*grid.dt/grid.h_dist(2, 1, y, x)) +&
+					 abs(func.v_vel(x, y, face)*grid.dt/grid.h_dist(3, 1, y, x))
 
 				end do
 			end do
@@ -127,8 +127,8 @@ CONTAINS
 			do y = -dim, dim
 				do x = -dim, dim
 
-					F1 = func.h_height(face, x, y) + func.h_height(face, x+1, y) + func.h_height(face, x, y+1)
-					F2 = func.h_height(face, x+1, y+1) + func.h_height(face, x+1, y) + func.h_height(face, x, y+1)
+					F1 = func.h_height(x, y, face) + func.h_height(x+1, y, face) + func.h_height(x, y+1, face)
+					F2 = func.h_height(x+1, y+1, face) + func.h_height(x+1, y, face) + func.h_height(x, y+1, face)
 					L1 = abs(F1)*grid.triangle_area(1, x, y) + abs(F2)*grid.triangle_area(2, x, y)
 					L2 = F1*F1*grid.triangle_area(1, x, y) + F2*F2*grid.triangle_area(2, x, y)
 					L_inf = MAXVAL(abs(func.h_height))

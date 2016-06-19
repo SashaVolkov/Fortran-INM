@@ -9,8 +9,10 @@ implicit none
 
 	Type parallel
 		integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim
-		integer(4) ns_xy(1:2), nf_xy(1:2), step, grey(4)
-		integer(4) snd_xy(4, 2), rcv_xy(4, 2)
+		integer(4) ns_xy(1:2), nf_xy(1:2), step,  grey(4)
+		integer(4) backward, backward_grey, backward_90, backward_grey_90, backward_m90(4), backward_grey_m90(4)
+		integer(4) snd_xy(4, 2), snd_xy_180(4, 2), snd_xy_90(4, 2), snd_xy_m90(4, 2)
+		integer(4) rcv_xy(4, 2), rcv_xy_90(4, 2), rcv_xy_m90(4, 2)
 		integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id
 		CONTAINS
 			Procedure, Public :: init => parallel_init
@@ -84,7 +86,7 @@ CONTAINS
 
 		call this.grey_zone()
 
-		print *, this.rcv_xy(3, :), id
+		! print *, this.rcv_xy(3, :), id
 
 	End Subroutine
 
@@ -100,14 +102,14 @@ CONTAINS
 
 
 		x=this.Xsize + 2*this.step
-		y=this.Ysize + 2*this.step
 
 		mp_dp = MPI_DOUBLE
 
 		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.grey(up), ier)
 		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.grey(down), ier)
-		call MPI_TYPE_VECTOR(this.Ysize, this.Ysize, y, mp_dp, this.grey(right), ier)
-		call MPI_TYPE_VECTOR(this.Ysize, this.Ysize, y, mp_dp, this.grey(left), ier)
+		call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.grey(right), ier)
+		call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.grey(left), ier)
+
 		call MPI_TYPE_COMMIT(this.grey(up), ier)
 		call MPI_TYPE_COMMIT(this.grey(down), ier)
 		call MPI_TYPE_COMMIT(this.grey(right), ier)
@@ -134,6 +136,56 @@ CONTAINS
 		this.snd_xy(up, 1) = this.ns_xy(1)
 		this.snd_xy(up, 2) = this.nf_xy(2) - this.step + 1;
 
+
+
+
+		call MPI_TYPE_VECTOR(this.Xsize, 1, -1, mp_dp, this.backward, ier)
+		call MPI_TYPE_COMMIT(this.backward, ier)
+
+		call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.backward_grey, ier)
+		call MPI_TYPE_COMMIT(this.backward_grey, ier)
+
+		this.snd_xy_180(down, 1) = this.nf_xy(1)
+		this.snd_xy_180(down, 2) = this.ns_xy(2) + this.step - 1
+		this.snd_xy_180(up, 1) = this.nf_xy(1)
+		this.snd_xy_180(up, 2) = this.nf_xy(2)
+
+
+
+
+		call MPI_TYPE_VECTOR(this.Ysize, 1, -x, mp_dp, this.backward_90, ier)
+		call MPI_TYPE_COMMIT(this.backward_90, ier)
+
+		call MPI_TYPE_VECTOR(this.step, 1, 1, this.backward_90, this.backward_grey_90, ier)
+		call MPI_TYPE_COMMIT(this.backward_grey_90, ier)
+
+		this.snd_xy_90(right, 1) = this.nf_xy(1) - this.step + 1
+		this.snd_xy_90(right, 2) = this.nf_xy(2)
+		this.snd_xy_90(left, 1) = this.ns_xy(1) + this.step - 1
+		this.snd_xy_90(left, 2) = this.nf_xy(2)
+
+		this.rcv_xy_90(right, 1) = this.nf_xy(1) + 1
+		this.rcv_xy_90(right, 2) = this.nf_xy(2)
+		this.rcv_xy_90(left, 1) = this.ns_xy(1) - this.step
+		this.rcv_xy_90(left, 2) = this.nf_xy(2)
+
+
+
+		call MPI_TYPE_VECTOR(this.Ysize, 1, x, mp_dp, this.backward_m90, ier)
+		call MPI_TYPE_COMMIT(this.backward_m90, ier)
+
+		call MPI_TYPE_VECTOR(this.step, 1, -1, this.backward_m90, this.backward_grey_m90, ier)
+		call MPI_TYPE_COMMIT(this.backward_grey_m90, ier)
+
+		this.snd_xy_m90(right, 1) = this.nf_xy(1) - this.step + 1
+		this.snd_xy_m90(right, 2) = this.ns_xy(2)
+		this.snd_xy_m90(left, 1) = this.ns_xy(1) + this.step - 1
+		this.snd_xy_m90(left, 2) = this.ns_xy(2)
+
+		this.rcv_xy_m90(right, 1) = this.nf_xy(1) + 1
+		this.rcv_xy_m90(right, 2) = this.ns_xy(2)
+		this.rcv_xy_m90(left, 1) = this.ns_xy(1) - this.step
+		this.rcv_xy_m90(left, 2) = this.ns_xy(2)
 
 	End Subroutine
 

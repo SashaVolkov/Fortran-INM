@@ -37,15 +37,15 @@ module schemes
 			do y = ns_y, nf_y
 				do x = ns_x, nf_x
 
-					partial(1) = grid.partial_c1_x(var_pr.h_height(face, x-1:x+1, y), x, y)
-					var.u_vel(face, x, y) = var_pr.u_vel(face, x, y) - dt*g*partial(1)
+					partial(1) = grid.partial_c1_x(var_pr.h_height(x-1:x+1, y, face), x, y)
+					var.u_vel(x, y, face) = var_pr.u_vel(x, y, face) - dt*g*partial(1)
 
-					partial(1) = grid.partial_c1_y(var_pr.h_height(face, x, y-1:y+1), x, y)
-					var.v_vel(face, x, y) = var_pr.v_vel(face, x, y) - dt*g*partial(1)
+					partial(1) = grid.partial_c1_y(var_pr.h_height(x, y-1:y+1, face), x, y)
+					var.v_vel(x, y, face) = var_pr.v_vel(x, y, face) - dt*g*partial(1)
 
-					partial(1) = grid.partial_c1_x(var_pr.u_vel(face, x-1:x+1, y), x, y)
-					partial(2) = grid.partial_c1_y(var_pr.v_vel(face, x, y-1:y+1), x, y)
-					var.h_height(face, x, y) = var_pr.h_height(face, x, y) - height*(partial(1) + partial(2))
+					partial(1) = grid.partial_c1_x(var_pr.u_vel(x-1:x+1, y, face), x, y)
+					partial(2) = grid.partial_c1_y(var_pr.v_vel(x, y-1:y+1, face), x, y)
+					var.h_height(x, y, face) = var_pr.h_height(x, y, face) - height*(partial(1) + partial(2))
 
 
 				end do

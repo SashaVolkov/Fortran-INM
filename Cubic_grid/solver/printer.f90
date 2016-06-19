@@ -85,13 +85,7 @@ module printer_ncdf
 
 		do face = 1, 6
 
-			! do y = ns_y, nf_y
-			! 	do x = ns_x, nf_x
-			! 		W_mass(x, y) = var(face).h_height(x, y)
-			! 	end do
-			! end do
-
-			status = nf90_put_var(ncid(face), Wid, var.h_height(face, ns_x:nf_x, ns_y:nf_y),&
+			status = nf90_put_var(ncid(face), Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, t/), count = (/ Xsize, Ysize, 1/))
 
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id

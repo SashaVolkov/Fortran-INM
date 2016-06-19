@@ -49,14 +49,12 @@ implicit none
 	call geom.init(r_sphere, pi)
 	call grid.init(geom, dim, gr_step, omega_cor, g, dt, rescale)
 	dim = grid.dim
-
 	call paral.init(dim, gr_step, np, id)
-
-
 	call var.init(paral, gr_step, height)
 	call var_prev.init(paral, gr_step, height)
-	call var_prev.start_conditions()
+	call msg.init()
 
+	call var_prev.start_conditions()
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)

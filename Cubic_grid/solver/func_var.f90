@@ -60,9 +60,9 @@ CONTAINS
 
 		Class(f_var) :: this
 
-		Allocate(this.h_height(6, this.first_x:this.last_x, this.first_y:this.last_y))
-		Allocate(this.u_vel(6, this.first_x:this.last_x, this.first_y:this.last_y))
-		Allocate(this.v_vel(6, this.first_x:this.last_x, this.first_y:this.last_y))
+		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.u_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.v_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 
 	end subroutine
 
@@ -111,17 +111,17 @@ CONTAINS
 
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					this.h_height(face, x, y) = 0
-					this.u_vel(face, x, y) = 0
-					this.v_vel(face, x, y) = 0
+					this.h_height(x, y, face) = 0
+					this.u_vel(x, y, face) = 0
+					this.v_vel(x, y, face) = 0
 				end do
 			end do
 
 			if ( face == 2 ) then
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					this.h_height(face, x, y) =&
-					 h0*exp(-((((10.0/dim)*((x-dim)*0.5))**2)+(((10.0/dim)*((y-dim)*0.5))**2)))
+					this.h_height(x, y, face) =&
+					 h0*exp(-((((10.0/dim)*((x-dim)*0.5))**2)+(((20.0/dim)*((y-dim)*0.5))**2)))
 				end do
 			end do
 			end if
