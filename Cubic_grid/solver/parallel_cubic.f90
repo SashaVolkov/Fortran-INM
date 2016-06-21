@@ -9,7 +9,7 @@ implicit none
 
 	Type parallel
 		integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim
-		integer(4) ns_xy(1:2), nf_xy(1:2), step,  grey(4)
+		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, grey(4)
 		integer(4) backward, backward_grey, backward_90, backward_grey_90, backward_m90(4), backward_grey_m90(4)
 		integer(4) snd_xy(4, 2), snd_xy_180(4, 2), snd_xy_90(4, 2), snd_xy_m90(4, 2)
 		integer(4) rcv_xy(4, 2), rcv_xy_90(4, 2), rcv_xy_m90(4, 2)
@@ -45,6 +45,8 @@ CONTAINS
 		this.step = step
 		this.dim = dim
 		this.id = id
+
+		this.up = 1; this.right=2; this.down=3; this.left=4
 
 
 		do while ( np > k )
@@ -103,7 +105,7 @@ CONTAINS
 
 		x=this.Xsize + 2*this.step
 
-		mp_dp = MPI_DOUBLE
+		mp_dp = MPI_DOUBLE_PRECISION
 
 		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.grey(up), ier)
 		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.grey(down), ier)
@@ -139,53 +141,53 @@ CONTAINS
 
 
 
-		call MPI_TYPE_VECTOR(this.Xsize, 1, -1, mp_dp, this.backward, ier)
-		call MPI_TYPE_COMMIT(this.backward, ier)
+		! call MPI_TYPE_VECTOR(this.Xsize, 1, -1, mp_dp, this.backward, ier)
+		! call MPI_TYPE_COMMIT(this.backward, ier)
 
-		call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.backward_grey, ier)
-		call MPI_TYPE_COMMIT(this.backward_grey, ier)
+		! call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.backward_grey, ier)
+		! call MPI_TYPE_COMMIT(this.backward_grey, ier)
 
-		this.snd_xy_180(down, 1) = this.nf_xy(1)
-		this.snd_xy_180(down, 2) = this.ns_xy(2) + this.step - 1
-		this.snd_xy_180(up, 1) = this.nf_xy(1)
-		this.snd_xy_180(up, 2) = this.nf_xy(2)
-
-
-
-
-		call MPI_TYPE_VECTOR(this.Ysize, 1, -x, mp_dp, this.backward_90, ier)
-		call MPI_TYPE_COMMIT(this.backward_90, ier)
-
-		call MPI_TYPE_VECTOR(this.step, 1, 1, this.backward_90, this.backward_grey_90, ier)
-		call MPI_TYPE_COMMIT(this.backward_grey_90, ier)
-
-		this.snd_xy_90(right, 1) = this.nf_xy(1) - this.step + 1
-		this.snd_xy_90(right, 2) = this.nf_xy(2)
-		this.snd_xy_90(left, 1) = this.ns_xy(1) + this.step - 1
-		this.snd_xy_90(left, 2) = this.nf_xy(2)
-
-		this.rcv_xy_90(right, 1) = this.nf_xy(1) + 1
-		this.rcv_xy_90(right, 2) = this.nf_xy(2)
-		this.rcv_xy_90(left, 1) = this.ns_xy(1) - this.step
-		this.rcv_xy_90(left, 2) = this.nf_xy(2)
+		! this.snd_xy_180(down, 1) = this.nf_xy(1)
+		! this.snd_xy_180(down, 2) = this.ns_xy(2) + this.step - 1
+		! this.snd_xy_180(up, 1) = this.nf_xy(1)
+		! this.snd_xy_180(up, 2) = this.nf_xy(2)
 
 
 
-		call MPI_TYPE_VECTOR(this.Ysize, 1, x, mp_dp, this.backward_m90, ier)
-		call MPI_TYPE_COMMIT(this.backward_m90, ier)
 
-		call MPI_TYPE_VECTOR(this.step, 1, -1, this.backward_m90, this.backward_grey_m90, ier)
-		call MPI_TYPE_COMMIT(this.backward_grey_m90, ier)
+		! call MPI_TYPE_VECTOR(this.Ysize, 1, -x, mp_dp, this.backward_90, ier)
+		! call MPI_TYPE_COMMIT(this.backward_90, ier)
 
-		this.snd_xy_m90(right, 1) = this.nf_xy(1) - this.step + 1
-		this.snd_xy_m90(right, 2) = this.ns_xy(2)
-		this.snd_xy_m90(left, 1) = this.ns_xy(1) + this.step - 1
-		this.snd_xy_m90(left, 2) = this.ns_xy(2)
+		! call MPI_TYPE_VECTOR(this.step, 1, 1, this.backward_90, this.backward_grey_90, ier)
+		! call MPI_TYPE_COMMIT(this.backward_grey_90, ier)
 
-		this.rcv_xy_m90(right, 1) = this.nf_xy(1) + 1
-		this.rcv_xy_m90(right, 2) = this.ns_xy(2)
-		this.rcv_xy_m90(left, 1) = this.ns_xy(1) - this.step
-		this.rcv_xy_m90(left, 2) = this.ns_xy(2)
+		! this.snd_xy_90(right, 1) = this.nf_xy(1) - this.step + 1
+		! this.snd_xy_90(right, 2) = this.nf_xy(2)
+		! this.snd_xy_90(left, 1) = this.ns_xy(1) + this.step - 1
+		! this.snd_xy_90(left, 2) = this.nf_xy(2)
+
+		! this.rcv_xy_90(right, 1) = this.nf_xy(1) + 1
+		! this.rcv_xy_90(right, 2) = this.nf_xy(2)
+		! this.rcv_xy_90(left, 1) = this.ns_xy(1) - this.step
+		! this.rcv_xy_90(left, 2) = this.nf_xy(2)
+
+
+
+		! call MPI_TYPE_VECTOR(this.Ysize, 1, x, mp_dp, this.backward_m90, ier)
+		! call MPI_TYPE_COMMIT(this.backward_m90, ier)
+
+		! call MPI_TYPE_VECTOR(this.step, 1, -1, this.backward_m90, this.backward_grey_m90, ier)
+		! call MPI_TYPE_COMMIT(this.backward_grey_m90, ier)
+
+		! this.snd_xy_m90(right, 1) = this.nf_xy(1) - this.step + 1
+		! this.snd_xy_m90(right, 2) = this.ns_xy(2)
+		! this.snd_xy_m90(left, 1) = this.ns_xy(1) + this.step - 1
+		! this.snd_xy_m90(left, 2) = this.ns_xy(2)
+
+		! this.rcv_xy_m90(right, 1) = this.nf_xy(1) + 1
+		! this.rcv_xy_m90(right, 2) = this.ns_xy(2)
+		! this.rcv_xy_m90(left, 1) = this.ns_xy(1) - this.step
+		! this.rcv_xy_m90(left, 2) = this.ns_xy(2)
 
 	End Subroutine
 

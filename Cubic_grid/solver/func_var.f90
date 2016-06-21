@@ -10,8 +10,8 @@ implicit none
 	Type f_var
 
 		Real(8), Allocatable :: h_height(:, :, :)
-		Real(8), Allocatable :: u_vel(:, :, :)
-		Real(8), Allocatable :: v_vel(:, :, :)
+		Real(8), Allocatable :: x_vel(:, :, :)
+		Real(8), Allocatable :: y_vel(:, :, :)
 		! Real(8), Allocatable :: distance_grid(:, :, :, :)
 		real(8) height
 		integer(4) step, dim, Xsize, Ysize
@@ -61,8 +61,8 @@ CONTAINS
 		Class(f_var) :: this
 
 		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.u_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.v_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.x_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.y_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 
 	end subroutine
 
@@ -72,8 +72,8 @@ CONTAINS
 		Class(f_var) :: this
 
 		if (Allocated(this.h_height)) Deallocate(this.h_height)
-		if (Allocated(this.u_vel)) Deallocate(this.u_vel)
-		if (Allocated(this.v_vel)) Deallocate(this.v_vel)
+		if (Allocated(this.x_vel)) Deallocate(this.x_vel)
+		if (Allocated(this.y_vel)) Deallocate(this.y_vel)
 
 	end subroutine
 
@@ -87,8 +87,8 @@ CONTAINS
 			! do y = var_pr.first_y, var_pr.last_y
 			! 	do x = var_pr.first_x, var_pr.last_x
 				var_pr.h_height(:, :, :)=var.h_height(:, :, :)
-				var_pr.u_vel(:, :, :)=var.u_vel(:, :, :)
-				var_pr.v_vel(:, :, :)=var.v_vel(:, :, :)
+				var_pr.x_vel(:, :, :)=var.x_vel(:, :, :)
+				var_pr.y_vel(:, :, :)=var.y_vel(:, :, :)
 			! 	end do
 			! end do
 
@@ -112,8 +112,8 @@ CONTAINS
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					this.h_height(x, y, face) = 0
-					this.u_vel(x, y, face) = 0
-					this.v_vel(x, y, face) = 0
+					this.x_vel(x, y, face) = 0
+					this.y_vel(x, y, face) = 0
 				end do
 			end do
 
@@ -146,21 +146,21 @@ CONTAINS
 		! 	do x = -dim, dim
 
 		! 		var_grey(1).h_height(x, -dim - y) = var(2).h_height(x, dim - y)
-		! 		var_grey(1).u_vel(x, -dim - y) = var(2).u_vel(x, dim - y)
-		! 		var_grey(1).v_vel(x, -dim - y) = var(2).v_vel(x, dim - y)
+		! 		var_grey(1).x_vel(x, -dim - y) = var(2).x_vel(x, dim - y)
+		! 		var_grey(1).y_vel(x, -dim - y) = var(2).y_vel(x, dim - y)
 
 		! 		var_grey(2).h_height(x, dim + y) = var(1).h_height(x, -dim + y)
-		! 		var_grey(2).u_vel(x, dim + y) = var(1).u_vel(x, -dim + y)
-		! 		var_grey(2).v_vel(x, dim + y) = var(1).v_vel(x, -dim + y)
+		! 		var_grey(2).x_vel(x, dim + y) = var(1).x_vel(x, -dim + y)
+		! 		var_grey(2).y_vel(x, dim + y) = var(1).y_vel(x, -dim + y)
 
 
 		! 		var_grey(6).h_height(x, dim + y) = var(2).h_height(x, -dim + y)
-		! 		var_grey(6).u_vel(x, dim + y) = var(2).u_vel(x, -dim + y)
-		! 		var_grey(6).v_vel(x, dim + y) = var(2).v_vel(x, -dim + y)
+		! 		var_grey(6).x_vel(x, dim + y) = var(2).x_vel(x, -dim + y)
+		! 		var_grey(6).y_vel(x, dim + y) = var(2).y_vel(x, -dim + y)
 
 		! 		var_grey(2).h_height(x, -dim - y) = var(6).h_height(x, dim - y)
-		! 		var_grey(2).u_vel(x, -dim - y) = var(6).u_vel(x, dim - y)
-		! 		var_grey(2).v_vel(x, -dim - y) = var(6).v_vel(x, dim - y)
+		! 		var_grey(2).x_vel(x, -dim - y) = var(6).x_vel(x, dim - y)
+		! 		var_grey(2).y_vel(x, -dim - y) = var(6).y_vel(x, dim - y)
 
 		! 	end do
 		! end do
@@ -170,21 +170,21 @@ CONTAINS
 		! 	do x = 0, step
 
 		! 		var_grey(5).h_height(dim + x, y) = var(2).h_height(-dim + x, y)
-		! 		var_grey(5).u_vel(dim + x, y) = var(2).u_vel(-dim + x, y)
-		! 		var_grey(5).v_vel(dim + x, y) = var(2).v_vel(-dim + x, y)
+		! 		var_grey(5).x_vel(dim + x, y) = var(2).x_vel(-dim + x, y)
+		! 		var_grey(5).y_vel(dim + x, y) = var(2).y_vel(-dim + x, y)
 
 		! 		var_grey(2).h_height(-dim - x, y) = var(5).h_height(dim - x, y)
-		! 		var_grey(2).u_vel(-dim - x, y) = var(5).u_vel(dim - x, y)
-		! 		var_grey(2).v_vel(-dim - x, y) = var(5).v_vel(dim - x, y)
+		! 		var_grey(2).x_vel(-dim - x, y) = var(5).x_vel(dim - x, y)
+		! 		var_grey(2).y_vel(-dim - x, y) = var(5).y_vel(dim - x, y)
 
 
 		! 		var_grey(3).h_height(-dim - x, y) = var(2).h_height(dim - x, y)
-		! 		var_grey(3).u_vel(-dim - x, y) = var(2).u_vel(dim - x, y)
-		! 		var_grey(3).v_vel(-dim - x, y) = var(2).v_vel(dim - x, y)
+		! 		var_grey(3).x_vel(-dim - x, y) = var(2).x_vel(dim - x, y)
+		! 		var_grey(3).y_vel(-dim - x, y) = var(2).y_vel(dim - x, y)
 
 		! 		var_grey(2).h_height(dim + x, y) = var(3).h_height(-dim + x, y)
-		! 		var_grey(2).u_vel(dim + x, y) = var(3).u_vel(-dim + x, y)
-		! 		var_grey(2).v_vel(dim + x, y) = var(3).v_vel(-dim + x, y)
+		! 		var_grey(2).x_vel(dim + x, y) = var(3).x_vel(-dim + x, y)
+		! 		var_grey(2).y_vel(dim + x, y) = var(3).y_vel(-dim + x, y)
 
 		! 	end do
 		! end do
@@ -194,21 +194,21 @@ CONTAINS
 		! 	do x = -dim, dim
 
 		! 	var_grey(1).h_height(-x, dim + y) = var(4).h_height(x, dim - y)
-		! 	var_grey(1).u_vel(-x, dim + y) = -var(4).u_vel(x, dim - y)
-		! 	var_grey(1).v_vel(-x, dim + y) = -var(4).v_vel(x, dim - y)
+		! 	var_grey(1).x_vel(-x, dim + y) = -var(4).x_vel(x, dim - y)
+		! 	var_grey(1).y_vel(-x, dim + y) = -var(4).y_vel(x, dim - y)
 
 		! 		var_grey(4).h_height(x, dim + y) = var(1).h_height(-x, dim - y)
-		! 		var_grey(4).u_vel(x, dim + y) = -var(1).u_vel(-x, dim - y)
-		! 		var_grey(4).v_vel(x, dim + y) = -var(1).v_vel(-x, dim - y)
+		! 		var_grey(4).x_vel(x, dim + y) = -var(1).x_vel(-x, dim - y)
+		! 		var_grey(4).y_vel(x, dim + y) = -var(1).y_vel(-x, dim - y)
 
 
 		! 		var_grey(6).h_height(-x, -dim - y) = var(4).h_height(x, -dim + y)
-		! 		var_grey(6).u_vel(-x, -dim - y) = -var(4).u_vel(x, -dim + y)
-		! 		var_grey(6).v_vel(-x, -dim - y) = -var(4).v_vel(x, -dim + y)
+		! 		var_grey(6).x_vel(-x, -dim - y) = -var(4).x_vel(x, -dim + y)
+		! 		var_grey(6).y_vel(-x, -dim - y) = -var(4).y_vel(x, -dim + y)
 
 		! 		var_grey(4).h_height(x, -dim - y) = var(6).h_height(-x, -dim + y)
-		! 		var_grey(4).u_vel(x, -dim - y) = -var(6).u_vel(-x, -dim + y)
-		! 		var_grey(4).v_vel(x, -dim - y) = -var(6).v_vel(-x, -dim + y)
+		! 		var_grey(4).x_vel(x, -dim - y) = -var(6).x_vel(-x, -dim + y)
+		! 		var_grey(4).y_vel(x, -dim - y) = -var(6).y_vel(-x, -dim + y)
 
 		! 	end do
 		! end do
@@ -218,21 +218,21 @@ CONTAINS
 		! 	do x = 0, step
 
 		! 		var_grey(3).h_height(dim + x, y) = var(4).h_height(-dim + x, y)
-		! 		var_grey(3).u_vel(dim + x, y) = var(4).u_vel(-dim + x, y)
-		! 		var_grey(3).v_vel(dim + x, y) = var(4).v_vel(-dim + x, y)
+		! 		var_grey(3).x_vel(dim + x, y) = var(4).x_vel(-dim + x, y)
+		! 		var_grey(3).y_vel(dim + x, y) = var(4).y_vel(-dim + x, y)
 
 		! 		var_grey(4).h_height(-dim - x, y) = var(3).h_height(dim - x, y)
-		! 		var_grey(4).u_vel(-dim - x, y) = var(3).u_vel(dim - x, y)
-		! 		var_grey(4).v_vel(-dim - x, y) = var(3).v_vel(dim - x, y)
+		! 		var_grey(4).x_vel(-dim - x, y) = var(3).x_vel(dim - x, y)
+		! 		var_grey(4).y_vel(-dim - x, y) = var(3).y_vel(dim - x, y)
 
 
 		! 		var_grey(4).h_height(dim + x, y) = var(5).h_height(-dim + x, y)
-		! 		var_grey(4).u_vel(dim + x, y) = var(5).u_vel(-dim + x, y)
-		! 		var_grey(4).v_vel(dim + x, y) = var(5).v_vel(-dim + x, y)
+		! 		var_grey(4).x_vel(dim + x, y) = var(5).x_vel(-dim + x, y)
+		! 		var_grey(4).y_vel(dim + x, y) = var(5).y_vel(-dim + x, y)
 
 		! 		var_grey(5).h_height(-dim - x, y) = var(4).h_height(dim - x, y)
-		! 		var_grey(5).u_vel(-dim - x, y) = var(4).u_vel(dim - x, y)
-		! 		var_grey(5).v_vel(-dim - x, y) = var(4).v_vel(dim - x, y)
+		! 		var_grey(5).x_vel(-dim - x, y) = var(4).x_vel(dim - x, y)
+		! 		var_grey(5).y_vel(-dim - x, y) = var(4).y_vel(dim - x, y)
 
 		! 	end do
 		! end do
@@ -242,40 +242,40 @@ CONTAINS
 		! 	do j = 0, step
 
 		! 		var_grey(1).h_height(-dim - j, -i) = var(5).h_height(i, dim - j)
-		! 		var_grey(1).u_vel(-dim - j, -i) = var(5).v_vel(i, dim - j)
-		! 		var_grey(1).v_vel(-dim - j, -i) = -var(5).u_vel(i, dim - j)
+		! 		var_grey(1).x_vel(-dim - j, -i) = var(5).y_vel(i, dim - j)
+		! 		var_grey(1).y_vel(-dim - j, -i) = -var(5).x_vel(i, dim - j)
 
 		! 		var_grey(5).h_height(i, dim + j) = var(1).h_height(-dim + j, -i)
-		! 		var_grey(5).u_vel(i, dim + j) = -var(1).v_vel(-dim + j, -i)
-		! 		var_grey(5).v_vel(i, dim + j) = var(1).u_vel(-dim + j, -i)
+		! 		var_grey(5).x_vel(i, dim + j) = -var(1).y_vel(-dim + j, -i)
+		! 		var_grey(5).y_vel(i, dim + j) = var(1).x_vel(-dim + j, -i)
 
 
 		! 		var_grey(6).h_height(-dim - j, i) = var(5).h_height(i, -dim + j)
-		! 		var_grey(6).u_vel(-dim - j, i) = -var(5).v_vel(i, -dim + j)
-		! 		var_grey(6).v_vel(-dim - j, i) = var(5).u_vel(i, -dim + j)
+		! 		var_grey(6).x_vel(-dim - j, i) = -var(5).y_vel(i, -dim + j)
+		! 		var_grey(6).y_vel(-dim - j, i) = var(5).x_vel(i, -dim + j)
 
 		! 		var_grey(5).h_height(i, -dim - j) = var(6).h_height(-dim + j, i)
-		! 		var_grey(5).u_vel(i, -dim - j) = var(6).v_vel(-dim + j, i)
-		! 		var_grey(5).v_vel(i, -dim - j) = -var(6).u_vel(-dim + j, i)
+		! 		var_grey(5).x_vel(i, -dim - j) = var(6).y_vel(-dim + j, i)
+		! 		var_grey(5).y_vel(i, -dim - j) = -var(6).x_vel(-dim + j, i)
 
 
 
 		! 		var_grey(1).h_height(dim + j, i) = var(3).h_height(i, dim - j)
-		! 		var_grey(1).u_vel(dim + j, i) = -var(3).v_vel(i, dim - j)
-		! 		var_grey(1).v_vel(dim + j, i) = var(3).u_vel(i, dim - j)
+		! 		var_grey(1).x_vel(dim + j, i) = -var(3).y_vel(i, dim - j)
+		! 		var_grey(1).y_vel(dim + j, i) = var(3).x_vel(i, dim - j)
 
 		! 		var_grey(3).h_height(i, dim + j) = var(1).h_height(dim - j, i)
-		! 		var_grey(3).u_vel(i, dim + j) = var(1).v_vel(dim - j, i)
-		! 		var_grey(3).v_vel(i, dim + j) = -var(1).u_vel(dim - j, i)
+		! 		var_grey(3).x_vel(i, dim + j) = var(1).y_vel(dim - j, i)
+		! 		var_grey(3).y_vel(i, dim + j) = -var(1).x_vel(dim - j, i)
 
 
 		! 		var_grey(6).h_height(dim + j, -i) = var(3).h_height(i, -dim + j)
-		! 		var_grey(6).u_vel(dim + j, -i) = var(3).v_vel(i, -dim + j)
-		! 		var_grey(6).v_vel(dim + j, -i) = -var(3).u_vel(i, -dim + j)
+		! 		var_grey(6).x_vel(dim + j, -i) = var(3).y_vel(i, -dim + j)
+		! 		var_grey(6).y_vel(dim + j, -i) = -var(3).x_vel(i, -dim + j)
 
 		! 		var_grey(3).h_height(i, -dim - j) = var(6).h_height(dim - j, -i)
-		! 		var_grey(3).u_vel(i, -dim - j) = -var(6).v_vel(dim - j, -i)
-		! 		var_grey(3).v_vel(i, -dim - j) = var(6).u_vel(dim - j, -i)
+		! 		var_grey(3).x_vel(i, -dim - j) = -var(6).y_vel(dim - j, -i)
+		! 		var_grey(3).y_vel(i, -dim - j) = var(6).x_vel(dim - j, -i)
 
 		! 	end do
 		! end do

@@ -20,7 +20,7 @@ implicit none
 		Real(8), Allocatable :: triangle_angles(:, :, :)
 		Real(8), Allocatable :: square_angles(:, :, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
-		integer(4) dim, step, dim_st, rescale
+		integer(4) dim, step, dim_st, rescale, up, right, left, down
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -50,6 +50,7 @@ CONTAINS
 		this.dim = dim;  this.step = step;  this.g = g;  this.dim_st = dim + step
 		this.omega_cor = omega_cor;  this.r_sphere = geom.radius;  this.dt = dt
 		this.pi = geom.pi;  this.rescale = rescale
+		this.up = 1; this.right=2; this.down=3; this.left=4
 
 				! print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
 
@@ -81,12 +82,14 @@ CONTAINS
 		Class(g_var) :: this
 		Class(geometry) :: g
 		real(8) dist, omega_cor, S1, S2, sphere_area
-		integer(4) face, x, y, dim, step, dim_st, k
+		integer(4) face, x, y, dim, step, dim_st, k, up, right, left, down
 		character(8) istring
 
 
 		omega_cor = this.omega_cor
 		dim = this.dim;  step = this.step;  dim_st = this.dim_st
+		up = this.up; right = this.right
+		down = this.down; left = this.left
 
 
 		do face = 1, 6 ! Only longitude
@@ -143,16 +146,16 @@ CONTAINS
 				do step = 1, this.step
 
 	call g.dist(this.points_dist(:, x, y+step), this.points_dist(:, x, y), dist) ! UP
-	this.h_dist(1, step, x, y) = dist
+	this.h_dist(up, step, x, y) = dist
 
 	call g.dist(this.points_dist(:, x+step, y), this.points_dist(:, x, y), dist) ! RIGHT
-	this.h_dist(2, step, x, y) = dist
+	this.h_dist(right, step, x, y) = dist
 
 	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x, y-step), dist) ! DOWN
-	this.h_dist(3, step, x, y) = dist
+	this.h_dist(down, step, x, y) = dist
 
 	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x-step, y), dist) ! LEFT
-	this.h_dist(4, step, x, y) = dist
+	this.h_dist(left, step, x, y) = dist
 
 				end do
 			end do
@@ -228,7 +231,7 @@ CONTAINS
 		Class(g_var) :: this
 		real(8), intent(in) :: fun(1:3)
 		integer, intent(in) :: x, y
-		partial_c1_x = (fun(3) - fun(1))/(this.h_dist(4, 1, x, y) + this.h_dist(2, 1, x, y))
+		partial_c1_x = (fun(3) - fun(1))/(this.h_dist(this.left, 1, x, y) + this.h_dist(this.right, 1, x, y))
 
 	end function
 
@@ -238,7 +241,7 @@ CONTAINS
 		Class(g_var) :: this
 		real(8), intent(in) :: fun(1:3)
 		integer, intent(in) :: x, y
-		partial_c1_y = (fun(3) - fun(1))/(this.h_dist(3, 1, x, y) + this.h_dist(1, 1, x, y))
+		partial_c1_y = (fun(3) - fun(1))/(this.h_dist(this.down, 1, x, y) + this.h_dist(this.up, 1, x, y))
 
 	end function
 
@@ -249,10 +252,10 @@ subroutine step_minmax(this)
 	real(8) dim
 
 	dim = this.dim
-	this.dx_min = MINVAL(this.h_dist(2, 1, 1:2*dim, 1:2*dim))
-	this.dy_min = MINVAL(this.h_dist(1, 1, 1:2*dim, 1:2*dim))
-	this.dx_max = MAXVAL(this.h_dist(2, 1, 1:2*dim, 1:2*dim))
-	this.dy_max = MAXVAL(this.h_dist(1, 1, 1:2*dim, 1:2*dim))
+	this.dx_min = MINVAL(this.h_dist(this.right, 1, 1:2*dim, 1:2*dim))
+	this.dy_min = MINVAL(this.h_dist(this.up, 1, 1:2*dim, 1:2*dim))
+	this.dx_max = MAXVAL(this.h_dist(this.right, 1, 1:2*dim, 1:2*dim))
+	this.dy_max = MAXVAL(this.h_dist(this.up, 1, 1:2*dim, 1:2*dim))
 
 end subroutine
 
