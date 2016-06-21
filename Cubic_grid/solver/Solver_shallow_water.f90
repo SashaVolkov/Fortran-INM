@@ -35,7 +35,7 @@ implicit none
 	dim = 32;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 8000;  speedup = 40;  dt = 400d0
+	Tmax = 16000;  speedup = 40;  dt = 400d0
 	rescale = 1 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
@@ -61,7 +61,7 @@ implicit none
 ! 	diagn.init( grid, Tmax, rescale)
 
 
-	do time = 1, 1
+	do time = 1, Tmax
 		call sch.Linear(var, var_prev, grid)
 ! 				if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
 ! 				if(mod(time, speedup) == 0) call diagn.L_norm(var_prev, grid, time)

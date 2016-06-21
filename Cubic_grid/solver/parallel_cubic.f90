@@ -9,13 +9,13 @@ implicit none
 
 	Type parallel
 		integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim
-		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, grey(4)
+		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(4)
 		integer(4) snd_xy(4, 2), snd_xy_180(4, 2), snd_xy_90(4, 2), snd_xy_m90(4, 2)
 		integer(4) rcv_xy(4, 2), rcv_xy_90(4, 2), rcv_xy_m90(4, 2)
 		integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id
 		CONTAINS
 			Procedure, Public :: init => parallel_init
-			Procedure, Private :: grey_zone => grey_zone
+			Procedure, Private :: halo_zone => halo_zone
 			Procedure, Private :: Neighbourhood => Neighbourhood
 	End Type
 
@@ -85,7 +85,7 @@ CONTAINS
 		this.Xsize = 1 + this.nf_xy(1) - this.ns_xy(1)
 		this.Ysize = 1 + this.nf_xy(2) - this.ns_xy(2)
 
-		call this.grey_zone()
+		call this.halo_zone()
 
 		! print *, this.rcv_xy(3, :), id
 
@@ -93,7 +93,7 @@ CONTAINS
 
 
 
-	Subroutine grey_zone(this)
+	Subroutine halo_zone(this)
 
 		Class(parallel) :: this
 		integer(4) x, y, mp_dp, ier
@@ -106,15 +106,15 @@ CONTAINS
 
 		mp_dp = MPI_DOUBLE_PRECISION
 
-		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.grey(up), ier)
-		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.grey(down), ier)
-		call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.grey(right), ier)
-		call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.grey(left), ier)
+		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(up), ier)
+		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(down), ier)
+		call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.halo(right), ier)
+		call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.halo(left), ier)
 
-		call MPI_TYPE_COMMIT(this.grey(up), ier)
-		call MPI_TYPE_COMMIT(this.grey(down), ier)
-		call MPI_TYPE_COMMIT(this.grey(right), ier)
-		call MPI_TYPE_COMMIT(this.grey(left), ier)
+		call MPI_TYPE_COMMIT(this.halo(up), ier)
+		call MPI_TYPE_COMMIT(this.halo(down), ier)
+		call MPI_TYPE_COMMIT(this.halo(right), ier)
+		call MPI_TYPE_COMMIT(this.halo(left), ier)
 
 		this.rcv_xy(left, 1) = this.ns_xy(1) - this.step
 		this.rcv_xy(left, 2) = this.ns_xy(2);

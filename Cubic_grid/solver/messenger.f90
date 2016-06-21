@@ -20,10 +20,8 @@ module messenger
 		Procedure, Public :: msg => msg
 		Procedure, Public :: init => init
 		Procedure, Private :: Simple_msg => Simple_msg
-		! Procedure, Private :: Rot_minus_90_msg => Rot_minus_90_msg
-		! Procedure, Private :: Rot_90_msg => Rot_90_msg
-		! Procedure, Private :: Rot_180_msg => Rot_180_msg
 		Procedure, Private :: Waiter => Waiter
+		Procedure, Private :: Rotations => Rotations
 	End Type
 
 
@@ -78,13 +76,13 @@ subroutine Simple_msg(this, paral, f)
 	sx = paral.snd_xy(i, 1);  sy = paral.snd_xy(i, 2)
 
 
-			call MPI_IRecv(f.h_height(rx, ry, face), 1, paral.grey(i), neib_id, paral.id, this.comm(1), this.rcv_req(1, i, face), this.ier)
-			call MPI_IRecv(f.x_vel(rx, ry, face), 1, paral.grey(i), neib_id, paral.id, this.comm(2), this.rcv_req(2, i, face), this.ier)
-			call MPI_IRecv(f.y_vel(rx, ry, face), 1, paral.grey(i), neib_id, paral.id, this.comm(3), this.rcv_req(3, i, face), this.ier)
+			call MPI_IRecv(f.h_height(rx, ry, face), 1, paral.halo(i), neib_id, paral.id, this.comm(1), this.rcv_req(1, i, face), this.ier)
+			call MPI_IRecv(f.x_vel(rx, ry, face), 1, paral.halo(i), neib_id, paral.id, this.comm(2), this.rcv_req(2, i, face), this.ier)
+			call MPI_IRecv(f.y_vel(rx, ry, face), 1, paral.halo(i), neib_id, paral.id, this.comm(3), this.rcv_req(3, i, face), this.ier)
 
-			call MPI_ISend(f.h_height(sx, sy, face), 1, paral.grey(i), neib_id, neib_id, this.comm(1), this.snd_req(1, i, face), this.ier)
-			call MPI_ISend(f.x_vel(sx, sy, face), 1, paral.grey(i), neib_id, neib_id, this.comm(2), this.snd_req(2, i, face), this.ier)
-			call MPI_ISend(f.y_vel(sx, sy, face), 1, paral.grey(i), neib_id, neib_id, this.comm(3), this.snd_req(3, i, face), this.ier)
+			call MPI_ISend(f.h_height(sx, sy, face), 1, paral.halo(i), neib_id, neib_id, this.comm(1), this.snd_req(1, i, face), this.ier)
+			call MPI_ISend(f.x_vel(sx, sy, face), 1, paral.halo(i), neib_id, neib_id, this.comm(2), this.snd_req(2, i, face), this.ier)
+			call MPI_ISend(f.y_vel(sx, sy, face), 1, paral.halo(i), neib_id, neib_id, this.comm(3), this.snd_req(3, i, face), this.ier)
 
 		end do
 	end do
@@ -97,7 +95,7 @@ subroutine Waiter(this, paral)
 
 	Class(message) :: this
 	Class(parallel) :: paral
-	integer(4) i, face, FLAG
+	integer(4) i, face
 
 
 	call MPI_Waitall(6*4*3, this.rcv_req, this.rcv_stat, this.ier)
@@ -107,6 +105,11 @@ subroutine Waiter(this, paral)
 end subroutine
 
 
+subroutine Rotations(this, paral)
 
+	Class(message) :: this
+	Class(parallel) :: paral
+
+end subroutine
 
 end module
