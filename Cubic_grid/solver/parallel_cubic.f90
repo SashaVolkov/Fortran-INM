@@ -138,6 +138,57 @@ CONTAINS
 		this.snd_xy(up, 2) = this.nf_xy(2) - this.step + 1;
 
 
+
+
+		! call MPI_TYPE_VECTOR(this.Xsize, 1, -1, mp_dp, this.backward, ier)
+		! call MPI_TYPE_COMMIT(this.backward, ier)
+
+		! call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.backward_grey, ier)
+		! call MPI_TYPE_COMMIT(this.backward_grey, ier)
+
+		! this.snd_xy_180(down, 1) = this.nf_xy(1)
+		! this.snd_xy_180(down, 2) = this.ns_xy(2) + this.step - 1
+		! this.snd_xy_180(up, 1) = this.nf_xy(1)
+		! this.snd_xy_180(up, 2) = this.nf_xy(2)
+
+
+
+
+		! call MPI_TYPE_VECTOR(this.Ysize, 1, -x, mp_dp, this.backward_90, ier)
+		! call MPI_TYPE_COMMIT(this.backward_90, ier)
+
+		! call MPI_TYPE_VECTOR(this.step, 1, 1, this.backward_90, this.backward_grey_90, ier)
+		! call MPI_TYPE_COMMIT(this.backward_grey_90, ier)
+
+		! this.snd_xy_90(right, 1) = this.nf_xy(1) - this.step + 1
+		! this.snd_xy_90(right, 2) = this.nf_xy(2)
+		! this.snd_xy_90(left, 1) = this.ns_xy(1) + this.step - 1
+		! this.snd_xy_90(left, 2) = this.nf_xy(2)
+
+		! this.rcv_xy_90(right, 1) = this.nf_xy(1) + 1
+		! this.rcv_xy_90(right, 2) = this.nf_xy(2)
+		! this.rcv_xy_90(left, 1) = this.ns_xy(1) - this.step
+		! this.rcv_xy_90(left, 2) = this.nf_xy(2)
+
+
+
+		! call MPI_TYPE_VECTOR(this.Ysize, 1, x, mp_dp, this.backward_m90, ier)
+		! call MPI_TYPE_COMMIT(this.backward_m90, ier)
+
+		! call MPI_TYPE_VECTOR(this.step, 1, -1, this.backward_m90, this.backward_grey_m90, ier)
+		! call MPI_TYPE_COMMIT(this.backward_grey_m90, ier)
+
+		! this.snd_xy_m90(right, 1) = this.nf_xy(1) - this.step + 1
+		! this.snd_xy_m90(right, 2) = this.ns_xy(2)
+		! this.snd_xy_m90(left, 1) = this.ns_xy(1) + this.step - 1
+		! this.snd_xy_m90(left, 2) = this.ns_xy(2)
+
+		! this.rcv_xy_m90(right, 1) = this.nf_xy(1) + 1
+		! this.rcv_xy_m90(right, 2) = this.ns_xy(2)
+		! this.rcv_xy_m90(left, 1) = this.ns_xy(1) - this.step
+		! this.rcv_xy_m90(left, 2) = this.ns_xy(2)
+
+
 	End Subroutine
 
 
