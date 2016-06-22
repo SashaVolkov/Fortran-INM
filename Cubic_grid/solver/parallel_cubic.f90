@@ -9,9 +9,9 @@ implicit none
 
 	Type parallel
 		integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim
-		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(4)
-		integer(4) snd_xy(4, 2), snd_xy_180(4, 2), snd_xy_90(4, 2), snd_xy_m90(4, 2)
-		integer(4) rcv_xy(4, 2), rcv_xy_90(4, 2), rcv_xy_m90(4, 2)
+		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), backward
+		integer(4) snd_xy(6, 4, 2), snd_xy_180(6, 4, 2), snd_xy_90(6, 4, 2), snd_xy_m90(6, 4, 2)
+		integer(4) rcv_xy(6, 4, 2), rcv_xy_90(6, 4, 2), rcv_xy_m90(6, 4, 2)
 		integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id
 		CONTAINS
 			Procedure, Public :: init => parallel_init
@@ -85,18 +85,19 @@ CONTAINS
 		this.Xsize = 1 + this.nf_xy(1) - this.ns_xy(1)
 		this.Ysize = 1 + this.nf_xy(2) - this.ns_xy(2)
 
-		call this.halo_zone()
-
-		! print *, this.rcv_xy(3, :), id
+		do face = 1, 6
+			call this.halo_zone(face)
+		end do
 
 	End Subroutine
 
 
 
-	Subroutine halo_zone(this)
+	Subroutine halo_zone(this, face)
 
 		Class(parallel) :: this
-		integer(4) x, y, mp_dp, ier
+		integer(4), intent(in) :: face
+		integer(4) x, y, mp_dp, ier, i
 		integer(4) up, right, left, down
 		
 		up = 1; right=2; down=3; left=4
@@ -106,36 +107,43 @@ CONTAINS
 
 		mp_dp = MPI_DOUBLE_PRECISION
 
-		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(up), ier)
-		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(down), ier)
-		call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.halo(right), ier)
-		call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.halo(left), ier)
 
-		call MPI_TYPE_COMMIT(this.halo(up), ier)
-		call MPI_TYPE_COMMIT(this.halo(down), ier)
-		call MPI_TYPE_COMMIT(this.halo(right), ier)
-		call MPI_TYPE_COMMIT(this.halo(left), ier)
+			call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(face, up), ier)
+			call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(face, down), ier)
+			call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.halo(face, right), ier)
+			call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.halo(face, left), ier)
 
-		this.rcv_xy(left, 1) = this.ns_xy(1) - this.step
-		this.rcv_xy(left, 2) = this.ns_xy(2);
-		this.rcv_xy(right, 1) = this.nf_xy(1) + 1
-		this.rcv_xy(right, 2) = this.ns_xy(2);
+			if (face == 4) then
+				call MPI_TYPE_VECTOR(this.Xsize, 1, -1, mp_dp, this.backward, ier)
+				call MPI_TYPE_COMMIT(this.backward, ier)
 
-		this.rcv_xy(down, 1) = this.ns_xy(1)
-		this.rcv_xy(down, 2) = this.ns_xy(2) - this.step;
-		this.rcv_xy(up, 1) = this.ns_xy(1)
-		this.rcv_xy(up, 2) = this.nf_xy(2) + 1;
+				call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.halo(face, up), ier)
+				call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.halo(face, down), ier)
+			end if
 
 
-		this.snd_xy(left, 1) = this.ns_xy(1)
-		this.snd_xy(left, 2) = this.ns_xy(2)
-		this.snd_xy(right, 1) = this.nf_xy(1) - this.step + 1
-		this.snd_xy(right, 2) = this.ns_xy(2)
+			do i = 1, 4
+				call MPI_TYPE_COMMIT(this.halo(face, i), ier)
+			end do
 
-		this.snd_xy(down, 1) = this.ns_xy(1)
-		this.snd_xy(down, 2) = this.ns_xy(2)
-		this.snd_xy(up, 1) = this.ns_xy(1)
-		this.snd_xy(up, 2) = this.nf_xy(2) - this.step + 1;
+		this.rcv_xy(face, left, 1) = this.ns_xy(1) - this.step
+		this.rcv_xy(face, left, 2) = this.ns_xy(2);
+		this.rcv_xy(face, right, 1) = this.nf_xy(1) + 1
+		this.rcv_xy(face, right, 2) = this.ns_xy(2);
+
+		this.rcv_xy(face, down, 1) = this.ns_xy(1)
+		this.rcv_xy(face, down, 2) = this.ns_xy(2) - this.step;
+		this.rcv_xy(face, up, 1) = this.ns_xy(1)
+		this.rcv_xy(face, up, 2) = this.nf_xy(2) + 1;
+
+
+		this.snd_xy(face, left, :) = this.ns_xy(:)
+		this.snd_xy(face, right, 1) = this.nf_xy(1) - this.step + 1
+		this.snd_xy(face, right, 2) = this.ns_xy(2)
+
+		this.snd_xy(face, down, :) = this.ns_xy(:)
+		this.snd_xy(face, up, 1) = this.ns_xy(1)
+		this.snd_xy(face, up, 2) = this.nf_xy(2) - this.step + 1;
 
 
 
@@ -143,8 +151,8 @@ CONTAINS
 		! call MPI_TYPE_VECTOR(this.Xsize, 1, -1, mp_dp, this.backward, ier)
 		! call MPI_TYPE_COMMIT(this.backward, ier)
 
-		! call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.backward_grey, ier)
-		! call MPI_TYPE_COMMIT(this.backward_grey, ier)
+		! call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.halo, ier)
+		! call MPI_TYPE_COMMIT(this.halo, ier)
 
 		! this.snd_xy_180(down, 1) = this.nf_xy(1)
 		! this.snd_xy_180(down, 2) = this.ns_xy(2) + this.step - 1
@@ -209,6 +217,7 @@ CONTAINS
 	this.Neighbour_id(:, 4) = id - this.Ydim_block
 
 	do face = 1, 6
+			this.Neighbours_face(face, :) = face
 
 		if (this.block_y == this.Ydim_block - 1) then  ! up
 
@@ -254,6 +263,9 @@ CONTAINS
 				this.Neighbour_id(face, right) = this.block_y*this.Xdim_block + this.block_x
 				this.border(face, right) = -1
 				this.Neighbours_face(face, right) = 3
+
+			else if(face == 5) then
+				this.Neighbours_face(face, right) = 2
 			end if
 		end if
 
@@ -282,6 +294,7 @@ CONTAINS
 
 			else if ( face == 6 ) then
 				this.Neighbours_face(face, down) = 2
+				this.border(face, down) = 2
 			end if
 		end if
 
@@ -299,6 +312,8 @@ CONTAINS
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, left) = this.Xdim_block*this.Ydim_block - 1 - this.block_y*this.Xdim_block
 				this.border(face, left) = 1
+				this.Neighbours_face(face, left) = 5
+			else if ( face == 2 ) then
 				this.Neighbours_face(face, left) = 5
 			end if
 		end if

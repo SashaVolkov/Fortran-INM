@@ -126,16 +126,6 @@ CONTAINS
 			end do
 			end if
 
-			! if ( face == 1 ) then
-			! do y = this.first_y, this.last_y
-			! 	do x = this.first_x, this.last_x
-			! 		this.h_height(x, y, face) = 1.0
-			! 	end do
-			! end do
-			! end if
-
-
-
 		end do
 
 
