@@ -42,8 +42,8 @@ CONTAINS
 		this.ns_x = paral.ns_xy(1);  this.ns_y = paral.ns_xy(2)
 		this.nf_x = paral.nf_xy(1);  this.nf_y = paral.nf_xy(2)
 
-		this.first_x = paral.ns_xy(1) - step;  this.first_y = paral.ns_xy(2) - step
-		this.last_x = paral.nf_xy(1) + step;  this.last_y = paral.nf_xy(2) + step
+		this.first_x = paral.first_x;  this.first_y = paral.first_y
+		this.last_x = paral.last_x;  this.last_y = paral.last_y
 
 		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
 

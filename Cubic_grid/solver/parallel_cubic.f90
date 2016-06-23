@@ -8,8 +8,8 @@ implicit none
 	Public :: parallel
 
 	Type parallel
-		integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim
-		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), backward
+		integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim, first_x, first_y, last_x, last_y
+		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), y_vec_type, rot(6, 4)
 		integer(4) snd_xy(6, 4, 2), snd_xy_180(6, 4, 2), snd_xy_90(6, 4, 2), snd_xy_m90(6, 4, 2)
 		integer(4) rcv_xy(6, 4, 2), rcv_xy_90(6, 4, 2), rcv_xy_m90(6, 4, 2)
 		integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id
@@ -77,7 +77,8 @@ CONTAINS
 		this.ns_xy(1) = 1 + this.Xsize*this.block_x  ; this.nf_xy(1) = this.Xsize*(this.block_x + 1)
 		this.ns_xy(2) = 1 + this.Ysize*this.block_y  ; this.nf_xy(2) = this.Ysize*(this.block_y + 1)
 
-!	id == this.block_x*this.Xdim_block + this.block_y
+		this.first_x = this.ns_xy(1) - step;  this.first_y = this.ns_xy(2) - step
+		this.last_x = this.nf_xy(1) + step;  this.last_y = this.nf_xy(2) + step
 
 
 		call this.Neighbourhood(id)
@@ -97,34 +98,28 @@ CONTAINS
 
 		Class(parallel) :: this
 		integer(4), intent(in) :: face
-		integer(4) x, y, mp_dp, ier, i
-		integer(4) up, right, left, down
+		integer(4) x, y, mp_dp, ier, i, k, n
+		integer(4) up, right, left, down, displ(1:this.step*this.Ysize), blocklen(1:this.step*this.Ysize)
 		
 		up = 1; right=2; down=3; left=4
-
-
 		x=this.Xsize + 2*this.step
-
 		mp_dp = MPI_DOUBLE_PRECISION
+		n = this.step*this.Ysize
 
+		displ(1) = 0
+		blocklen(1) = 1
+		do k = 2, this.Ysize
+			displ(k) = displ(k - 1) + x
+			blocklen(k) = 1
+		end do
 
-			call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(face, up), ier)
-			call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(face, down), ier)
-			call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.halo(face, right), ier)
-			call MPI_TYPE_VECTOR(this.Ysize, this.step, x, mp_dp, this.halo(face, left), ier)
-
-			if (face == 4) then
-				call MPI_TYPE_VECTOR(this.Xsize, 1, -1, mp_dp, this.backward, ier)
-				call MPI_TYPE_COMMIT(this.backward, ier)
-
-				call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.halo(face, up), ier)
-				call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.halo(face, down), ier)
-			end if
-
-
-			do i = 1, 4
-				call MPI_TYPE_COMMIT(this.halo(face, i), ier)
+		if(this.step > 1) then
+			do i = this.Ysize+1, n
+				displ(i) = displ(i - this.Ysize) + 1
+				blocklen(i) = 1
 			end do
+		end if
+
 
 		this.rcv_xy(face, left, 1) = this.ns_xy(1) - this.step
 		this.rcv_xy(face, left, 2) = this.ns_xy(2);
@@ -146,55 +141,14 @@ CONTAINS
 		this.snd_xy(face, up, 2) = this.nf_xy(2) - this.step + 1;
 
 
+		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(face, up), ier)
+		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(face, down), ier)
+		call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, right), ier)
+		call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, left), ier)
 
-
-		! call MPI_TYPE_VECTOR(this.Xsize, 1, -1, mp_dp, this.backward, ier)
-		! call MPI_TYPE_COMMIT(this.backward, ier)
-
-		! call MPI_TYPE_VECTOR(this.step, 1, -x, this.backward, this.halo, ier)
-		! call MPI_TYPE_COMMIT(this.halo, ier)
-
-		! this.snd_xy_180(down, 1) = this.nf_xy(1)
-		! this.snd_xy_180(down, 2) = this.ns_xy(2) + this.step - 1
-		! this.snd_xy_180(up, 1) = this.nf_xy(1)
-		! this.snd_xy_180(up, 2) = this.nf_xy(2)
-
-
-
-
-		! call MPI_TYPE_VECTOR(this.Ysize, 1, -x, mp_dp, this.backward_90, ier)
-		! call MPI_TYPE_COMMIT(this.backward_90, ier)
-
-		! call MPI_TYPE_VECTOR(this.step, 1, 1, this.backward_90, this.backward_grey_90, ier)
-		! call MPI_TYPE_COMMIT(this.backward_grey_90, ier)
-
-		! this.snd_xy_90(right, 1) = this.nf_xy(1) - this.step + 1
-		! this.snd_xy_90(right, 2) = this.nf_xy(2)
-		! this.snd_xy_90(left, 1) = this.ns_xy(1) + this.step - 1
-		! this.snd_xy_90(left, 2) = this.nf_xy(2)
-
-		! this.rcv_xy_90(right, 1) = this.nf_xy(1) + 1
-		! this.rcv_xy_90(right, 2) = this.nf_xy(2)
-		! this.rcv_xy_90(left, 1) = this.ns_xy(1) - this.step
-		! this.rcv_xy_90(left, 2) = this.nf_xy(2)
-
-
-
-		! call MPI_TYPE_VECTOR(this.Ysize, 1, x, mp_dp, this.backward_m90, ier)
-		! call MPI_TYPE_COMMIT(this.backward_m90, ier)
-
-		! call MPI_TYPE_VECTOR(this.step, 1, -1, this.backward_m90, this.backward_grey_m90, ier)
-		! call MPI_TYPE_COMMIT(this.backward_grey_m90, ier)
-
-		! this.snd_xy_m90(right, 1) = this.nf_xy(1) - this.step + 1
-		! this.snd_xy_m90(right, 2) = this.ns_xy(2)
-		! this.snd_xy_m90(left, 1) = this.ns_xy(1) + this.step - 1
-		! this.snd_xy_m90(left, 2) = this.ns_xy(2)
-
-		! this.rcv_xy_m90(right, 1) = this.nf_xy(1) + 1
-		! this.rcv_xy_m90(right, 2) = this.ns_xy(2)
-		! this.rcv_xy_m90(left, 1) = this.ns_xy(1) - this.step
-		! this.rcv_xy_m90(left, 2) = this.ns_xy(2)
+		do i = 1, 4
+			call MPI_TYPE_COMMIT(this.halo(face, i), ier)
+		end do
 
 
 	End Subroutine
@@ -215,6 +169,7 @@ CONTAINS
 	this.Neighbour_id(:, 2) = this.Ydim_block + id
 	this.Neighbour_id(:, 3) = id - 1
 	this.Neighbour_id(:, 4) = id - this.Ydim_block
+	this.rot(:, :) = 0
 
 	do face = 1, 6
 			this.Neighbours_face(face, :) = face
@@ -226,11 +181,13 @@ CONTAINS
 
 			if ( face == 3 ) then
 				this.Neighbour_id(face, up) = this.block_y*this.Xdim_block + this.block_x
-				this.border(face, up) = 1
+				this.border(face, up) = -1
+				this.rot(face, up) = 1
 
 			else if ( face == 5 ) then
 				this.Neighbour_id(face, up) = this.Xdim_block - this.block_x - 1
-				this.border(face, up) = -1
+				this.border(face, up) = 1
+				this.rot(face, up) = -1
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
@@ -257,11 +214,13 @@ CONTAINS
 			if ( face == 1 ) then
 				this.Neighbour_id(face, right) = (this.Ydim_block - this.block_y - 1)*this.Xdim_block
 				this.border(face, right) = 1
+				this.rot(face, right) = 1
 				this.Neighbours_face(face, right) = 3
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, right) = this.block_y*this.Xdim_block + this.block_x
 				this.border(face, right) = -1
+				this.rot(face, right) = -1
 				this.Neighbours_face(face, right) = 3
 
 			else if(face == 5) then
@@ -277,11 +236,13 @@ CONTAINS
 
 			if ( face == 3 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*this.Xdim_block - this.block_x - 1
-				this.border(face, down) = -1
+				this.border(face, down) = 1
+				this.rot(face, down) = -1
 
 			else if ( face == 5 ) then
 				this.Neighbour_id(face, down) = this.block_x
-				this.border(face, down) = 1
+				this.border(face, down) = -1
+				this.rot(face, down) = 1
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
@@ -294,7 +255,6 @@ CONTAINS
 
 			else if ( face == 6 ) then
 				this.Neighbours_face(face, down) = 2
-				this.border(face, down) = 2
 			end if
 		end if
 
@@ -307,11 +267,13 @@ CONTAINS
 			if ( face == 1 ) then
 				this.Neighbour_id(face, left) = this.Xdim_block*this.block_y
 				this.border(face, left) = -1
+				this.rot(face, left) = -1
 				this.Neighbours_face(face, left) = 5
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, left) = this.Xdim_block*this.Ydim_block - 1 - this.block_y*this.Xdim_block
 				this.border(face, left) = 1
+				this.rot(face, left) = 1
 				this.Neighbours_face(face, left) = 5
 			else if ( face == 2 ) then
 				this.Neighbours_face(face, left) = 5
