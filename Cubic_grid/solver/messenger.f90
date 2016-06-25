@@ -52,7 +52,7 @@ subroutine msg(this, f, paral)
 
 	call this.Waiter(paral)
 
-	call this.Halo_Rotations(paral, f.h_height, 0, 0)
+! 	call this.Halo_Rotations(paral, f.h_height, 0, 0)
 	! call this.Halo_Rotations(paral, f.x_vel, 1, 0)
 	! call this.Halo_Rotations(paral, f.y_vel, 0, 1)
 

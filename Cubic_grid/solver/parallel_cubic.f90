@@ -17,6 +17,7 @@ implicit none
 			Procedure, Public :: init => parallel_init
 			Procedure, Private :: halo_zone => halo_zone
 			Procedure, Private :: Neighbourhood => Neighbourhood
+			Procedure, Private :: Displacement => Displacement
 	End Type
 
 
@@ -99,27 +100,11 @@ CONTAINS
 		Class(parallel) :: this
 		integer(4), intent(in) :: face
 		integer(4) x, y, mp_dp, ier, i, k, n
-		integer(4) up, right, left, down, displ(1:this.step*this.Ysize), blocklen(1:this.step*this.Ysize)
-		
+		integer(4) up, right, left, down, displ(1:this.step*this.Xsize), blocklen(1:this.step*this.Ysize)
+
 		up = 1; right=2; down=3; left=4
 		x=this.Xsize + 2*this.step
 		mp_dp = MPI_DOUBLE_PRECISION
-		n = this.step*this.Ysize
-
-		displ(1) = 0
-		blocklen(1) = 1
-		do k = 2, this.Ysize
-			displ(k) = displ(k - 1) + x
-			blocklen(k) = 1
-		end do
-
-		if(this.step > 1) then
-			do i = this.Ysize+1, n
-				displ(i) = displ(i - this.Ysize) + 1
-				blocklen(i) = 1
-			end do
-		end if
-
 
 		this.rcv_xy(face, left, 1) = this.ns_xy(1) - this.step
 		this.rcv_xy(face, left, 2) = this.ns_xy(2);
@@ -141,13 +126,16 @@ CONTAINS
 		this.snd_xy(face, up, 2) = this.nf_xy(2) - this.step + 1;
 
 
-		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(face, up), ier)
-		call MPI_TYPE_VECTOR(this.step, this.Xsize, x, mp_dp, this.halo(face, down), ier)
-		call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, right), ier)
-		call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, left), ier)
+		do i = 1, this.step*this.Xsize
+			blocklen(i) = 1
+		end do
 
 		do i = 1, 4
+
+			call this.Displacement(face, i, displ)
+			call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, i), ier)
 			call MPI_TYPE_COMMIT(this.halo(face, i), ier)
+
 		end do
 
 
@@ -283,6 +271,187 @@ CONTAINS
 
 
 	End Subroutine
+
+
+
+
+
+Subroutine Displacement(this, face, dir, displ)
+	Class(parallel) :: this
+	integer(4), intent(in) :: face, dir
+	integer(4), intent(out) :: displ(1:this.step*this.Xsize)
+	integer(4) k, i, n, x
+
+	n = this.step*this.Xsize
+	x=this.Xsize + 2*this.step
+
+	if ( dir == 1 .or. dir == 3 ) then
+
+		select case(this.border(face, dir))
+		case (0)
+
+			displ(1) = 0
+			do k = 2, this.Xsize
+				displ(k) = displ(k - 1) + 1
+			end do
+
+			if(this.step > 1) then
+				do i = this.Xsize+1, n
+					displ(i) = displ(i - this.Xsize) + x
+				end do
+			end if
+
+		case (1)
+
+			displ(1) = this.Xsize - 1
+			do k = 2, this.Xsize
+				displ(k) = displ(k - 1) - 1
+			end do
+
+			if(this.step > 1) then
+				do i = this.Xsize+1, n
+					displ(i) = displ(i - this.Xsize) + x
+				end do
+			end if
+
+		case (-1)
+
+			displ(1) = x*(this.step - 1)
+			do k = 2, this.Xsize
+				displ(k) = displ(k - 1) + 1
+			end do
+
+			if(this.step > 1) then
+				do i = this.Xsize+1, n
+					displ(i) = displ(i - this.Xsize) - x
+				end do
+			end if
+
+		case (2)
+
+			displ(1) = x*(this.step - 1) + this.Xsize - 1
+			do k = 2, this.Xsize
+				displ(k) = displ(k - 1) - 1
+			end do
+
+			if(this.step > 1) then
+				do i = this.Xsize+1, n
+					displ(i) = displ(i - this.Xsize) - x
+				end do
+			end if
+
+		end select
+
+
+	else
+
+		select case(this.border(face, dir))
+		case (0)
+
+			displ(1) = 0
+			do k = 2, this.Ysize
+				displ(k) = displ(k - 1) + x
+			end do
+
+			if(this.step > 1) then
+				do i = this.Ysize+1, n
+					displ(i) = displ(i - this.Ysize) + 1
+				end do
+			end if
+
+		case (1)
+
+		displ(1) = (this.Ysize - 1)*x
+		do k = 2, this.Ysize
+			displ(k) = displ(k - 1) - x
+		end do
+
+		if(this.step > 1) then
+			do i = this.Ysize+1, n
+				displ(i) = displ(i - this.Ysize) + 1
+			end do
+		end if
+
+		case (-1)
+
+		displ(1) = this.step - 1
+		do k = 2, this.Ysize
+			displ(k) = displ(k - 1) + x
+		end do
+
+		if(this.step > 1) then
+			do i = this.Ysize+1, n
+				displ(i) = displ(i - this.Ysize) - 1
+			end do
+		end if
+
+		case (2)
+
+		displ(1) = (this.Ysize - 1)*x + this.step - 1
+		do k = 2, this.Ysize
+			displ(k) = displ(k - 1) - x
+		end do
+
+		if(this.step > 1) then
+			do i = this.Ysize+1, n
+				displ(i) = displ(i - this.Ysize) - 1
+			end do
+		end if
+
+		end select
+
+	end if
+
+
+
+! 	m = this.step*this.Xsize
+
+! 	displ(1) = 0
+! 	blocklen(1) = 1
+! 	do k = 2, this.Ysize
+! 		displ(k) = displ(k - 1) + x
+! 		blocklen(k) = 1
+! 	end do
+
+! 	if(this.step > 1) then
+! 		do i = this.Ysize+1, n
+! 			displ(i) = displ(i - this.Ysize) + 1
+! 			blocklen(i) = 1
+! 		end do
+! 	end if
+
+
+! 	do i = 1, this.Xsize
+! 		displ_1x(i) = this.Xsize - i
+! 	end do
+! 	if(this.step > 1) then
+! 		do i = this.Ysize+1, n
+! 			displ(i) = displ(i - this.Ysize) + 1
+! 			blocklen(i) = 1
+! 		end do
+! 	end if
+
+! 	if(this.step > 1) then
+! 		do i = this.Xsize+1, m
+! 			displ_1x(i) = displ_1x(i - this.Xsize) + x
+! 		end do
+! 	end if
+
+
+! 	displ_1y(1) = n - this.step + 1
+! 	do i = 2, this.Ysize
+! 		displ_1y(i) = displ_1y(i - 1) - x
+! 	end do
+
+! 	if(this.step > 1) then
+! 		do i = this.Ysize+1, n
+! 			displ_1y(i) = displ_1y(i - this.Ysize) + 1
+! 			blocklen(i) = 1
+! 		end do
+! 	end if
+
+
+End Subroutine
 
 
 
