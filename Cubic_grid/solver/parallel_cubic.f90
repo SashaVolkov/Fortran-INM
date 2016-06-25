@@ -105,6 +105,7 @@ CONTAINS
 		up = 1; right=2; down=3; left=4
 		x=this.Xsize + 2*this.step
 		mp_dp = MPI_DOUBLE_PRECISION
+		n = this.step*this.Ysize
 
 		this.rcv_xy(face, left, 1) = this.ns_xy(1) - this.step
 		this.rcv_xy(face, left, 2) = this.ns_xy(2);
@@ -137,6 +138,7 @@ CONTAINS
 			call MPI_TYPE_COMMIT(this.halo(face, i), ier)
 
 		end do
+
 
 
 	End Subroutine
@@ -179,7 +181,6 @@ CONTAINS
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
-				this.border(face, up) = 2
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
@@ -234,7 +235,6 @@ CONTAINS
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
-				this.border(face, down) = 2
 
 			else if ( face == 1 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
@@ -287,8 +287,8 @@ Subroutine Displacement(this, face, dir, displ)
 
 	if ( dir == 1 .or. dir == 3 ) then
 
-		select case(this.border(face, dir))
-		case (0)
+		select case(this.border(face, dir) == 2)
+		case (.false.)
 
 			displ(1) = 0
 			do k = 2, this.Xsize
@@ -301,33 +301,33 @@ Subroutine Displacement(this, face, dir, displ)
 				end do
 			end if
 
-		case (1)
+		! case (1)
 
-			displ(1) = this.Xsize - 1
-			do k = 2, this.Xsize
-				displ(k) = displ(k - 1) - 1
-			end do
+		! 	displ(1) = this.Xsize - 1
+		! 	do k = 2, this.Xsize
+		! 		displ(k) = displ(k - 1) - 1
+		! 	end do
 
-			if(this.step > 1) then
-				do i = this.Xsize+1, n
-					displ(i) = displ(i - this.Xsize) + x
-				end do
-			end if
+		! 	if(this.step > 1) then
+		! 		do i = this.Xsize+1, n
+		! 			displ(i) = displ(i - this.Xsize) + x
+		! 		end do
+		! 	end if
 
-		case (-1)
+		! case (-1)
 
-			displ(1) = x*(this.step - 1)
-			do k = 2, this.Xsize
-				displ(k) = displ(k - 1) + 1
-			end do
+		! 	displ(1) = x*(this.step - 1)
+		! 	do k = 2, this.Xsize
+		! 		displ(k) = displ(k - 1) + 1
+		! 	end do
 
-			if(this.step > 1) then
-				do i = this.Xsize+1, n
-					displ(i) = displ(i - this.Xsize) - x
-				end do
-			end if
+		! 	if(this.step > 1) then
+		! 		do i = this.Xsize+1, n
+		! 			displ(i) = displ(i - this.Xsize) - x
+		! 		end do
+		! 	end if
 
-		case (2)
+		case (.true.)
 
 			displ(1) = x*(this.step - 1) + this.Xsize - 1
 			do k = 2, this.Xsize
@@ -348,9 +348,22 @@ Subroutine Displacement(this, face, dir, displ)
 		select case(this.border(face, dir))
 		case (0)
 
-			displ(1) = 0
+				displ(1) = 0
+				do k = 2, this.Ysize
+					displ(k) = displ(k - 1) + x
+				end do
+
+				if(this.step > 1) then
+					do i = this.Ysize+1, n
+						displ(i) = displ(i - this.Ysize) + 1
+					end do
+				end if
+
+		case (1)
+
+			displ(1) = (this.Ysize - 1)*x
 			do k = 2, this.Ysize
-				displ(k) = displ(k - 1) + x
+				displ(k) = displ(k - 1) - x
 			end do
 
 			if(this.step > 1) then
@@ -359,96 +372,23 @@ Subroutine Displacement(this, face, dir, displ)
 				end do
 			end if
 
-		case (1)
-
-		displ(1) = (this.Ysize - 1)*x
-		do k = 2, this.Ysize
-			displ(k) = displ(k - 1) - x
-		end do
-
-		if(this.step > 1) then
-			do i = this.Ysize+1, n
-				displ(i) = displ(i - this.Ysize) + 1
-			end do
-		end if
-
 		case (-1)
 
-		displ(1) = this.step - 1
-		do k = 2, this.Ysize
-			displ(k) = displ(k - 1) + x
-		end do
-
-		if(this.step > 1) then
-			do i = this.Ysize+1, n
-				displ(i) = displ(i - this.Ysize) - 1
+			displ(1) = this.step - 1
+			do k = 2, this.Ysize
+				displ(k) = displ(k - 1) + x
 			end do
-		end if
 
-		case (2)
-
-		displ(1) = (this.Ysize - 1)*x + this.step - 1
-		do k = 2, this.Ysize
-			displ(k) = displ(k - 1) - x
-		end do
-
-		if(this.step > 1) then
-			do i = this.Ysize+1, n
-				displ(i) = displ(i - this.Ysize) - 1
-			end do
-		end if
+			if(this.step > 1) then
+				do i = this.Ysize+1, n
+					displ(i) = displ(i - this.Ysize) - 1
+				end do
+			end if
 
 		end select
 
 	end if
 
-
-
-! 	m = this.step*this.Xsize
-
-! 	displ(1) = 0
-! 	blocklen(1) = 1
-! 	do k = 2, this.Ysize
-! 		displ(k) = displ(k - 1) + x
-! 		blocklen(k) = 1
-! 	end do
-
-! 	if(this.step > 1) then
-! 		do i = this.Ysize+1, n
-! 			displ(i) = displ(i - this.Ysize) + 1
-! 			blocklen(i) = 1
-! 		end do
-! 	end if
-
-
-! 	do i = 1, this.Xsize
-! 		displ_1x(i) = this.Xsize - i
-! 	end do
-! 	if(this.step > 1) then
-! 		do i = this.Ysize+1, n
-! 			displ(i) = displ(i - this.Ysize) + 1
-! 			blocklen(i) = 1
-! 		end do
-! 	end if
-
-! 	if(this.step > 1) then
-! 		do i = this.Xsize+1, m
-! 			displ_1x(i) = displ_1x(i - this.Xsize) + x
-! 		end do
-! 	end if
-
-
-! 	displ_1y(1) = n - this.step + 1
-! 	do i = 2, this.Ysize
-! 		displ_1y(i) = displ_1y(i - 1) - x
-! 	end do
-
-! 	if(this.step > 1) then
-! 		do i = this.Ysize+1, n
-! 			displ_1y(i) = displ_1y(i - this.Ysize) + 1
-! 			blocklen(i) = 1
-! 		end do
-! 	end if
 
 
 End Subroutine
