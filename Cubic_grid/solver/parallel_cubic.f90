@@ -301,32 +301,6 @@ Subroutine Displacement(this, face, dir, displ)
 				end do
 			end if
 
-		! case (1)
-
-		! 	displ(1) = this.Xsize - 1
-		! 	do k = 2, this.Xsize
-		! 		displ(k) = displ(k - 1) - 1
-		! 	end do
-
-		! 	if(this.step > 1) then
-		! 		do i = this.Xsize+1, n
-		! 			displ(i) = displ(i - this.Xsize) + x
-		! 		end do
-		! 	end if
-
-		! case (-1)
-
-		! 	displ(1) = x*(this.step - 1)
-		! 	do k = 2, this.Xsize
-		! 		displ(k) = displ(k - 1) + 1
-		! 	end do
-
-		! 	if(this.step > 1) then
-		! 		do i = this.Xsize+1, n
-		! 			displ(i) = displ(i - this.Xsize) - x
-		! 		end do
-		! 	end if
-
 		case (.true.)
 
 			displ(1) = x*(this.step - 1) + this.Xsize - 1
