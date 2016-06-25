@@ -52,9 +52,9 @@ subroutine msg(this, f, paral)
 
 	call this.Waiter(paral)
 
-! 	call this.Halo_Rotations(paral, f.h_height, 0, 0)
-	! call this.Halo_Rotations(paral, f.x_vel, 1, 0)
-	! call this.Halo_Rotations(paral, f.y_vel, 0, 1)
+	call this.Halo_Rotations(paral, f.h_height, 0, 0)
+	call this.Halo_Rotations(paral, f.x_vel, 1, 0)
+	call this.Halo_Rotations(paral, f.y_vel, 0, 1)
 
 end subroutine
 
@@ -136,57 +136,17 @@ subroutine Halo_Rotations(this, paral, func_mass, x_vec, y_vec)
 			select case(paral.border(face, i))
 				case(-1) ! step rot
 
+					if(y_vec == 1 .and. paral.rot(face, i) == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
+					if(x_vec == 1 .and. paral.rot(face, i) == -1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
 
-					if(i == up .or. i == down) then
-						do k = ns_xy(1), nf_xy(1), 1
-							call this.swap(func_mass(k, ns_xy(2):nf_xy(2), face), paral.step)
-						end do
-					else
-						do k = ns_xy(2), nf_xy(2), 1
-							call this.swap(func_mass(ns_xy(1):nf_xy(1), k, face), paral.step)
-						end do
-					end if
-
+				case(1) ! side rot
 
 					if(y_vec == 1 .and. paral.rot(face, i) == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
 					if(x_vec == 1 .and. paral.rot(face, i) == -1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
 
-
-				case(1) ! side rot
-
-				if(i == up .or. i == down) then
-					do k = ns_xy(2), nf_xy(2), 1
-						call this.swap(func_mass(ns_xy(1):nf_xy(1), k, face), paral.Xsize)
-					end do
-				else
-					do k = ns_xy(1), nf_xy(1), 1
-						call this.swap(func_mass(k, ns_xy(2):nf_xy(2), face), paral.Ysize)
-					end do
-				end if
-
-				if(y_vec == 1 .and. paral.rot(face, i) == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
-				if(x_vec == 1 .and. paral.rot(face, i) == -1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
-
-					! print *, face, i, paral.id
-
 				case(2) ! full rot
 
-				if(i == up .or. i == down) then
-					do k = ns_xy(2), nf_xy(2), 1
-						call this.swap(func_mass(ns_xy(1):nf_xy(1), k, face), paral.Xsize)
-					end do
-					do k = ns_xy(1), nf_xy(1), 1
-						call this.swap(func_mass(k, ns_xy(2):nf_xy(2), face), paral.step)
-					end do
-				else
-					do k = ns_xy(1), nf_xy(1), 1
-						call this.swap(func_mass(k, ns_xy(2):nf_xy(2), face), paral.Ysize)
-					end do
-					do k = ns_xy(2), nf_xy(2), 1
-						call this.swap(func_mass(ns_xy(1):nf_xy(1), k, face), paral.step)
-					end do
-				end if
-				if(x_vec ==1 .or. y_vec == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
+					if(x_vec ==1 .or. y_vec == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
 
 				case default
 
