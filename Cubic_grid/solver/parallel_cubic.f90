@@ -127,7 +127,7 @@ CONTAINS
 		this.snd_xy(face, up, 2) = this.nf_xy(2) - this.step + 1;
 
 
-		do i = 1, this.step*this.Xsize
+		do i = 1, n
 			blocklen(i) = 1
 		end do
 
@@ -138,7 +138,6 @@ CONTAINS
 			call MPI_TYPE_COMMIT(this.halo(face, i), ier)
 
 		end do
-
 
 
 	End Subroutine
@@ -154,7 +153,7 @@ CONTAINS
 	up = 1; right=2; down=3; left=4
 
 	! 			Neighbourhood
-	this.border(:, :) = 0 ! if 0 element in center, if "1": +pi/2 rotation, if "2": +pi, if "-1": -pi/2
+	this.border(:, :) = 0 ! if "0" no rotation, if "1": +pi/2 rotation, if "2": +pi, if "-1": -pi/2
 	this.Neighbour_id(:, 1) = id + 1
 	this.Neighbour_id(:, 2) = this.Ydim_block + id
 	this.Neighbour_id(:, 3) = id - 1
