@@ -2,6 +2,7 @@ module schemes
 
 	use grid_var, Only: g_var
 	use func_var, Only: f_var
+	use omp_lib
 
 	implicit none
 
@@ -32,7 +33,7 @@ module schemes
 		dt = grid.dt;  ns_x = var.ns_x;  ns_y = var.ns_y
 		nf_x = var.nf_x;  nf_y = var.nf_y
 
-
+!$OMP DO
 		do face = 1, 6
 			do y = ns_y, nf_y
 				do x = ns_x, nf_x
@@ -51,6 +52,7 @@ module schemes
 				end do
 			end do
 		end do
+!$OMP END DO
 
 			call var_pr.equal(var)
 

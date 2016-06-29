@@ -8,6 +8,7 @@ program solver
 	use schemes, Only: schema
 	use diagnostic_mod, Only: diagnostic
 	use messenger, Only: message
+	use omp_lib
 
 implicit none
 
@@ -17,7 +18,7 @@ implicit none
 	real(8) r_sphere, g, pi, step, omega_cor, height, dt
 	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6), rescale, face
 
-	integer(4) status(MPI_STATUS_SIZE), ier, id, np
+	integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
 
 	Type(geometry) :: geom
 	Type(f_var) :: var, var_prev
@@ -36,7 +37,7 @@ implicit none
 	step = 2*pi*r_sphere/(8d0*dim)
 
 	Tmax = 26000;  speedup = 40;  dt = 200d0
-	rescale = 1 ! 0-simple, 1-tan, 2-pow(4/3)
+	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
 	call MPI_Init(ier)
@@ -58,7 +59,7 @@ implicit none
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
-! 	diagn.init( grid, Tmax, rescale)
+	! call diagn.init( grid, paral, Tmax, rescale, id)
 
 
 	do time = 1, Tmax
@@ -80,7 +81,7 @@ implicit none
 		print '(" np = ", I7)', np
 	end if
 
-
+	! print *, "threads = ", omp_get_num_threads()
 
 	call grid.deinit()
 	call var.deinit()

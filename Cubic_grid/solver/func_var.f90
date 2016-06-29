@@ -23,7 +23,6 @@ implicit none
 		Procedure, Public :: deinit => deinit
 		Procedure, Public :: equal => equal
 		Procedure, Public :: start_conditions => start_conditions
-		! Procedure, Public :: borders => borders
 	End Type
 
 
@@ -38,7 +37,6 @@ CONTAINS
 		integer(4), intent(in) :: step
 		real(8), intent(in) :: height
 
-
 		this.ns_x = paral.ns_xy(1);  this.ns_y = paral.ns_xy(2)
 		this.nf_x = paral.nf_xy(1);  this.nf_y = paral.nf_xy(2)
 
@@ -46,9 +44,7 @@ CONTAINS
 		this.last_x = paral.last_x;  this.last_y = paral.last_y
 
 		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
-
 		this.step = step;  this.height = height;  this.dim = paral.dim
-
 
 		call this.alloc()
 
@@ -82,16 +78,10 @@ CONTAINS
 	subroutine equal(var_pr, var)
 
 		Class(f_var) :: var_pr, var
-		integer(4) x, y
 
-			! do y = var_pr.first_y, var_pr.last_y
-			! 	do x = var_pr.first_x, var_pr.last_x
 				var_pr.h_height(:, :, :)=var.h_height(:, :, :)
 				var_pr.x_vel(:, :, :)=var.x_vel(:, :, :)
 				var_pr.y_vel(:, :, :)=var.y_vel(:, :, :)
-			! 	end do
-			! end do
-
 
 	end subroutine
 
@@ -117,7 +107,7 @@ CONTAINS
 				end do
 			end do
 
-			if ( face == 2 ) then
+			if ( face == 4 ) then
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					this.h_height(x, y, face) =&
@@ -128,160 +118,7 @@ CONTAINS
 
 		end do
 
-
 	end subroutine
-
-
-
-		! integer(4) function borders(this, var, var_grey)
-
-		! Class(f_var) :: this
-		! Class(f_var) :: var(1:6), var_grey(1:6)
-		! integer(4) dim, step, dim_st, x, y, i, j
-
-		! dim = var(1).dim;  step = var(1).step;  dim_st = var(1).dim_st
-
-
-		! do y = 0, step
-		! 	do x = -dim, dim
-
-		! 		var_grey(1).h_height(x, -dim - y) = var(2).h_height(x, dim - y)
-		! 		var_grey(1).x_vel(x, -dim - y) = var(2).x_vel(x, dim - y)
-		! 		var_grey(1).y_vel(x, -dim - y) = var(2).y_vel(x, dim - y)
-
-		! 		var_grey(2).h_height(x, dim + y) = var(1).h_height(x, -dim + y)
-		! 		var_grey(2).x_vel(x, dim + y) = var(1).x_vel(x, -dim + y)
-		! 		var_grey(2).y_vel(x, dim + y) = var(1).y_vel(x, -dim + y)
-
-
-		! 		var_grey(6).h_height(x, dim + y) = var(2).h_height(x, -dim + y)
-		! 		var_grey(6).x_vel(x, dim + y) = var(2).x_vel(x, -dim + y)
-		! 		var_grey(6).y_vel(x, dim + y) = var(2).y_vel(x, -dim + y)
-
-		! 		var_grey(2).h_height(x, -dim - y) = var(6).h_height(x, dim - y)
-		! 		var_grey(2).x_vel(x, -dim - y) = var(6).x_vel(x, dim - y)
-		! 		var_grey(2).y_vel(x, -dim - y) = var(6).y_vel(x, dim - y)
-
-		! 	end do
-		! end do
-
-
-		! do y = -dim, dim
-		! 	do x = 0, step
-
-		! 		var_grey(5).h_height(dim + x, y) = var(2).h_height(-dim + x, y)
-		! 		var_grey(5).x_vel(dim + x, y) = var(2).x_vel(-dim + x, y)
-		! 		var_grey(5).y_vel(dim + x, y) = var(2).y_vel(-dim + x, y)
-
-		! 		var_grey(2).h_height(-dim - x, y) = var(5).h_height(dim - x, y)
-		! 		var_grey(2).x_vel(-dim - x, y) = var(5).x_vel(dim - x, y)
-		! 		var_grey(2).y_vel(-dim - x, y) = var(5).y_vel(dim - x, y)
-
-
-		! 		var_grey(3).h_height(-dim - x, y) = var(2).h_height(dim - x, y)
-		! 		var_grey(3).x_vel(-dim - x, y) = var(2).x_vel(dim - x, y)
-		! 		var_grey(3).y_vel(-dim - x, y) = var(2).y_vel(dim - x, y)
-
-		! 		var_grey(2).h_height(dim + x, y) = var(3).h_height(-dim + x, y)
-		! 		var_grey(2).x_vel(dim + x, y) = var(3).x_vel(-dim + x, y)
-		! 		var_grey(2).y_vel(dim + x, y) = var(3).y_vel(-dim + x, y)
-
-		! 	end do
-		! end do
-
-
-		! do y = 0, step
-		! 	do x = -dim, dim
-
-		! 	var_grey(1).h_height(-x, dim + y) = var(4).h_height(x, dim - y)
-		! 	var_grey(1).x_vel(-x, dim + y) = -var(4).x_vel(x, dim - y)
-		! 	var_grey(1).y_vel(-x, dim + y) = -var(4).y_vel(x, dim - y)
-
-		! 		var_grey(4).h_height(x, dim + y) = var(1).h_height(-x, dim - y)
-		! 		var_grey(4).x_vel(x, dim + y) = -var(1).x_vel(-x, dim - y)
-		! 		var_grey(4).y_vel(x, dim + y) = -var(1).y_vel(-x, dim - y)
-
-
-		! 		var_grey(6).h_height(-x, -dim - y) = var(4).h_height(x, -dim + y)
-		! 		var_grey(6).x_vel(-x, -dim - y) = -var(4).x_vel(x, -dim + y)
-		! 		var_grey(6).y_vel(-x, -dim - y) = -var(4).y_vel(x, -dim + y)
-
-		! 		var_grey(4).h_height(x, -dim - y) = var(6).h_height(-x, -dim + y)
-		! 		var_grey(4).x_vel(x, -dim - y) = -var(6).x_vel(-x, -dim + y)
-		! 		var_grey(4).y_vel(x, -dim - y) = -var(6).y_vel(-x, -dim + y)
-
-		! 	end do
-		! end do
-
-
-		! do y = -dim, dim
-		! 	do x = 0, step
-
-		! 		var_grey(3).h_height(dim + x, y) = var(4).h_height(-dim + x, y)
-		! 		var_grey(3).x_vel(dim + x, y) = var(4).x_vel(-dim + x, y)
-		! 		var_grey(3).y_vel(dim + x, y) = var(4).y_vel(-dim + x, y)
-
-		! 		var_grey(4).h_height(-dim - x, y) = var(3).h_height(dim - x, y)
-		! 		var_grey(4).x_vel(-dim - x, y) = var(3).x_vel(dim - x, y)
-		! 		var_grey(4).y_vel(-dim - x, y) = var(3).y_vel(dim - x, y)
-
-
-		! 		var_grey(4).h_height(dim + x, y) = var(5).h_height(-dim + x, y)
-		! 		var_grey(4).x_vel(dim + x, y) = var(5).x_vel(-dim + x, y)
-		! 		var_grey(4).y_vel(dim + x, y) = var(5).y_vel(-dim + x, y)
-
-		! 		var_grey(5).h_height(-dim - x, y) = var(4).h_height(dim - x, y)
-		! 		var_grey(5).x_vel(-dim - x, y) = var(4).x_vel(dim - x, y)
-		! 		var_grey(5).y_vel(-dim - x, y) = var(4).y_vel(dim - x, y)
-
-		! 	end do
-		! end do
-
-
-		! do i = -dim, dim
-		! 	do j = 0, step
-
-		! 		var_grey(1).h_height(-dim - j, -i) = var(5).h_height(i, dim - j)
-		! 		var_grey(1).x_vel(-dim - j, -i) = var(5).y_vel(i, dim - j)
-		! 		var_grey(1).y_vel(-dim - j, -i) = -var(5).x_vel(i, dim - j)
-
-		! 		var_grey(5).h_height(i, dim + j) = var(1).h_height(-dim + j, -i)
-		! 		var_grey(5).x_vel(i, dim + j) = -var(1).y_vel(-dim + j, -i)
-		! 		var_grey(5).y_vel(i, dim + j) = var(1).x_vel(-dim + j, -i)
-
-
-		! 		var_grey(6).h_height(-dim - j, i) = var(5).h_height(i, -dim + j)
-		! 		var_grey(6).x_vel(-dim - j, i) = -var(5).y_vel(i, -dim + j)
-		! 		var_grey(6).y_vel(-dim - j, i) = var(5).x_vel(i, -dim + j)
-
-		! 		var_grey(5).h_height(i, -dim - j) = var(6).h_height(-dim + j, i)
-		! 		var_grey(5).x_vel(i, -dim - j) = var(6).y_vel(-dim + j, i)
-		! 		var_grey(5).y_vel(i, -dim - j) = -var(6).x_vel(-dim + j, i)
-
-
-
-		! 		var_grey(1).h_height(dim + j, i) = var(3).h_height(i, dim - j)
-		! 		var_grey(1).x_vel(dim + j, i) = -var(3).y_vel(i, dim - j)
-		! 		var_grey(1).y_vel(dim + j, i) = var(3).x_vel(i, dim - j)
-
-		! 		var_grey(3).h_height(i, dim + j) = var(1).h_height(dim - j, i)
-		! 		var_grey(3).x_vel(i, dim + j) = var(1).y_vel(dim - j, i)
-		! 		var_grey(3).y_vel(i, dim + j) = -var(1).x_vel(dim - j, i)
-
-
-		! 		var_grey(6).h_height(dim + j, -i) = var(3).h_height(i, -dim + j)
-		! 		var_grey(6).x_vel(dim + j, -i) = var(3).y_vel(i, -dim + j)
-		! 		var_grey(6).y_vel(dim + j, -i) = -var(3).x_vel(i, -dim + j)
-
-		! 		var_grey(3).h_height(i, -dim - j) = var(6).h_height(dim - j, -i)
-		! 		var_grey(3).x_vel(i, -dim - j) = -var(6).y_vel(dim - j, -i)
-		! 		var_grey(3).y_vel(i, -dim - j) = var(6).x_vel(dim - j, -i)
-
-		! 	end do
-		! end do
-
-
-		! end function
 
 
 

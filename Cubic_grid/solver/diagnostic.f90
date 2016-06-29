@@ -2,10 +2,14 @@ module diagnostic_mod
 
 	use grid_var, Only: g_var
 	use func_var, Only: f_var
+	use parallel_cubic, Only: parallel
+
 
 	implicit none
 	Private
 	Public :: diagnostic
+
+	include"mpif.h"
 
 	Type diagnostic
 
@@ -29,18 +33,20 @@ CONTAINS
 
 
 
-	subroutine init(this, grid, Tmax, rescale)
+	subroutine init(this, grid, paral, Tmax, rescale, id)
 
 		Class(diagnostic) :: this
 		Class(g_var) :: grid
-		integer(4), intent(in) :: Tmax, rescale
+		Class(parallel) :: paral
+
+		integer(4), intent(in) :: Tmax, rescale, id
 		character(8) istring
 
 
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
 		this.convert_time = grid.dt/3600d0/24d0
 
-		call this.alloc()
+		call this.alloc(paral)
 
 		if (rescale == 1) then
 			istring = '_tan'
@@ -50,24 +56,29 @@ CONTAINS
 			istring = '_exp'
 		end if
 
-		call this.histogram(16*grid.dim*grid.dim, 'datFiles/angle'//trim(istring)//'.dat', 'datFiles/angle_distribution'//trim(istring)//'.dat')
-		call this.histogram(16*grid.dim*grid.dim, 'datFiles/dist'//trim(istring)//'.dat', 'datFiles/dist_distribution'//trim(istring)//'.dat')
-		call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
+		if(id == 0) then
 
-		open(9,file='datFiles/CFL'//trim(istring)//'.dat')
-		open(11,file='datFiles/L1'//trim(istring)//'.dat')
-		open(12,file='datFiles/L2'//trim(istring)//'.dat')
-		open(13,file='datFiles/L_inf'//trim(istring)//'.dat')
+			call this.histogram(16*grid.dim*grid.dim, 'datFiles/angle'//trim(istring)//'.dat', 'datFiles/angle_distribution'//trim(istring)//'.dat')
+			call this.histogram(16*grid.dim*grid.dim, 'datFiles/dist'//trim(istring)//'.dat', 'datFiles/dist_distribution'//trim(istring)//'.dat')
+			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
+
+			open(9,file='datFiles/CFL'//trim(istring)//'.dat')
+			open(11,file='datFiles/L1'//trim(istring)//'.dat')
+			open(12,file='datFiles/L2'//trim(istring)//'.dat')
+			open(13,file='datFiles/L_inf'//trim(istring)//'.dat')
+
+		end if
 
 	end subroutine
 
 
 
-	subroutine alloc(this)
+	subroutine alloc(this, paral)
 
 		Class(diagnostic) :: this
+		Class(parallel) :: paral
 
-		Allocate(this.CFL(-this.dim:this.dim, -this.dim:this.dim, 1:6))
+		Allocate(this.CFL(paral.first_x:paral.last_x, paral.first_y:paral.last_y, 1:6))
 
 	end subroutine
 
@@ -75,9 +86,17 @@ CONTAINS
 
 	subroutine deinit(this)
 		Class(diagnostic) :: this
+		integer(4) ier, id
 
 		if (Allocated(this.CFL)) Deallocate(this.CFL)
-		close(9)
+		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
+
+		if(id == 0) then
+			close(9)
+			close(11)
+			close(12)
+			close(13)
+		end if
 
 	end subroutine
 
@@ -93,8 +112,8 @@ CONTAINS
 		dim = this.dim
 
 		do face = 1, 6
-			do y = -dim, dim
-				do x = -dim, dim
+			do y = func.first_y, func.last_y
+				do x = func.first_x, func.last_x
 
 					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/grid.h_dist(2, 1, y, x)) +&
 					 abs(func.y_vel(x, y, face)*grid.dt/grid.h_dist(3, 1, y, x))

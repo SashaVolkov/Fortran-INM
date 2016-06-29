@@ -14,7 +14,7 @@ module messenger
 
 	integer(4) :: var_count = 3
 	integer(4) snd_stat(MPI_STATUS_SIZE, 3, 4, 6), rcv_stat(MPI_STATUS_SIZE, 3, 4, 6)
-	integer(4) ier, snd_req(3, 4, 6), rcv_req(3, 4, 6), comm(3)
+	integer(4) ier, np, snd_req(3, 4, 6), rcv_req(3, 4, 6), comm(3)
 
 		CONTAINS
 		Procedure, Public :: msg => msg
@@ -22,7 +22,6 @@ module messenger
 		Procedure, Private :: Simple_msg => Simple_msg
 		Procedure, Private :: Waiter => Waiter
 		Procedure, Private :: Halo_Rotations => Halo_Rotations
-		Procedure, Private :: swap => swap
 	End Type
 
 
@@ -34,6 +33,9 @@ subroutine init(this)
 
 	Class(message) :: this
 	integer(4) i
+
+
+	call MPI_Comm_size(MPI_COMM_WORLD,this.np,this.ier)
 
 	do i = 1, this.var_count
 		call MPI_COMM_DUP(MPI_COMM_WORLD, this.comm(i), this.ier)
@@ -52,9 +54,8 @@ subroutine msg(this, f, paral)
 
 	call this.Waiter(paral)
 
-	call this.Halo_Rotations(paral, f.h_height, 0, 0)
-	call this.Halo_Rotations(paral, f.x_vel, 1, 0)
-	call this.Halo_Rotations(paral, f.y_vel, 0, 1)
+	! call this.Halo_Rotations(paral, f.x_vel, 1, 0)
+	! call this.Halo_Rotations(paral, f.y_vel, 0, 1)
 
 end subroutine
 
@@ -69,14 +70,15 @@ subroutine Simple_msg(this, paral, f)
 	integer(4) i, face, rcv_tag, snd_tag
 	integer(4) rx, ry, sx, sy, neib_id
 
+
 	do face = 1, 6
 		do i = 1, 4
 
 			neib_id = paral.Neighbour_id(face, i)
 			rx = paral.rcv_xy(face, i, 1);  ry = paral.rcv_xy(face, i, 2)
 			sx = paral.snd_xy(face, i, 1);  sy = paral.snd_xy(face, i, 2)
-			rcv_tag = (paral.id + 1) * 6 + face
-			snd_tag = (neib_id + 1) * 6 + paral.Neighbours_face(face, i)
+			snd_tag = (neib_id + 1)*6*4 + paral.Neighbours_face(face, i)*4 + paral.Neighb_dir(face, i)
+			rcv_tag = (paral.id + 1)*6*4  + face*4 + i
 
 			call MPI_IRecv(f.h_height(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(1), this.rcv_req(1, i, face), this.ier)
 
@@ -91,6 +93,8 @@ subroutine Simple_msg(this, paral, f)
 			call MPI_ISend(f.h_height(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(1), this.snd_req(1, i, face), this.ier)
 			call MPI_ISend(f.x_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(2), this.snd_req(2, i, face), this.ier)
 			call MPI_ISend(f.y_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(3), this.snd_req(3, i, face), this.ier)
+
+			! print *, snd_tag, ";", face, ";", i
 
 		end do
 	end do
@@ -133,49 +137,15 @@ subroutine Halo_Rotations(this, paral, func_mass, x_vec, y_vec)
 				nf_xy(2) = ns_xy(2) + paral.Ysize - 1
 			end if
 
-			select case(paral.border(face, i))
-				case(-1) ! step rot
-
+			select case(paral.border(face, i) == 2)
+				case(.false.)
 					if(y_vec == 1 .and. paral.rot(face, i) == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
 					if(x_vec == 1 .and. paral.rot(face, i) == -1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
-
-				case(1) ! side rot
-
-					if(y_vec == 1 .and. paral.rot(face, i) == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
-					if(x_vec == 1 .and. paral.rot(face, i) == -1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
-
-				case(2) ! full rot
-
-					if(x_vec ==1 .or. y_vec == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
-
-				case default
-
+				case(.true.)
+					if(x_vec == 1 .or. y_vec == 1) func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face) = - func_mass(ns_xy(1):nf_xy(1), ns_xy(2):nf_xy(2), face)
 			end select
 
-
-
 		end do
-	end do
-
-end subroutine
-
-
-
-subroutine swap(this, mass, n)
-
-	Class(message) :: this
-	integer(4), intent(in) :: n
-	real(8), intent(inout) :: mass(1:n)
-	real(8) temp
-	integer(4) i
-	i = 0
-
-	do while(1+i < n-i)
-		temp = mass(1+i)
-		mass(1+i) = mass(n-i)
-		mass(n-i) = temp
-
-		i = i + 1
 	end do
 
 end subroutine

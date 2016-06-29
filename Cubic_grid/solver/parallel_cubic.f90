@@ -12,7 +12,7 @@ implicit none
 		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), y_vec_type, rot(6, 4)
 		integer(4) snd_xy(6, 4, 2), snd_xy_180(6, 4, 2), snd_xy_90(6, 4, 2), snd_xy_m90(6, 4, 2)
 		integer(4) rcv_xy(6, 4, 2), rcv_xy_90(6, 4, 2), rcv_xy_m90(6, 4, 2)
-		integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id
+		integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
 		CONTAINS
 			Procedure, Public :: init => parallel_init
 			Procedure, Private :: halo_zone => halo_zone
@@ -33,118 +33,119 @@ CONTAINS
 
 
 
-	Subroutine parallel_init(this, dim, step, np, id)
+Subroutine parallel_init(this, dim, step, np, id)
 
-		Class(parallel) :: this
+	Class(parallel) :: this
 
-		integer, Intent(In) :: dim, step, np, id
-		integer k, i, j, rc, p, ier, face
-		integer dims(2)
+	integer, Intent(In) :: dim, step, np, id
+	integer k, i, j, rc, p, ier, face
+	integer dims(2)
 
-		k=1; i = 0; j = 0; p = 0
-		this.step = step
-		this.dim = dim
-		this.id = id
+	k=1; i = 0; j = 0; p = 0
+	this.step = step
+	this.dim = dim
+	this.id = id
 
-		this.up = 1; this.right=2; this.down=3; this.left=4
-
-
-		do while ( np > k )
-			k = k*2
-			if (i > j) then
-				j=j+1
-			else
-				i=i+1
-			end if
-		end do
-
-		call MPI_DIMS_CREATE(np, 2, dims, ier)
-
-		this.Ydim_block = dims(1); this.Xdim_block = dims(2)
-
-		if ( id == 0 ) print *, this.Xdim_block, this.Ydim_block
-		this.block_y = mod((id), this.Ydim_block)
-
-		do while ( id > (p + 1)*this.Ydim_block - 1)
-			p = p + 1
-		end do
-		this.block_x = p
+	this.up = 1; this.right=2; this.down=3; this.left=4
 
 
-		this.Xsize = 2*dim/this.Xdim_block
-		this.Ysize = 2*dim/this.Ydim_block
+	do while ( np > k )
+		k = k*2
+		if (i > j) then
+			j=j+1
+		else
+			i=i+1
+		end if
+	end do
+
+	call MPI_DIMS_CREATE(np, 2, dims, ier)
+
+	this.Ydim_block = dims(1); this.Xdim_block = dims(2)
+
+	if ( id == 0 ) print *, this.Xdim_block, this.Ydim_block
+	this.block_y = mod((id), this.Ydim_block)
+
+	do while ( id > (p + 1)*this.Ydim_block - 1)
+		p = p + 1
+	end do
+	this.block_x = p
 
 
-		this.ns_xy(1) = 1 + this.Xsize*this.block_x  ; this.nf_xy(1) = this.Xsize*(this.block_x + 1)
-		this.ns_xy(2) = 1 + this.Ysize*this.block_y  ; this.nf_xy(2) = this.Ysize*(this.block_y + 1)
-
-		this.first_x = this.ns_xy(1) - step;  this.first_y = this.ns_xy(2) - step
-		this.last_x = this.nf_xy(1) + step;  this.last_y = this.nf_xy(2) + step
+	this.Xsize = 2*dim/this.Xdim_block
+	this.Ysize = 2*dim/this.Ydim_block
 
 
-		call this.Neighbourhood(id)
+	this.ns_xy(1) = 1 + this.Xsize*this.block_x  ; this.nf_xy(1) = this.Xsize*(this.block_x + 1)
+	this.ns_xy(2) = 1 + this.Ysize*this.block_y  ; this.nf_xy(2) = this.Ysize*(this.block_y + 1)
 
-		this.Xsize = 1 + this.nf_xy(1) - this.ns_xy(1)
-		this.Ysize = 1 + this.nf_xy(2) - this.ns_xy(2)
-
-		do face = 1, 6
-			call this.halo_zone(face)
-		end do
-
-	End Subroutine
+	this.first_x = this.ns_xy(1) - step;  this.first_y = this.ns_xy(2) - step
+	this.last_x = this.nf_xy(1) + step;  this.last_y = this.nf_xy(2) + step
 
 
+	call this.Neighbourhood(id)
 
-	Subroutine halo_zone(this, face)
+	this.Xsize = 1 + this.nf_xy(1) - this.ns_xy(1)
+	this.Ysize = 1 + this.nf_xy(2) - this.ns_xy(2)
 
-		Class(parallel) :: this
-		integer(4), intent(in) :: face
-		integer(4) x, y, mp_dp, ier, i, k, n
-		integer(4) up, right, left, down, displ(1:this.step*this.Xsize), blocklen(1:this.step*this.Ysize)
+	do face = 1, 6
+		call this.halo_zone(face)
+	end do
 
-		up = 1; right=2; down=3; left=4
-		x=this.Xsize + 2*this.step
-		mp_dp = MPI_DOUBLE_PRECISION
-		n = this.step*this.Ysize
-
-		this.rcv_xy(face, left, 1) = this.ns_xy(1) - this.step
-		this.rcv_xy(face, left, 2) = this.ns_xy(2);
-		this.rcv_xy(face, right, 1) = this.nf_xy(1) + 1
-		this.rcv_xy(face, right, 2) = this.ns_xy(2);
-
-		this.rcv_xy(face, down, 1) = this.ns_xy(1)
-		this.rcv_xy(face, down, 2) = this.ns_xy(2) - this.step;
-		this.rcv_xy(face, up, 1) = this.ns_xy(1)
-		this.rcv_xy(face, up, 2) = this.nf_xy(2) + 1;
-
-
-		this.snd_xy(face, left, :) = this.ns_xy(:)
-		this.snd_xy(face, right, 1) = this.nf_xy(1) - this.step + 1
-		this.snd_xy(face, right, 2) = this.ns_xy(2)
-
-		this.snd_xy(face, down, :) = this.ns_xy(:)
-		this.snd_xy(face, up, 1) = this.ns_xy(1)
-		this.snd_xy(face, up, 2) = this.nf_xy(2) - this.step + 1;
-
-
-		do i = 1, n
-			blocklen(i) = 1
-		end do
-
-		do i = 1, 4
-
-			call this.Displacement(face, i, displ)
-			call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, i), ier)
-			call MPI_TYPE_COMMIT(this.halo(face, i), ier)
-
-		end do
-
-
-	End Subroutine
+End Subroutine
 
 
 
-	Subroutine Neighbourhood(this, id)
+Subroutine halo_zone(this, face)
+
+	Class(parallel) :: this
+	integer(4), intent(in) :: face
+	integer(4) x, y, mp_dp, ier, i, k, n
+	integer(4) up, right, left, down, displ(1:this.step*this.Xsize), blocklen(1:this.step*this.Ysize)
+
+	up = 1; right=2; down=3; left=4
+	x=this.Xsize + 2*this.step
+	mp_dp = MPI_DOUBLE_PRECISION
+	n = this.step*this.Ysize
+
+	this.rcv_xy(face, left, 1) = this.ns_xy(1) - this.step
+	this.rcv_xy(face, left, 2) = this.ns_xy(2);
+	this.rcv_xy(face, right, 1) = this.nf_xy(1) + 1
+	this.rcv_xy(face, right, 2) = this.ns_xy(2);
+
+	this.rcv_xy(face, down, 1) = this.ns_xy(1)
+	this.rcv_xy(face, down, 2) = this.ns_xy(2) - this.step;
+	this.rcv_xy(face, up, 1) = this.ns_xy(1)
+	this.rcv_xy(face, up, 2) = this.nf_xy(2) + 1;
+
+
+	this.snd_xy(face, left, :) = this.ns_xy(:)
+	this.snd_xy(face, right, 1) = this.nf_xy(1) - this.step + 1
+	this.snd_xy(face, right, 2) = this.ns_xy(2)
+
+	this.snd_xy(face, down, :) = this.ns_xy(:)
+	this.snd_xy(face, up, 1) = this.ns_xy(1)
+	this.snd_xy(face, up, 2) = this.nf_xy(2) - this.step + 1;
+
+
+	do i = 1, n
+		blocklen(i) = 1
+	end do
+
+	do i = 1, 4
+
+		call this.Displacement(face, i, displ)
+		call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, i), ier)
+		call MPI_TYPE_COMMIT(this.halo(face, i), ier)
+		! if (face == 4 .and. i == 1 .and. this.id == 3) print *, displ(:)
+
+	end do
+
+
+End Subroutine
+
+
+
+Subroutine Neighbourhood(this, id)
 
 	Class(parallel) :: this
 	integer(4), Intent(In) :: id
@@ -159,6 +160,11 @@ CONTAINS
 	this.Neighbour_id(:, 3) = id - 1
 	this.Neighbour_id(:, 4) = id - this.Ydim_block
 	this.rot(:, :) = 0
+	this.Neighb_dir(:, up) = down
+	this.Neighb_dir(:, down) = up
+	this.Neighb_dir(:, left) = right
+	this.Neighb_dir(:, right) = left
+
 
 	do face = 1, 6
 			this.Neighbours_face(face, :) = face
@@ -172,19 +178,25 @@ CONTAINS
 				this.Neighbour_id(face, up) = this.block_y*this.Xdim_block + this.block_x
 				this.border(face, up) = -1
 				this.rot(face, up) = 1
+				this.Neighb_dir(face, up) = right
 
 			else if ( face == 5 ) then
 				this.Neighbour_id(face, up) = this.Xdim_block - this.block_x - 1
 				this.border(face, up) = 1
 				this.rot(face, up) = -1
+				this.Neighb_dir(face, up) = left
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
+				this.border(face, up) = 2
+				this.Neighb_dir(face, up) = up
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
 				this.Neighbours_face(face, up) = 4
+				this.rot(face, up) = 2
 				this.border(face, up) = 2
+				this.Neighb_dir(face, up) = up
 
 			else if ( face == 1 ) then
 				this.Neighbours_face(face, up) = 2
@@ -204,12 +216,14 @@ CONTAINS
 				this.border(face, right) = 1
 				this.rot(face, right) = 1
 				this.Neighbours_face(face, right) = 3
+				this.Neighb_dir(face, right) = down
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, right) = this.block_y*this.Xdim_block + this.block_x
 				this.border(face, right) = -1
 				this.rot(face, right) = -1
 				this.Neighbours_face(face, right) = 3
+				this.Neighb_dir(face, right) = up
 
 			else if(face == 5) then
 				this.Neighbours_face(face, right) = 2
@@ -226,19 +240,25 @@ CONTAINS
 				this.Neighbour_id(face, down) = this.Ydim_block*this.Xdim_block - this.block_x - 1
 				this.border(face, down) = 1
 				this.rot(face, down) = -1
+				this.Neighb_dir(face, down) = right
 
 			else if ( face == 5 ) then
 				this.Neighbour_id(face, down) = this.block_x
 				this.border(face, down) = -1
 				this.rot(face, down) = 1
+				this.Neighb_dir(face, down) = left
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
+				this.border(face, down) = 2
+				this.Neighb_dir(face, down) = down
 
 			else if ( face == 1 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
 				this.border(face, down) = 2
+				this.rot(face, down) = 2
 				this.Neighbours_face(face, down) = 4
+				this.Neighb_dir(face, down) = down
 
 			else if ( face == 6 ) then
 				this.Neighbours_face(face, down) = 2
@@ -256,22 +276,22 @@ CONTAINS
 				this.border(face, left) = -1
 				this.rot(face, left) = -1
 				this.Neighbours_face(face, left) = 5
+				this.Neighb_dir(face, left) = down
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, left) = this.Xdim_block*this.Ydim_block - 1 - this.block_y*this.Xdim_block
 				this.border(face, left) = 1
 				this.rot(face, left) = 1
 				this.Neighbours_face(face, left) = 5
+				this.Neighb_dir(face, left) = up
+
 			else if ( face == 2 ) then
 				this.Neighbours_face(face, left) = 5
 			end if
 		end if
 	end do
 
-
-	End Subroutine
-
-
+End Subroutine
 
 
 
@@ -284,9 +304,9 @@ Subroutine Displacement(this, face, dir, displ)
 	n = this.step*this.Xsize
 	x=this.Xsize + 2*this.step
 
-	if ( dir == 1 .or. dir == 3 ) then
+	if ( dir == this.up .or. dir == this.down ) then
 
-		select case(this.border(face, dir) == 2)
+		select case(this.rot(face, dir) == 2)
 		case (.false.)
 
 			displ(1) = 0
@@ -316,7 +336,7 @@ Subroutine Displacement(this, face, dir, displ)
 		end select
 
 
-	else
+	else if ( dir == this.right .or. dir == this.left ) then
 
 		select case(this.border(face, dir))
 		case (0)

@@ -9,7 +9,8 @@ Files=$Files" Solver_shallow_water.f90"
 
 netcdf="/home/sasha/netcdf"
 
-mpiifort $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+
+mpiifort -openmp $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	echo "compilation status" $?
 
@@ -22,7 +23,7 @@ else
 	echo `grep -c warning err.file` "warnings"
 
 	if [[ $1 != "compile" ]]; then
-		time mpiexec -n $1 ./a.out
+		time mpirun -n $1 ./a.out
 
 		cd datFiles
 		# ./plotscript.sh

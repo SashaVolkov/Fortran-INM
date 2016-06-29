@@ -32,7 +32,7 @@ module printer_ncdf
 
 		do face = 1, 6
 		write(istring(1:1), '(i1.1)') face
-		istring = istring//'.nc'
+		istring = istring
 
 		if(rescale == 0) then
 			status = nf90_create (path = trim('datFiles/simple/'//"face"//istring), &

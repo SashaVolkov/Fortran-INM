@@ -3,6 +3,7 @@ module grid_generator_solver
 use projections, Only: projection
 use matrix_rotation, Only: matrix
 use spherical
+use omp_lib
 
 !			|6|
 !		|5|2|3|4|    Baiburin diploma pages 5-8
@@ -48,7 +49,7 @@ CONTAINS
 		call matr.compute_matr_of_rot(matr_of_rots, r_sphere) ! matr_of_rots - 48 2dim matrices (3*3). You can find them in grid/matrices_of_rotations.dat
 		x_min = -2*dim; x_max = 2*dim; y_min = -2*dim; y_max = 2*dim
 
-
+		!$OMP DO
 		do face_index= 1, 6
 			do j= x_min, x_max
 				do k= y_min, y_max
@@ -83,6 +84,7 @@ CONTAINS
 					end do
 			end do
 		end do
+		!$OMP END DO
 
 ! 		call cpu_time(t(2)) ! Time stop
 ! 		print '("")'
