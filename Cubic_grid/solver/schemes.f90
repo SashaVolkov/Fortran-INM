@@ -3,10 +3,10 @@ module schemes
 	use grid_var, Only: g_var
 	use func_var, Only: f_var
 	use omp_lib
+	use mpi
 
 	implicit none
 
-	include"mpif.h"
 
 	Private
 	Public :: schema

@@ -24,9 +24,9 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere_grid_generation(this, dim, r_sphere, rescale, grid_points_latlon_c, grid_points_latlon)
+	subroutine conformal_cubed_sphere_grid_generation(this, dim, ns_xy, nf_xy, r_sphere, rescale, grid_points_latlon_c, grid_points_latlon)
 		Class(generator) :: this
-		integer, intent(in) :: dim, rescale
+		integer, intent(in) :: dim, rescale, ns_xy(2), nf_xy(2)
 		real(8), intent(in) :: r_sphere
 		real(8), intent(out) :: grid_points_latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
 		real(8), intent(out) :: grid_points_latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)

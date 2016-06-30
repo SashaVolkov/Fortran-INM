@@ -2,6 +2,7 @@ module grid_var
 
 	use sphere_geometry, Only: geometry
 	use grid_generator_solver, Only: generator
+	use parallel_cubic, Only: parallel
 
 implicit none
 
@@ -20,7 +21,7 @@ implicit none
 		Real(8), Allocatable :: triangle_angles(:, :, :)
 		Real(8), Allocatable :: square_angles(:, :, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
-		integer(4) dim, step, dim_st, rescale, up, right, left, down
+		integer(4) dim, step, dim_st, rescale, up, right, left, down, ns_xy(2), nf_xy(2)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -37,25 +38,27 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, geom, dim, step, omega_cor, g, dt, rescale)
+	subroutine init(this, geom, paral, omega_cor, g, dt, rescale)
 
 		Class(g_var) :: this
 		Class(geometry) :: geom
-		integer(4), intent(in) :: dim, step, rescale
+		Class(parallel) :: paral
+		integer(4), intent(in) :: rescale
 		real(8), intent(in) :: omega_cor, g, dt
 		integer(4) x, y
 		real(8) t(2), dist
 		Type(generator) :: generate
 
-		this.dim = dim;  this.step = step;  this.g = g;  this.dim_st = dim + step
+		this.dim = paral.dim;  this.step = paral.step;  this.g = g;  this.dim_st = this.dim + this.step
 		this.omega_cor = omega_cor;  this.r_sphere = geom.radius;  this.dt = dt
 		this.pi = geom.pi;  this.rescale = rescale
 		this.up = 1; this.right=2; this.down=3; this.left=4
+		this.ns_xy(:) = paral.ns_xy(:);  this.nf_xy(:) = paral.nf_xy(:);
 
 				! print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
 
 		call this.alloc()
-		call generate.conformal_cubed_sphere(dim, geom.radius, rescale, this.points_latlon_c, this.points_latlon)
+		call generate.conformal_cubed_sphere(this.dim, this.ns_xy, this.nf_xy, geom.radius, rescale, this.points_latlon_c, this.points_latlon)
 		call this.const_def(geom)
 		call this.step_minmax()
 

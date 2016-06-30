@@ -2,9 +2,9 @@ module printer_ncdf
 
 	use func_var, Only: f_var
 	use netcdf
+	use mpi
 
 	implicit none
-	include"mpif.h"
 
 	Private
 	Public :: printer

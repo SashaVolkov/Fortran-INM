@@ -2,10 +2,10 @@ module messenger
 
 	use parallel_cubic, Only: parallel
 	use func_var, Only: f_var
+	use mpi
 
 	implicit none
 
-	include"mpif.h"
 
 	Private
 	Public :: message

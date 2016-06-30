@@ -1,8 +1,10 @@
 module parallel_cubic
 
+	use omp_lib
+	use mpi
+
 implicit none
 
-	include"mpif.h"
 
 	Private
 	Public :: parallel
@@ -33,13 +35,16 @@ CONTAINS
 
 
 
-Subroutine parallel_init(this, dim, step, np, id)
+Subroutine parallel_init(this, dim, step)
 
 	Class(parallel) :: this
 
-	integer, Intent(In) :: dim, step, np, id
-	integer k, i, j, rc, p, ier, face
+	integer, Intent(In) :: dim, step
+	integer k, i, j, rc, p, ier, face, np, id
 	integer dims(2)
+
+	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
+	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
 
 	k=1; i = 0; j = 0; p = 0
 	this.step = step
@@ -48,16 +53,8 @@ Subroutine parallel_init(this, dim, step, np, id)
 
 	this.up = 1; this.right=2; this.down=3; this.left=4
 
-
-	do while ( np > k )
-		k = k*2
-		if (i > j) then
-			j=j+1
-		else
-			i=i+1
-		end if
-	end do
-
+	!$OMP PARALLEL
+	!$OMP END PARALLEL
 	call MPI_DIMS_CREATE(np, 2, dims, ier)
 
 	this.Ydim_block = dims(1); this.Xdim_block = dims(2)

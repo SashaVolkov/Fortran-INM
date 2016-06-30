@@ -9,13 +9,13 @@ program solver
 	use diagnostic_mod, Only: diagnostic
 	use messenger, Only: message
 	use omp_lib
+	use mpi
 
 implicit none
 
-	include"mpif.h"
 
 !variables
-	real(8) r_sphere, g, pi, step, omega_cor, height, dt
+	real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
 	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6), rescale, face
 
 	integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
@@ -47,12 +47,12 @@ implicit none
 !subroutines calls
 
 
+	call paral.init(dim, gr_step)
+	start_init = MPI_Wtime()
 	call geom.init(r_sphere, pi)
-	call grid.init(geom, dim, gr_step, omega_cor, g, dt, rescale)
-	dim = grid.dim
-	call paral.init(dim, gr_step, np, id)
-	call var.init(paral, gr_step, height)
-	call var_prev.init(paral, gr_step, height)
+	call grid.init(geom, paral, omega_cor, g, dt, rescale)
+	call var.init(paral, height)
+	call var_prev.init(paral, height)
 	call msg.init()
 
 	call var_prev.start_conditions()
@@ -61,6 +61,9 @@ implicit none
 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
 	! call diagn.init( grid, paral, Tmax, rescale, id)
 
+	end_init = MPI_Wtime()
+
+	if( id == 0) print '(" Init time =  ", f10.1, " sec")', end_init - start_init
 
 	do time = 1, Tmax
 		call sch.Linear(var, var_prev, grid)
