@@ -12,20 +12,9 @@ module schemes
 
 	Type schema
 
-		Real(8), Allocatable :: ku1(:,:)
-		Real(8), Allocatable :: ku2(:,:)
-		Real(8), Allocatable :: ku3(:,:)
-		Real(8), Allocatable :: ku4(:,:)
-
-		Real(8), Allocatable :: kv1(:,:)
-		Real(8), Allocatable :: kv2(:,:)
-		Real(8), Allocatable :: kv3(:,:)
-		Real(8), Allocatable :: kv4(:,:)
-
-		Real(8), Allocatable :: kh1(:,:)
-		Real(8), Allocatable :: kh2(:,:)
-		Real(8), Allocatable :: kh3(:,:)
-		Real(8), Allocatable :: kh4(:,:)
+		Real(8), Allocatable :: ku(:, :, :)
+		Real(8), Allocatable :: kv(:, :, :)
+		Real(8), Allocatable :: kh(:, :, :)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -49,20 +38,9 @@ Subroutine init(this, f, g)
 	f_x = f.first_x;  f_y = f.first_y
 	l_x = f.last_x;  l_y = f.last_y
 
-		Allocate(this.ku1(f_x: l_x, f_y : l_y))
-		Allocate(this.ku2(f_x: l_x, f_y : l_y))
-		Allocate(this.ku3(f_x: l_x, f_y : l_y))
-		Allocate(this.ku4(f_x: l_x, f_y : l_y))
-
-		Allocate(this.kv1(f_x: l_x, f_y : l_y))
-		Allocate(this.kv2(f_x: l_x, f_y : l_y))
-		Allocate(this.kv3(f_x: l_x, f_y : l_y))
-		Allocate(this.kv4(f_x: l_x, f_y : l_y))
-
-		Allocate(this.kh1(f_x: l_x, f_y : l_y))
-		Allocate(this.kh2(f_x: l_x, f_y : l_y))
-		Allocate(this.kh3(f_x: l_x, f_y : l_y))
-		Allocate(this.kh4(f_x: l_x, f_y : l_y))
+	Allocate(this.ku(f_x: l_x, f_y : l_y, 0 : 4))
+	Allocate(this.kv(f_x: l_x, f_y : l_y, 0 : 4))
+	Allocate(this.kh(f_x: l_x, f_y : l_y, 0 : 4))
 
 
 End Subroutine
@@ -118,7 +96,7 @@ Subroutine sch_RungeKutta(this, var, var_pr, grid)
 	Class(g_var) :: grid
 
 	real(8) g, height, dt, partial(1:2), temp(1:3)
-	integer(4) face, x, y, dim, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier
+	integer(4) face, x, y, dim, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier, iteration
 
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
 	dt = grid.dt;  ns_x = var.ns_x;  ns_y = var.ns_y
@@ -127,16 +105,20 @@ Subroutine sch_RungeKutta(this, var, var_pr, grid)
 
 	do face = 1, 6
 
-		call this.FRunge(this.ku1, this.kv1, this.kh1, var_pr, grid, face)
-		call this.FRunge(this.ku2, this.kv2, this.kh2, var_pr, grid, face)
-		call this.FRunge(this.ku3, this.kv3, this.kh3, var_pr, grid, face)
-		call this.FRunge(this.ku4, this.kv4, this.kh4, var_pr, grid, face)
+	this.ku(:, :, 0) = var_pr.x_vel(:, :, face)
+	this.kv(:, :, 0) = var_pr.y_vel(:, :, face)
+	this.kh(:, :, 0) = var_pr.h_height(:, :, face)
+
+		do iteration = 1, 4
+			call this.FRunge(grid, face, iteration)
+		end do
+
 
 		do y = ns_y, nf_y
 			do x= ns_x, nf_x
-var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) + (this.ku1(x, y) + 2.0*this.ku2(x, y) + 2.0*this.ku3(x, y) + this.ku4(x, y))/6.0
-var.y_vel(x, y, face) = var_pr.y_vel(x, y, face) + (this.kv1(x, y) + 2.0*this.kv2(x, y) + 2.0*this.kv3(x, y) + this.kv4(x, y))/6.0
-var.h_height(x, y, face) = var_pr.h_height(x, y, face) + (this.kh1(x, y) + 2.0*this.kh2(x, y) + 2.0*this.kh3(x, y) + this.kh4(x, y))/6.0
+var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) + (this.ku(x, y, 1) + 2.0*this.ku(x, y, 2) + 2.0*this.ku(x, y, 3) + this.ku(x, y, 4))/6.0
+var.y_vel(x, y, face) = var_pr.y_vel(x, y, face) + (this.kv(x, y, 1) + 2.0*this.kv(x, y, 2) + 2.0*this.kv(x, y, 3) + this.kv(x, y, 4))/6.0
+var.h_height(x, y, face) = var_pr.h_height(x, y, face) + (this.kh(x, y, 1) + 2.0*this.kh(x, y, 2) + 2.0*this.kh(x, y, 3) + this.kh(x, y, 4))/6.0
 			end do
 		end do
 	end do
@@ -146,17 +128,13 @@ var.h_height(x, y, face) = var_pr.h_height(x, y, face) + (this.kh1(x, y) + 2.0*t
 End Subroutine
 
 
-Subroutine sch_FRunge(this, ku, kv, kh, var, grid, face)
+Subroutine sch_FRunge(this, grid, face, i)
 	Class(schema) :: this
 	Class(f_var) :: var
 	Class(g_var) :: grid
 
-	integer(4), intent(in) :: face
+	integer(4), intent(in) :: face, i
 	integer(4) :: x,y
-
-	Real(8), Intent(inout) :: ku(var.first_x : var.last_x, var.first_y : var.last_y)
-	Real(8), Intent(inout) :: kv(var.first_x : var.last_x, var.first_y : var.last_y)
-	Real(8), Intent(inout) :: kh(var.first_x : var.last_x, var.first_y : var.last_y)
 
 	Real(8) :: g, height, dt, partial(1:2), temp(1:3)
 
@@ -165,18 +143,19 @@ Subroutine sch_FRunge(this, ku, kv, kh, var, grid, face)
 	do y = var.ns_y, var.nf_y
 		do x = var.ns_x, var.nf_x
 
-			partial(1) = grid.partial_c1_x(var.h_height(x-1:x+1, y, face), x, y)
-			ku(x, y) = - dt*g*partial(1)
-
-			temp(:) = var.h_height(x, y-1:y+1, face)
-			partial(1) = grid.partial_c1_y(temp, x, y)
-			kv(x, y) =  - dt*g*partial(1)
-
-			temp(:) = var.x_vel(x-1:x+1, y, face)
+			temp(:) = this.kh(x-1:x+1, y, i - 1)
 			partial(1) = grid.partial_c1_x(temp, x, y)
-			temp(:) = var.y_vel(x, y-1:y+1, face)
+			this.ku(x, y, i) = - dt*g*partial(1)
+
+			temp(:) = this.kh(x, y-1:y+1, i - 1)
+			partial(1) = grid.partial_c1_y(temp, x, y)
+			this.kv(x, y, i) =  - dt*g*partial(1)
+
+			temp(:) = this.ku(x-1:x+1, y, i - 1)
+			partial(1) = grid.partial_c1_x(temp, x, y)
+			temp(:) = this.kv(x, y-1:y+1, i - 1)
 			partial(2) = grid.partial_c1_y(temp, x, y)
-			kh(x, y) = - dt*height*(partial(1) + partial(2))
+			this.kh(x, y, i) = - dt*height*(partial(1) + partial(2))
 
 
 		end do
