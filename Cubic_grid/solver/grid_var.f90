@@ -116,7 +116,7 @@ CONTAINS
 			end do
 
 			do x = 1-this.step, 0
-				this.points_dist(:, x, y) = this.points_latlon_c(:, 2*dim - x, y, 5)
+				this.points_dist(:, x, y) = this.points_latlon_c(:, 2*dim + x, y, 5)
 			end do
 		end do
 
@@ -127,7 +127,7 @@ CONTAINS
 			end do
 
 			do y = 1-this.step, 0
-				this.points_dist(:, x, y) = this.points_latlon_c(:, x, 2*dim - y, 1)
+				this.points_dist(:, x, y) = this.points_latlon_c(:, x, 2*dim + y, 1)
 			end do
 		end do
 
@@ -177,9 +177,9 @@ CONTAINS
 			istring = '_exp'
 		end if
 
-		open (20, file = 'datFiles/angle'//trim(istring)//'.dat')
-		open (21, file = 'datFiles/cell'//trim(istring)//'.dat')
-		open (22, file = 'datFiles/dist'//trim(istring)//'.dat')
+! 		open (20, file = 'datFiles/angle'//trim(istring)//'.dat')
+! 		open (21, file = 'datFiles/cell'//trim(istring)//'.dat')
+! 		open (22, file = 'datFiles/dist'//trim(istring)//'.dat')
 
 		do x = 1, 2*dim
 			do y = 1, 2*dim
@@ -198,16 +198,16 @@ CONTAINS
 				this.square_angles(3, x, y) = this.triangle_angles(5, y, x)
 				this.square_angles(4, x, y) = this.triangle_angles(1, y, x) + this.triangle_angles(4, y, x)
 
-				do k=1,4
-					write(20,*) this.square_angles(k, x, y)*180d0/this.pi
-					write(22,*) this.h_dist(k, 1, y, x)
-				end do
-				write(21, *) this.square(x, y)
+! 				do k=1,4
+! 					write(20,*) this.square_angles(k, x, y)*180d0/this.pi
+! 					write(22,*) this.h_dist(k, 1, y, x)
+! 				end do
+! 				write(21, *) this.square(x, y)
 
 			end do
 		end do
 
-		close(20);  close(21);  close(22)
+! 		close(20);  close(21);  close(22)
 
 		! print '(" sphere_area = ", f20.2)', sphere_area*6d0
 

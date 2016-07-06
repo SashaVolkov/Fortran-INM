@@ -1,6 +1,6 @@
 module parallel_cubic
 
-	use omp_lib
+! 	use omp_lib
 	use mpi
 
 implicit none
@@ -35,16 +35,16 @@ CONTAINS
 
 
 
-Subroutine parallel_init(this, dim, step)
+Subroutine parallel_init(this, dim, step, np, id)
 
 	Class(parallel) :: this
 
-	integer, Intent(In) :: dim, step
-	integer k, i, j, rc, p, ier, face, np, id
+	integer, Intent(In) :: dim, step, np, id
+	integer k, i, j, rc, p, ier, face
 	integer dims(2)
 
-	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
-	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
+! 	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
+! 	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
 
 	k=1; i = 0; j = 0; p = 0
 	this.step = step

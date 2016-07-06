@@ -8,7 +8,7 @@ program solver
 	use schemes, Only: schema
 	use diagnostic_mod, Only: diagnostic
 	use messenger, Only: message
-	use omp_lib
+! 	use omp_lib
 	use mpi
 
 implicit none
@@ -16,7 +16,7 @@ implicit none
 
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, ncid(1:6), rescale, face
+	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, faceid, ncid, rescale, face
 
 	integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
 
@@ -33,10 +33,10 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 980616d-5
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 32;  gr_step = 2;  height = 100.0
+	dim = 50;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 26000;  speedup = 40;  dt = 200d0
+	Tmax = 12;  speedup = 12;  dt = 1d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
 
 
@@ -46,33 +46,32 @@ implicit none
 
 !subroutines calls
 
-
-	call paral.init(dim, gr_step)
 	start_init = MPI_Wtime()
+
+	call paral.init(dim, gr_step, np, id)
 	call geom.init(r_sphere, pi)
 	call grid.init(geom, paral, omega_cor, g, dt, rescale)
 	call var.init(paral, height)
 	call var_prev.init(paral, height)
+	call sch.init(var_prev, grid)
 	call msg.init()
 
 	call var_prev.start_conditions()
 
-	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, ncid, rescale)
-	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
-	! call diagn.init( grid, paral, Tmax, rescale, id)
+! 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, faceid, ncid, rescale)
+! 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
+! 	! call diagn.init( grid, paral, Tmax, rescale, id)
 
-	end_init = MPI_Wtime()
-
-	if( id == 0) print '(" Init time =  ", f10.1, " sec")', end_init - start_init
 
 	do time = 1, Tmax
-		call sch.Linear(var, var_prev, grid)
+		call sch.RungeKutta(var, var_prev, grid)
 ! 				if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
 ! 				if(mod(time, speedup) == 0) call diagn.L_norm(var_prev, grid, time)
 		call msg.msg(var_prev, paral)
-		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
+! 		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
 	end do
 
+	end_init = MPI_Wtime()
 
 	if(id == 0) then
 		print '(" Grid step =  ", f10.2, " m")', step
@@ -82,6 +81,7 @@ implicit none
 		! print '(" latlon = ", f10.2, f10.2)', grid.points_latlon(:, dim+1, 1, 4) * 180.0/pi
 		! print '(" latlon = ", f10.2, f10.2)', grid.points_latlon(:, dim+1, 2*dim+1, 4) * 180.0/pi
 		print '(" np = ", I7)', np
+		print '(" time = ", f10.2)', end_init - start_init
 	end if
 
 	! print *, "threads = ", omp_get_num_threads()
@@ -89,8 +89,9 @@ implicit none
 	call grid.deinit()
 	call var.deinit()
 	call var_prev.deinit()
-	call printer_nc.deinit()
+! 	call printer_nc.deinit()
 	call diagn.deinit()
+	call sch.deinit()
 
 
 	call MPI_FINALIZE(ier)

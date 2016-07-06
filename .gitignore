@@ -27,3 +27,6 @@ CUDA
 out
 Cubic_grid/conformal_sphere_grid_sasha/analyze_tan/
 Cubic_grid/conformal_sphere_grid_sasha/grid_tan/
+
+Cubic_grid.*
+Cubic_grid/solver/fort.*
