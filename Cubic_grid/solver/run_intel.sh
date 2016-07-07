@@ -8,10 +8,10 @@ Files=$Files" parallel_cubic.f90 grid_generator.f90 grid_var.f90 func_var.f90 me
 Files=$Files" Solver_shallow_water.f90"
 
 netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
-netcdf="/home/sasha/netcdf"
+# netcdf="/home/sasha/netcdf"
 
 
-mpiifort -check all -traceback -ftrapuv  -fpe0  $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+mpiifort $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	echo "compilation status" $?
 

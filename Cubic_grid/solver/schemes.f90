@@ -19,8 +19,8 @@ module schemes
 		CONTAINS
 		Procedure, Public :: init => init
 		Procedure, Public :: Linear => Linear
-		Procedure, Public ::  RungeKutta=> sch_RungeKutta
-		Procedure, Private ::  FRunge=> sch_FRunge
+		Procedure, Public ::  RungeKutta=> RungeKutta
+		Procedure, Private ::  FRunge=> FRunge
 		Procedure, Public :: deinit => deinit
 	End Type
 
@@ -89,7 +89,7 @@ end subroutine
 
 
 
-Subroutine sch_RungeKutta(this, var, var_pr, grid)
+Subroutine RungeKutta(this, var, var_pr, grid)
 
 	Class(schema) :: this
 	Class(f_var) :: var, var_pr
@@ -127,7 +127,7 @@ var.h_height(x, y, face) = var_pr.h_height(x, y, face) + (this.kh(x, y, 1) + 2.0
 End Subroutine
 
 
-Subroutine sch_FRunge(this, grid, var, face, i)
+Subroutine FRunge(this, grid, var, face, i)
 	Class(schema) :: this
 	Class(f_var) :: var
 	Class(g_var) :: grid

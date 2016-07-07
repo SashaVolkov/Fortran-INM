@@ -33,11 +33,11 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 980616d-5
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 16;  gr_step = 2;  height = 100.0
+	dim = 32;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 12000;  speedup = 120;  dt = 1d0
-	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)
+	Tmax = 120000;  speedup = 120;  dt = 100d0
+	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 
 
 	call MPI_Init(ier)
@@ -60,16 +60,19 @@ implicit none
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, faceid, ncid, rescale)
 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
-! 	! call diagn.init( grid, paral, Tmax, rescale, id)
+	call diagn.init( grid, paral, Tmax, rescale, id)
 
 
 	do time = 1, Tmax
-		call sch.RungeKutta(var, var_prev, grid)
-! 				if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
+		call sch.Linear(var, var_prev, grid)
+		if(mod(time, speedup) == 0) call diagn.Courant(var_prev, grid, time)
 ! 				if(mod(time, speedup) == 0) call diagn.L_norm(var_prev, grid, time)
 		call msg.msg(var_prev, paral)
 		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
-		if(mod(time, Tmax/10) == 0 .and. id == 0) print '(I3, "% Done")', time*100/Tmax
+		if(mod(time, Tmax/10) == 0 .and. id == 0) then
+			end_init = MPI_Wtime()
+			print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
+		end if
 	end do
 
 	end_init = MPI_Wtime()
@@ -81,8 +84,8 @@ implicit none
 		print '(" X max/min = ", f5.2)', grid.dx_max/grid.dx_min
 		! print '(" latlon = ", f10.2, f10.2)', grid.points_latlon(:, dim+1, 1, 4) * 180.0/pi
 		! print '(" latlon = ", f10.2, f10.2)', grid.points_latlon(:, dim+1, 2*dim+1, 4) * 180.0/pi
-		print '(" np = ", I7)', np
-		print '(" time = ", f10.2)', end_init - start_init
+		print '(" np = ", I5)', np
+		print '(" time = ", f10.2, " sec")', end_init - start_init
 	end if
 
 	! print *, "threads = ", omp_get_num_threads()

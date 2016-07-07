@@ -91,7 +91,6 @@ module printer_ncdf
 
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 		end do
-
 	end subroutine
 
 

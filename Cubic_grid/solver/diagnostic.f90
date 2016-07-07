@@ -3,13 +3,13 @@ module diagnostic_mod
 	use grid_var, Only: g_var
 	use func_var, Only: f_var
 	use parallel_cubic, Only: parallel
+	use mpi
 
 
 	implicit none
 	Private
 	Public :: diagnostic
 
-	include"mpif.h"
 
 	Type diagnostic
 
@@ -58,14 +58,14 @@ CONTAINS
 
 		if(id == 0) then
 
-			call this.histogram(16*grid.dim*grid.dim, 'datFiles/angle'//trim(istring)//'.dat', 'datFiles/angle_distribution'//trim(istring)//'.dat')
-			call this.histogram(16*grid.dim*grid.dim, 'datFiles/dist'//trim(istring)//'.dat', 'datFiles/dist_distribution'//trim(istring)//'.dat')
-			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
+! 			call this.histogram(16*grid.dim*grid.dim, 'datFiles/angle'//trim(istring)//'.dat', 'datFiles/angle_distribution'//trim(istring)//'.dat')
+! 			call this.histogram(16*grid.dim*grid.dim, 'datFiles/dist'//trim(istring)//'.dat', 'datFiles/dist_distribution'//trim(istring)//'.dat')
+! 			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
 
 			open(9,file='datFiles/CFL'//trim(istring)//'.dat')
-			open(11,file='datFiles/L1'//trim(istring)//'.dat')
-			open(12,file='datFiles/L2'//trim(istring)//'.dat')
-			open(13,file='datFiles/L_inf'//trim(istring)//'.dat')
+! 			open(11,file='datFiles/L1'//trim(istring)//'.dat')
+! 			open(12,file='datFiles/L2'//trim(istring)//'.dat')
+! 			open(13,file='datFiles/L_inf'//trim(istring)//'.dat')
 
 		end if
 
@@ -93,9 +93,9 @@ CONTAINS
 
 		if(id == 0) then
 			close(9)
-			close(11)
-			close(12)
-			close(13)
+! 			close(11)
+! 			close(12)
+! 			close(13)
 		end if
 
 	end subroutine
@@ -107,13 +107,14 @@ CONTAINS
 		Class(f_var) :: func
 		Class(g_var) :: grid
 		integer(4), intent(in) :: time
-		integer(4) face, x, y, dim
+		integer(4) face, x, y, dim, ier, id
+		real(8) :: Courant_number, Courant_max
 
 		dim = this.dim
 
 		do face = 1, 6
-			do y = func.first_y, func.last_y
-				do x = func.first_x, func.last_x
+			do y = func.ns_y, func.nf_y
+				do x = func.ns_x, func.nf_x
 
 					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/grid.h_dist(2, 1, y, x)) +&
 					 abs(func.y_vel(x, y, face)*grid.dt/grid.h_dist(3, 1, y, x))
@@ -122,10 +123,11 @@ CONTAINS
 			end do
 		end do
 
-			write(9, FMT = "(f14.6, f10.4)"),dble(time)*this.convert_time, MAXVAL(this.CFL)
+		Courant_number = MAXVAL(this.CFL)
+		call MPI_Allreduce(Courant_number, Courant_max, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 
-
-! 		print '(" CFL x = ", f6.4, "   CFL y = ", f6.4)', MAXVAL(this.CFL_x), MAXVAL(this.CFL_y)
+		if (id == 0) write(9, FMT = "(f14.6, f10.4)"),dble(time)*this.convert_time, Courant_max
 
 	end subroutine
 
