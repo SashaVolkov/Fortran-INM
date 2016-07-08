@@ -63,9 +63,9 @@ CONTAINS
 ! 			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
 
 			open(9,file='datFiles/CFL'//trim(istring)//'.dat')
-! 			open(11,file='datFiles/L1'//trim(istring)//'.dat')
-! 			open(12,file='datFiles/L2'//trim(istring)//'.dat')
-! 			open(13,file='datFiles/L_inf'//trim(istring)//'.dat')
+			open(11,file='datFiles/L1'//trim(istring)//'.dat')
+			open(12,file='datFiles/L2'//trim(istring)//'.dat')
+			open(13,file='datFiles/L_inf'//trim(istring)//'.dat')
 
 		end if
 
@@ -93,9 +93,9 @@ CONTAINS
 
 		if(id == 0) then
 			close(9)
-! 			close(11)
-! 			close(12)
-! 			close(13)
+			close(11)
+			close(12)
+			close(13)
 		end if
 
 	end subroutine
@@ -139,20 +139,19 @@ CONTAINS
 ! 		real(8), intent(in) :: func(-this.dim:this.dim, -this.dim:this.dim, 1:6)
 		integer(4), intent(in) :: time
 
-		integer(4) face, x, y, dim
-		real(8) L1, L2, F1, F2, L_inf
+		integer(4) face, x, y, id, ier
+		real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square
 
-		L1 = 0;  dim = this.dim;  L_inf = 0
+		L1 = 0;  L2 = 0;  L_inf = 0
 
 		do face = 1, 6
-			do y = -dim, dim
-				do x = -dim, dim
+			do y = func.ns_y, func.nf_y
+				do x = func.ns_x, func.nf_x
 
-					F1 = func.h_height(x, y, face) + func.h_height(x+1, y, face) + func.h_height(x, y+1, face)
-					F2 = func.h_height(x+1, y+1, face) + func.h_height(x+1, y, face) + func.h_height(x, y+1, face)
-					L1 = abs(F1)*grid.triangle_area(1, x, y) + abs(F2)*grid.triangle_area(2, x, y)
-					L2 = F1*F1*grid.triangle_area(1, x, y) + F2*F2*grid.triangle_area(2, x, y)
-					L_inf = MAXVAL(abs(func.h_height))
+					F1 = func.h_height(x, y, face)
+					square = grid.triangle_area(1, x, y) + grid.triangle_area(2, x, y)
+					L1 = abs(F1)*square + L1
+					L2 = F1*F1*square + L2
 
 				end do
 			end do
@@ -160,9 +159,17 @@ CONTAINS
 
 		L2 = dsqrt(L2)
 
-		write(11, FMT = "(f14.6, f10.4)"),time*this.convert_time, L1
-		write(12, FMT = "(f14.6, f10.4)"),time*this.convert_time, L2
-		write(13, FMT = "(f14.6, f10.4)"),time*this.convert_time, L_inf
+		L_inf = MAXVAL(abs(func.h_height))
+		call MPI_Allreduce(L_inf, L_inf_all, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+		call MPI_Allreduce(L1, L1_all, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
+		call MPI_Allreduce(L2, L2_all, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
+		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
+
+		if (id == 0) then
+			write(11, FMT = "(f20.6, f40.6)"),time*this.convert_time, L1_all
+			write(12, FMT = "(f20.6, f40.6)"),time*this.convert_time, L2_all
+			write(13, FMT = "(f20.6, f40.6)"),time*this.convert_time, L_inf_all
+		end if
 
 	end subroutine
 

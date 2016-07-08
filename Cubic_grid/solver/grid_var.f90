@@ -32,6 +32,7 @@ implicit none
 		Procedure, Private :: step_minmax => step_minmax
 		Procedure, Public :: partial_c1_x => partial_c1_x
 		Procedure, Public :: partial_c1_y => partial_c1_y
+		Procedure, Public :: partial_c4_x => partial_c4_x
 	End Type
 
 
@@ -106,7 +107,7 @@ CONTAINS
 
 		do y = 1, 2*dim
 			do x = 1, 2*dim
-				this.points_dist(:, y, x) = this.points_latlon_c(:, y, x, 2) ! face = 2
+				this.points_dist(:, x, y) = this.points_latlon_c(:, x, y, 2) ! face = 2
 			end do
 		end do
 
@@ -234,7 +235,8 @@ CONTAINS
 		Class(g_var) :: this
 		real(8), intent(in) :: fun(1:3)
 		integer, intent(in) :: x, y
-		partial_c1_x = (fun(3) - fun(1))/(this.h_dist(this.left, 1, x, y) + this.h_dist(this.right, 1, x, y))
+		partial_c1_x = (fun(3) * this.h_dist(this.left, 1, x, y) - fun(1) * this.h_dist(this.right, 1, x, y))/&
+		(this.h_dist(this.left, 1, x, y) + this.h_dist(this.right, 1, x, y))**2
 
 	end function
 
@@ -244,10 +246,20 @@ CONTAINS
 		Class(g_var) :: this
 		real(8), intent(in) :: fun(1:3)
 		integer, intent(in) :: x, y
-		partial_c1_y = (fun(3) - fun(1))/(this.h_dist(this.down, 1, x, y) + this.h_dist(this.up, 1, x, y))
+		partial_c1_y = (fun(3) * this.h_dist(this.down, 1, x, y) - fun(1)*this.h_dist(this.up, 1, x, y))/&
+		(this.h_dist(this.down, 1, x, y) + this.h_dist(this.up, 1, x, y))**2
 
 	end function
 
+
+
+	real(8) function partial_c4_x(this, fun, x, y)
+		Class(g_var) :: this
+		real(8), intent(in) :: fun(-2:2)
+		integer, intent(in) :: x, y
+		partial_c4_x = 0
+
+	end function
 
 
 subroutine step_minmax(this)
