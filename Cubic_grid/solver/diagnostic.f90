@@ -46,6 +46,7 @@ CONTAINS
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
 		this.convert_time = grid.dt/3600d0/24d0
 
+
 		call this.alloc(paral)
 
 		if (rescale == 1) then
@@ -116,8 +117,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/grid.h_dist(2, 1, y, x)) +&
-					 abs(func.y_vel(x, y, face)*grid.dt/grid.h_dist(3, 1, y, x))
+					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/grid.x_dist(x, y)) +&
+					 abs(func.y_vel(x, y, face)*grid.dt/grid.y_dist(x, y))
 
 				end do
 			end do

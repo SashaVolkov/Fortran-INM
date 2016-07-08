@@ -11,7 +11,8 @@ implicit none
 
 	Type g_var
 
-		Real(8), Allocatable :: h_dist(:, :, :, :)
+		Real(8), Allocatable :: x_dist(:, :)
+		Real(8), Allocatable :: y_dist(:, :)
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: points_latlon_c(:, :, :, :)
 		Real(8), Allocatable :: points_latlon(:, :, :, :)
@@ -21,7 +22,8 @@ implicit none
 		Real(8), Allocatable :: triangle_angles(:, :, :)
 		Real(8), Allocatable :: square_angles(:, :, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
-		integer(4) dim, step, dim_st, rescale, up, right, left, down, ns_xy(2), nf_xy(2)
+		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2)
+		integer(4) first_x, first_y, last_x, last_y
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -50,11 +52,13 @@ CONTAINS
 		real(8) t(2), dist
 		Type(generator) :: generate
 
-		this.dim = paral.dim;  this.step = paral.step;  this.g = g;  this.dim_st = this.dim + this.step
+		this.dim = paral.dim;  this.step = paral.step;  this.g = g
 		this.omega_cor = omega_cor;  this.r_sphere = geom.radius;  this.dt = dt
 		this.pi = geom.pi;  this.rescale = rescale
-		this.up = 1; this.right=2; this.down=3; this.left=4
+
 		this.ns_xy(:) = paral.ns_xy(:);  this.nf_xy(:) = paral.nf_xy(:);
+		this.first_x = paral.first_x;  this.first_y = paral.first_y
+		this.last_x = paral.last_x;  this.last_y = paral.last_y
 
 				! print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
 
@@ -69,8 +73,13 @@ CONTAINS
 
 	subroutine alloc(this)
 		Class(g_var) :: this
-			Allocate(this.h_dist(1:4, this.step, 1:2*this.dim , 1:2*this.dim))
-			Allocate(this.f_cor(1:2*this.dim, 1:2*this.dim, 1:6))
+		integer(4) f_x, f_y, l_x, l_y
+
+		f_x = this.first_x;  l_x = this.last_x;  f_y = this.first_y;  l_y = this.last_y
+
+			Allocate(this.x_dist(f_x:l_x , f_y:l_y))
+			Allocate(this.y_dist(f_x:l_x , f_y:l_y))
+			Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
 			Allocate(this.points_latlon_c(1:2, 1:2*this.dim, 1:2*this.dim, 1:6))
 			Allocate(this.points_latlon(1:2, 1:2*this.dim+1, 1:2*this.dim+1, 1:6))
 			Allocate(this.points_dist(1:2, 1-this.step:2*this.dim + this.step, 1-this.step:2*this.dim + this.step))
@@ -86,19 +95,17 @@ CONTAINS
 		Class(g_var) :: this
 		Class(geometry) :: g
 		real(8) dist, omega_cor, S1, S2, sphere_area
-		integer(4) face, x, y, dim, step, dim_st, k, up, right, left, down
+		integer(4) face, x, y, dim, step, k
 		character(8) istring
 
 
 		omega_cor = this.omega_cor
-		dim = this.dim;  step = this.step;  dim_st = this.dim_st
-		up = this.up; right = this.right
-		down = this.down; left = this.left
+		dim = this.dim;  step = this.step
 
 
 		do face = 1, 6 ! Only longitude
-			do y = 1, 2*dim
-				do x = 1, 2*dim
+			do x = this.first_x, this.last_x
+				do y = this.first_y+1, this.last_y
 					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.points_latlon_c(1, x, y, face)) ! function of latitude
 				end do
 			end do
@@ -145,23 +152,21 @@ CONTAINS
 
 
 
-		do x = 1, 2*dim
-			do y = 1, 2*dim
-				do step = 1, this.step
+		do x = this.first_x, this.last_x
+			do y = this.first_y+1, this.last_y
 
-	call g.dist(this.points_dist(:, x, y+step), this.points_dist(:, x, y), dist) ! UP
-	this.h_dist(up, step, x, y) = dist
+	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x, y-1), dist)
+	this.y_dist(x, y) = dist
 
-	call g.dist(this.points_dist(:, x+step, y), this.points_dist(:, x, y), dist) ! RIGHT
-	this.h_dist(right, step, x, y) = dist
+			end do
+		end do
 
-	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x, y-step), dist) ! DOWN
-	this.h_dist(down, step, x, y) = dist
+		do x = this.first_x+1, this.last_x
+			do y = this.first_y, this.last_y
 
-	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x-step, y), dist) ! LEFT
-	this.h_dist(left, step, x, y) = dist
+	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x-1, y), dist)
+	this.x_dist(x, y) = dist
 
-				end do
 			end do
 		end do
 
@@ -218,7 +223,8 @@ CONTAINS
 
 	subroutine deinit(this)
 		Class(g_var) :: this
-			if (Allocated(this.h_dist)) Deallocate(this.h_dist)
+			if (Allocated(this.x_dist)) Deallocate(this.x_dist)
+			if (Allocated(this.y_dist)) Deallocate(this.y_dist)
 			if (Allocated(this.f_cor)) Deallocate(this.f_cor)
 			if (Allocated(this.points_latlon_c)) Deallocate(this.points_latlon_c)
 			if (Allocated(this.points_latlon)) Deallocate(this.points_latlon)
@@ -233,10 +239,10 @@ CONTAINS
 
 	real(8) function partial_c1_x(this, fun, x, y)
 		Class(g_var) :: this
-		real(8), intent(in) :: fun(1:3)
+		real(8), intent(in) :: fun(-1:1)
 		integer, intent(in) :: x, y
-		partial_c1_x = (fun(3) * this.h_dist(this.left, 1, x, y) - fun(1) * this.h_dist(this.right, 1, x, y))/&
-		(this.h_dist(this.left, 1, x, y) + this.h_dist(this.right, 1, x, y))**2
+		partial_c1_x = (fun(1) * this.x_dist(x, y) - fun(-1) * this.x_dist(x+1, y))/&
+		(this.x_dist(x, y) + this.x_dist(x+1, y))**2
 
 	end function
 
@@ -244,10 +250,10 @@ CONTAINS
 
 	real(8) function partial_c1_y(this, fun, x, y)
 		Class(g_var) :: this
-		real(8), intent(in) :: fun(1:3)
+		real(8), intent(in) :: fun(-1:1)
 		integer, intent(in) :: x, y
-		partial_c1_y = (fun(3) * this.h_dist(this.down, 1, x, y) - fun(1)*this.h_dist(this.up, 1, x, y))/&
-		(this.h_dist(this.down, 1, x, y) + this.h_dist(this.up, 1, x, y))**2
+		partial_c1_y = (fun(1) * this.y_dist(x, y) - fun(-1)*this.y_dist(x, y+1))/&
+		(this.y_dist(x, y) + this.y_dist(x, y+1))**2
 
 	end function
 
@@ -267,10 +273,10 @@ subroutine step_minmax(this)
 	real(8) dim
 
 	dim = this.dim
-	this.dx_min = MINVAL(this.h_dist(this.right, 1, 1:2*dim, 1:2*dim))
-	this.dy_min = MINVAL(this.h_dist(this.up, 1, 1:2*dim, 1:2*dim))
-	this.dx_max = MAXVAL(this.h_dist(this.right, 1, 1:2*dim, 1:2*dim))
-	this.dy_max = MAXVAL(this.h_dist(this.up, 1, 1:2*dim, 1:2*dim))
+	this.dx_min = MINVAL(this.x_dist(this.ns_xy(1):this.nf_xy(1), this.ns_xy(2):this.nf_xy(2)))
+	this.dy_min = MINVAL(this.y_dist(this.ns_xy(1):this.nf_xy(1), this.ns_xy(2):this.nf_xy(2)))
+	this.dx_max = MAXVAL(this.x_dist(this.ns_xy(1):this.nf_xy(1), this.ns_xy(2):this.nf_xy(2)))
+	this.dy_max = MAXVAL(this.y_dist(this.ns_xy(1):this.nf_xy(1), this.ns_xy(2):this.nf_xy(2)))
 
 end subroutine
 

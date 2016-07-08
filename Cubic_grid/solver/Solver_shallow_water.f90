@@ -36,7 +36,7 @@ implicit none
 	dim = 32;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 480000;  speedup = 480;  dt = 10d0
+	Tmax = 48000;  speedup = 480;  dt = 10d0
 	rescale = 1 ! 0-simple, 1-tan, 2-pow(4/3)q
 !480000
 
@@ -66,8 +66,8 @@ implicit none
 	do time = 1, Tmax
 		call sch.Linear(var, var_prev, grid)
 		call msg.msg(var_prev, paral)
-! 		call diagn.L_norm(var_prev, grid, time)
-! 		call diagn.Courant(var_prev, grid, time)
+		call diagn.L_norm(var_prev, grid, time)
+		call diagn.Courant(var_prev, grid, time)
 			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
 			if(mod(time, Tmax/10) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
