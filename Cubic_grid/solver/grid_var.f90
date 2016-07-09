@@ -21,6 +21,8 @@ implicit none
 		Real(8), Allocatable :: triangle_area(:, :, :)
 		Real(8), Allocatable :: triangle_angles(:, :, :)
 		Real(8), Allocatable :: square_angles(:, :, :)
+		Real(8), Allocatable :: four_order_const_x(:, :, :)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
+		Real(8), Allocatable :: four_order_const_y(:, :, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
 		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2)
 		integer(4) first_x, first_y, last_x, last_y
@@ -60,6 +62,7 @@ CONTAINS
 		this.first_x = paral.first_x;  this.first_y = paral.first_y
 		this.last_x = paral.last_x;  this.last_y = paral.last_y
 
+
 				! print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
 
 		call this.alloc()
@@ -87,6 +90,8 @@ CONTAINS
 			Allocate(this.triangle_area(1:2, 1:2*this.dim, 1:2*this.dim))
 			Allocate(this.triangle_angles(1:6, 1:2*this.dim, 1:2*this.dim))
 			Allocate(this.square_angles(1:4, 1:2*this.dim, 1:2*this.dim))
+			Allocate(this.four_order_const_x(1:5, f_x:l_x , f_y:l_y))
+			Allocate(this.four_order_const_y(1:5, f_x:l_x , f_y:l_y))
 	end subroutine
 
 
@@ -95,7 +100,9 @@ CONTAINS
 		Class(g_var) :: this
 		Class(geometry) :: g
 		real(8) dist, omega_cor, S1, S2, sphere_area
+		real(8) h(-2:2)
 		integer(4) face, x, y, dim, step, k
+		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
 		character(8) istring
 
 
@@ -169,6 +176,27 @@ CONTAINS
 
 			end do
 		end do
+
+
+
+			do x = this.first_x, this.last_x
+				do y = this.first_y, this.last_y ! Gamet et al. 1999 Apendix A. Approx. of derivat.
+
+				h(-2) = this.x_dist(x-2, y);  h(-1) = this.x_dist(x-1, y);  h(0) = this.x_dist(x, y)
+				h(1) = this.x_dist(x+1, y);  h(2) = this.x_dist(x+2, y)
+
+this.four_order_const_x( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
+
+this.four_order_const_x( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
+
+this.four_order_const_x( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_x( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this.four_order_const_x( B, x, y) + this.four_order_const_x( C, x, y) + this.four_order_const_x( D, x, y) )
+
+				end do
+			end do
 
 
 
@@ -263,6 +291,8 @@ CONTAINS
 		Class(g_var) :: this
 		real(8), intent(in) :: fun(-2:2)
 		integer, intent(in) :: x, y
+		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+
 		partial_c4_x = 0
 
 	end function
