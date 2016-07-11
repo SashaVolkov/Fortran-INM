@@ -37,6 +37,7 @@ implicit none
 		Procedure, Public :: partial_c1_x => partial_c1_x
 		Procedure, Public :: partial_c1_y => partial_c1_y
 		Procedure, Public :: partial_c4_x => partial_c4_x
+		Procedure, Public :: partial_c4_y => partial_c4_y
 	End Type
 
 
@@ -198,6 +199,25 @@ this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this
 				end do
 			end do
 
+			do x = this.first_x, this.last_x
+				do y = this.first_y, this.last_y
+
+				h(-2) = this.y_dist(x-2, y);  h(-1) = this.y_dist(x-1, y);  h(0) = this.y_dist(x, y)
+				h(1) = this.y_dist(x+1, y);  h(2) = this.y_dist(x+2, y)
+
+this.four_order_const_y( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
+
+this.four_order_const_y( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this.four_order_const_y( B, x, y) + this.four_order_const_y( C, x, y) + this.four_order_const_y( D, x, y) )
+
+				end do
+			end do
+
 
 
 		sphere_area = 0
@@ -293,7 +313,20 @@ this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this
 		integer, intent(in) :: x, y
 		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
 
-		partial_c4_x = 0
+		partial_c4_x = this.four_order_const_x( A, x, y)*fun(1) + this.four_order_const_x( B, x, y)*fun(-1) +&
+			 this.four_order_const_x( C, x, y)*fun(2) +  this.four_order_const_x( D, x, y)*fun(-2) +  this.four_order_const_x( E, x, y)*fun(0)
+
+	end function
+
+
+	real(8) function partial_c4_y(this, fun, x, y)
+		Class(g_var) :: this
+		real(8), intent(in) :: fun(-2:2)
+		integer, intent(in) :: x, y
+		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+
+		partial_c4_y =  this.four_order_const_y( A, x, y)*fun(1) + this.four_order_const_y( B, x, y)*fun(-1) +&
+			 this.four_order_const_y( C, x, y)*fun(2) +  this.four_order_const_y( D, x, y)*fun(-2) +  this.four_order_const_y( E, x, y)*fun(0)
 
 	end function
 

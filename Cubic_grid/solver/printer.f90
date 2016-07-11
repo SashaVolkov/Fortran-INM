@@ -35,13 +35,13 @@ module printer_ncdf
 ! 		istring = istring
 
 		if(rescale == 0) then
-			status = nf90_create (path = trim('datFiles/simple/'//"surface"), &
+			status = nf90_create (path = trim('datFiles/simple/'//"surface.nc"), &
 	cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
 		else if(rescale == 1) then
-			status = nf90_create (path = trim('datFiles/tan/'//"surface"), &
+			status = nf90_create (path = trim('datFiles/tan/'//"surface.nc"), &
 	cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
 		else if(rescale == 2) then
-			status = nf90_create (path = trim('datFiles/exp/'//"surface"), &
+			status = nf90_create (path = trim('datFiles/exp/'//"surface.nc"), &
 	cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)), comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
 		end if
 

@@ -128,7 +128,7 @@ CONTAINS
 		call MPI_Allreduce(Courant_number, Courant_max, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
 		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 
-		if (id == 0) write(9, FMT = "(f14.6, f10.4)"),dble(time)*this.convert_time, Courant_max
+		if (id == 0) write(9, FMT = "(f40.6, f40.6)"),dble(time)*this.convert_time, Courant_max
 
 	end subroutine
 
@@ -167,9 +167,9 @@ CONTAINS
 		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 
 		if (id == 0) then
-			write(11, FMT = "(f20.6, f40.6)"),time*this.convert_time, L1_all
-			write(12, FMT = "(f20.6, f40.6)"),time*this.convert_time, L2_all
-			write(13, FMT = "(f20.6, f40.6)"),time*this.convert_time, L_inf_all
+			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, L1_all
+			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, L2_all
+			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, L_inf_all
 		end if
 
 	end subroutine

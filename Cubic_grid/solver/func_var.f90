@@ -106,7 +106,7 @@ CONTAINS
 				end do
 			end do
 
-			if ( face == 4 ) then
+			if ( face == 3 ) then
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					this.h_height(x, y, face) =&
