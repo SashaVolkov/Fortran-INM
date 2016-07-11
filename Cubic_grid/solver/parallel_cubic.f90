@@ -303,79 +303,58 @@ Subroutine Displacement(this, face, dir, displ)
 
 	if ( dir == this.up .or. dir == this.down ) then
 
-		select case(this.rot(face, dir) == 2)
-		case (.false.)
+		displ(1) = 0
+		do k = 2, this.Xsize
+			displ(k) = displ(k - 1) + 1
+		end do
+		do k = this.Xsize+1, n
+			displ(k) = displ(k - this.Xsize) + x
+		end do
 
-			displ(1) = 0
-			do k = 2, this.Xsize
-				displ(k) = displ(k - 1) + 1
-			end do
 
-			if(this.step > 1) then
-				do i = this.Xsize+1, n
-					displ(i) = displ(i - this.Xsize) + x
-				end do
+		if(face == 5 .or. face == 3) then
+			if (this.border(face, dir) == 1) then
+
+					displ(1) = this.Xsize
+					do k = 2, this.Xsize
+						displ(k) = displ(k - 1) - 1
+					end do
+					do k = this.Xsize+1, n
+						displ(k) = displ(k - this.Xsize) + x
+					end do
+
+			else if (this.border(face, dir) == -1) then
+
+					displ(1) = x*(this.step - 1)
+					do k = 2, this.Xsize
+						displ(k) = displ(k - 1) + 1
+					end do
+					do k = this.Xsize+1, n
+						displ(k) = displ(k - this.Xsize) - x
+					end do
+
 			end if
+		else if(face == 4 .and. this.border(face, dir) == 2) then
 
-		case (.true.)
-
-			displ(1) = x*(this.step - 1) + this.Xsize - 1
+			displ(1) = x*(this.step - 1) + this.Xsize
 			do k = 2, this.Xsize
 				displ(k) = displ(k - 1) - 1
 			end do
+			do k = this.Xsize+1, n
+				displ(k) = displ(k - this.Xsize) - x
+			end do
 
-			if(this.step > 1) then
-				do i = this.Xsize+1, n
-					displ(i) = displ(i - this.Xsize) - x
-				end do
-			end if
-
-		end select
-
+		end if
 
 	else if ( dir == this.right .or. dir == this.left ) then
 
-		select case(this.border(face, dir))
-		case (0)
-
-				displ(1) = 0
-				do k = 2, this.Ysize
-					displ(k) = displ(k - 1) + x
-				end do
-
-				if(this.step > 1) then
-					do i = this.Ysize+1, n
-						displ(i) = displ(i - this.Ysize) + 1
-					end do
-				end if
-
-		case (1)
-
-			displ(1) = (this.Ysize - 1)*x
-			do k = 2, this.Ysize
-				displ(k) = displ(k - 1) - x
-			end do
-
-			if(this.step > 1) then
-				do i = this.Ysize+1, n
-					displ(i) = displ(i - this.Ysize) + 1
-				end do
-			end if
-
-		case (-1)
-
-			displ(1) = this.step - 1
+			displ(1) = 0
 			do k = 2, this.Ysize
 				displ(k) = displ(k - 1) + x
 			end do
-
-			if(this.step > 1) then
-				do i = this.Ysize+1, n
-					displ(i) = displ(i - this.Ysize) - 1
-				end do
-			end if
-
-		end select
+			do k = this.Ysize+1, n
+				displ(k) = displ(k - this.Ysize) + 1
+			end do
 
 	end if
 
