@@ -101,7 +101,7 @@ CONTAINS
 		Class(g_var) :: this
 		Class(geometry) :: g
 		real(8) dist, omega_cor, S1, S2, sphere_area
-		real(8) h(-2:2)
+		real(8) h(-1:2)
 		integer(4) face, x, y, dim, step, k
 		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
 		character(8) istring
@@ -112,8 +112,8 @@ CONTAINS
 
 
 		do face = 1, 6 ! Only longitude
-			do x = this.first_x, this.last_x
-				do y = this.first_y+1, this.last_y
+			do x = this.ns_xy(1), this.nf_xy(1)
+				do y = this.ns_xy(2), this.nf_xy(2)
 					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.points_latlon_c(1, x, y, face)) ! function of latitude
 				end do
 			end do
@@ -124,9 +124,7 @@ CONTAINS
 			do x = 1, 2*dim
 				this.points_dist(:, x, y) = this.points_latlon_c(:, x, y, 2) ! face = 2
 			end do
-		end do
 
-		do y = 1, 2*dim
 			do x = 2*dim + 1, 2*dim + this.step
 				this.points_dist(:, x, y) = this.points_latlon_c(:, x - 2*dim, y, 3) ! face = 3
 			end do
@@ -160,7 +158,7 @@ CONTAINS
 
 
 
-		do x = this.first_x, this.last_x
+		do x = this.ns_xy(1), this.nf_xy(1)
 			do y = this.first_y+1, this.last_y
 
 	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x, y-1), dist)
@@ -170,7 +168,7 @@ CONTAINS
 		end do
 
 		do x = this.first_x+1, this.last_x
-			do y = this.first_y, this.last_y
+			do y = this.ns_xy(2), this.nf_xy(2)
 
 	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x-1, y), dist)
 	this.x_dist(x, y) = dist
@@ -178,12 +176,10 @@ CONTAINS
 			end do
 		end do
 
+		do x = this.ns_xy(1), this.nf_xy(1)
+			do y = this.ns_xy(2), this.nf_xy(2) ! Gamet et al. 1999 Apendix A. Approx. of derivat.
 
-
-			do x = this.first_x, this.last_x
-				do y = this.first_y, this.last_y ! Gamet et al. 1999 Apendix A. Approx. of derivat.
-
-				h(-2) = this.x_dist(x-2, y);  h(-1) = this.x_dist(x-1, y);  h(0) = this.x_dist(x, y)
+				h(-1) = this.x_dist(x-1, y);  h(0) = this.x_dist(x, y)
 				h(1) = this.x_dist(x+1, y);  h(2) = this.x_dist(x+2, y)
 
 this.four_order_const_x( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
@@ -199,11 +195,11 @@ this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this
 				end do
 			end do
 
-			do x = this.first_x, this.last_x
-				do y = this.first_y, this.last_y
+			do x = this.ns_xy(1), this.nf_xy(1)
+				do y = this.ns_xy(2), this.nf_xy(2)
 
-				h(-2) = this.y_dist(x-2, y);  h(-1) = this.y_dist(x-1, y);  h(0) = this.y_dist(x, y)
-				h(1) = this.y_dist(x+1, y);  h(2) = this.y_dist(x+2, y)
+				h(-1) = this.y_dist(x, y-1);  h(0) = this.y_dist(x, y)
+				h(1) = this.y_dist(x, y+1);  h(2) = this.y_dist(x, y+2)
 
 this.four_order_const_y( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
 

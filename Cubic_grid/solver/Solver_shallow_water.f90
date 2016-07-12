@@ -36,7 +36,7 @@ implicit none
 	dim = 32;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 36000;  speedup = 480;  dt = 5d0
+	Tmax = 480000;  speedup = 480;  dt = 5d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 !480000
 
