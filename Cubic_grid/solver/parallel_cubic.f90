@@ -128,14 +128,14 @@ Subroutine halo_zone(this, face)
 		blocklen(i) = 1
 	end do
 
-	do i = 1, 4
+! 	do i = 1, 4
 
-		call this.Displacement(face, i, displ)
-		call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, i), ier)
-		call MPI_TYPE_COMMIT(this.halo(face, i), ier)
-		! if (face == 4 .and. i == 1 .and. this.id == 3) print *, displ(:)
+! 		call this.Displacement(face, i, displ)
+! 		call MPI_TYPE_INDEXED(n, blocklen, displ, mp_dp, this.halo(face, i), ier)
+! 		call MPI_TYPE_COMMIT(this.halo(face, i), ier)
+! 		! if (face == 4 .and. i == 1 .and. this.id == 3) print *, displ(:)
 
-	end do
+! 	end do
 
 
 End Subroutine

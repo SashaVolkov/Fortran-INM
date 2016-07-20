@@ -53,29 +53,28 @@ subroutine Linear(this, var, var_pr, grid)
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
 
-	real(8) g, height, dt, partial(1:2), temp(-2:2)
+	real(8) g, height, dt, partial(1:2), temp1(-1:1), temp2(-1:1), div
 	integer(4) face, x, y, dim, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier
 
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
 	dt = grid.dt;  ns_x = var.ns_x;  ns_y = var.ns_y
 	nf_x = var.nf_x;  nf_y = var.nf_y
 
-	do face = 1, 6
-		do y = ns_y, nf_y
-			do x = ns_x, nf_x
+	do face = 2, 2
+		do y = 1, 2*dim
+			do x = 1, 2*dim
 
-				partial(1) = grid.partial_c4_x(var_pr.h_height(x-2:x+2, y, face), x, y)
+				partial(1) = grid.partial_c2_x(var_pr.h_height(x-1:x+1, y, face), x, y)
 				var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) - dt*g*partial(1)
 
-				temp(:) = var_pr.h_height(x, y-2:y+2, face)
-				partial(1) = grid.partial_c4_y(temp, x, y)
+				temp1(:) = var_pr.h_height(x, y-1:y+1, face)
+				partial(1) = grid.partial_c2_y(temp1, x, y)
 				var.y_vel(x, y, face) = var_pr.y_vel(x, y, face) - dt*g*partial(1)
 
-				temp(:) = var_pr.x_vel(x-2:x+2, y, face)
-				partial(1) = grid.partial_c4_x(temp, x, y)
-				temp(:) = var_pr.y_vel(x, y-2:y+2, face)
-				partial(2) = grid.partial_c4_y(temp, x, y)
-				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*(partial(1) + partial(2))
+				temp1(:) = var_pr.x_vel(x-1:x+1, y, face)
+				temp2(:) = var_pr.y_vel(x, y-1:y+1, face)
+				div = grid.div_2(temp1, temp2, x, y)
+				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*(div)
 
 
 			end do
@@ -160,17 +159,17 @@ Subroutine FRunge(this, grid, var, face, i)
 			if((y <=2 .or. y >= 2*var.dim-1) .and. (x <=2 .or. x >= 2*var.dim-1)) then
 
 				temp1(:) = this.kh(x-1:x+1, y, 0) + coef(i-1)*this.kh(x-1:x+1, y, i-1)
-				partial(1) = grid.partial_c1_x(temp1, x, y)
+				partial(1) = grid.partial_c2_x(temp1, x, y)
 				this.ku(x, y, i) = - dt*g*partial(1)
 
 				temp1(:) = this.kh(x, y-1:y+1, 0) + coef(i-1)*this.kh(x, y-1:y+1, i-1)
-				partial(1) = grid.partial_c1_y(temp1, x, y)
+				partial(1) = grid.partial_c2_y(temp1, x, y)
 				this.kv(x, y, i) =  - dt*g*partial(1)
 
 				temp1(:) = this.ku(x-1:x+1, y, 0) + coef(i-1)*this.ku(x-1:x+1, y, i-1)
-				partial(1) = grid.partial_c1_x(temp1, x, y)
+				partial(1) = grid.partial_c2_x(temp1, x, y)
 				temp1(:) = this.kv(x, y-1:y+1, 0) + coef(i-1)*this.kv(x, y-1:y+1, i-1)
-				partial(2) = grid.partial_c1_y(temp1, x, y)
+				partial(2) = grid.partial_c2_y(temp1, x, y)
 				this.kh(x, y, i) = - dt*height*(partial(1) + partial(2))
 
 			end if

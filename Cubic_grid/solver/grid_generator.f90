@@ -16,7 +16,8 @@ Public :: generator
 
 Type generator
 	CONTAINS
-	Procedure, Public :: conformal_cubed_sphere => conformal_cubed_sphere_grid_generation
+	Procedure, Public :: conformal_cubed_sphere => conformal_cubed_sphere
+	Procedure, Public :: equiangular_cubed_sphere => equiangular_cubed_sphere
 	Procedure, Private :: face_to_octant => face_to_octant
 		Procedure, Private :: rescale => rescale
 
@@ -24,7 +25,7 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere_grid_generation(this, dim, ns_xy, nf_xy, r_sphere, rescale, grid_points_latlon_c, grid_points_latlon)
+	subroutine conformal_cubed_sphere(this, dim, ns_xy, nf_xy, r_sphere, rescale, grid_points_latlon_c, grid_points_latlon)
 		Class(generator) :: this
 		integer, intent(in) :: dim, rescale, ns_xy(2), nf_xy(2)
 		real(8), intent(in) :: r_sphere
@@ -84,7 +85,7 @@ CONTAINS
 		end do
 
 
-	end subroutine conformal_cubed_sphere_grid_generation
+	end subroutine conformal_cubed_sphere
 
 
 
@@ -127,6 +128,39 @@ CONTAINS
 	end subroutine rescale
 
 
+
+
+	subroutine equiangular_cubed_sphere(this, dim, grid_points_latlon_c, grid_points_latlon)
+
+		Class(generator) :: this
+		integer, intent(in) :: dim
+		real(8), intent(out) :: grid_points_latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
+		real(8), intent(out) :: grid_points_latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)
+		integer face, j, k, pi
+		real(8) x,y,z, x_face,y_face
+
+		pi = 314159265358979323846d-20
+
+		face = 2
+
+		do j= -2*dim, 2*dim
+			do k= -2*dim, 2*dim
+				x_face = (pi*j/dble(4))/dble(2*dim);  y_face= (pi*k/dble(4))/dble(2*dim)
+
+
+		if(abs(mod(j,2)) == 1 .and. abs(mod(k,2)) == 1) then
+			grid_points_latlon_c(1, dim + (j+1)/2, dim + (k+1)/2, face) = y_face
+			grid_points_latlon_c(2, dim + (j+1)/2, dim + (k+1)/2, face) = x_face
+		else if(abs(mod(j,2)) == 0 .and. abs(mod(k,2)) == 0) then
+			grid_points_latlon(1, dim + j/2 + 1, dim + k/2 + 1, face) = y_face
+			grid_points_latlon(2, dim + j/2 + 1, dim + k/2 + 1, face) = x_face
+		end if
+
+			end do
+		end do
+
+
+	end subroutine equiangular_cubed_sphere
 
 
 
