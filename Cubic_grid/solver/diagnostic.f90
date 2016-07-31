@@ -117,8 +117,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/grid.x_dist(x, y)) +&
-					 abs(func.y_vel(x, y, face)*grid.dt/grid.y_dist(x, y))
+					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/(grid.x_dist(x, y)*grid.r_sphere)) +&
+					 abs(func.y_vel(x, y, face)*grid.dt/(grid.y_dist(x, y)*grid.r_sphere))
 
 				end do
 			end do
@@ -141,9 +141,9 @@ CONTAINS
 		integer(4), intent(in) :: time
 
 		integer(4) face, x, y, id, ier
-		real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square
+		real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square, L10, L20, L_inf0
 
-		L1 = 0;  L2 = 0;  L_inf = 0
+		L1 = 0;  L2 = 0;  L_inf = 0;  L10 = 0;  L20 = 0;  L_inf0 = 0
 
 		do face = 1, 6
 			do y = func.ns_y, func.nf_y
@@ -167,10 +167,12 @@ CONTAINS
 		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 
 		if (id == 0) then
-			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, L1_all
-			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, L2_all
-			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, L_inf_all
+			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, L1_all - L10
+			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, L2_all - L20
+			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, L_inf_all - L_inf0
 		end if
+
+		if(time == 0) L10 = L1_all;  L20 = L2_all; L_inf0 = L_inf_all
 
 	end subroutine
 

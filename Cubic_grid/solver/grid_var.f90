@@ -14,13 +14,13 @@ implicit none
 		Real(8), Allocatable :: x_dist(:, :)
 		Real(8), Allocatable :: y_dist(:, :)
 		Real(8), Allocatable :: G_sqr(:, :)
-		Real(8), Allocatable :: G(:, :, :, :)
-		Real(8), Allocatable :: G_invers(:, :, :, :)
+		Real(8), Allocatable :: G_tensor(:, :, :, :)
+		Real(8), Allocatable :: G_inverse(:, :, :, :)
 		Real(8), Allocatable :: rho(:, :)
 		Real(8), Allocatable :: f_cor(:, :, :)
-		Real(8), Allocatable :: points_latlon_c(:, :, :, :)
-		Real(8), Allocatable :: points_latlon(:, :, :, :)
-		Real(8), Allocatable :: points_dist(:, :, :)
+		Real(8), Allocatable :: latlon_c(:, :, :, :)
+		Real(8), Allocatable :: equiang_c(:, :, :, :)
+		Real(8), Allocatable :: latlon(:, :, :, :)
 		Real(8), Allocatable :: square(:, :)
 		Real(8), Allocatable :: triangle_area(:, :, :)
 		Real(8), Allocatable :: triangle_angles(:, :, :)
@@ -39,6 +39,7 @@ implicit none
 
 		Procedure, Private :: step_minmax => step_minmax
 		Procedure, Public :: div_2 => div_2
+		Procedure, Public :: div_4 => div_4
 		Procedure, Public :: partial_c2_x => partial_c2_x
 		Procedure, Public :: partial_c2_y => partial_c2_y
 		Procedure, Public :: partial_c4_x => partial_c4_x
@@ -72,7 +73,7 @@ CONTAINS
 				! print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
 
 		call this.alloc()
-		call generate.equiangular_cubed_sphere(this.dim, this.points_latlon_c, this.points_latlon)
+		call generate.equiangular_cubed_sphere(this.dim, this.step, this.equiang_c, this.latlon_c, this.latlon)
 		call this.const_def(geom)
 		call this.step_minmax()
 
@@ -82,24 +83,25 @@ CONTAINS
 
 	subroutine alloc(this)
 		Class(g_var) :: this
-		integer(4) f_x, f_y, l_x, l_y
+		integer(4) f_x, f_y, l_x, l_y, dim, step
 
 		f_x = this.first_x;  l_x = this.last_x;  f_y = this.first_y;  l_y = this.last_y
+		dim = this.dim;  step = this.step
 
 			Allocate(this.x_dist(f_x:l_x , f_y:l_y))
 			Allocate(this.y_dist(f_x:l_x , f_y:l_y))
 			Allocate(this.G_sqr(f_x:l_x , f_y:l_y))
-			Allocate(this.G(f_x:l_x , f_y:l_y, 1:2, 1:2))
-			Allocate(this.G_invers(f_x:l_x , f_y:l_y, 1:2, 1:2))
+			Allocate(this.G_tensor(f_x:l_x , f_y:l_y, 1:2, 1:2))
+			Allocate(this.G_inverse(f_x:l_x , f_y:l_y, 1:2, 1:2))
 			Allocate(this.rho(f_x:l_x , f_y:l_y))
 			Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
-			Allocate(this.points_latlon_c(1:2, 1:2*this.dim, 1:2*this.dim, 1:6))
-			Allocate(this.points_latlon(1:2, 1:2*this.dim+1, 1:2*this.dim+1, 1:6))
-			Allocate(this.points_dist(1:2, 1-this.step:2*this.dim + this.step, 1-this.step:2*this.dim + this.step))
-			Allocate(this.square(1:2*this.dim, 1:2*this.dim))
-			Allocate(this.triangle_area(1:2, 1:2*this.dim, 1:2*this.dim))
-			Allocate(this.triangle_angles(1:6, 1:2*this.dim, 1:2*this.dim))
-			Allocate(this.square_angles(1:4, 1:2*this.dim, 1:2*this.dim))
+			Allocate(this.latlon_c(1:2, - step:2*dim + step + 1, - step:2*dim + step + 1, 1:6))
+			Allocate(this.equiang_c(1:2, - step:2*dim + step + 1, - step:2*dim + step + 1, 1:6))
+			Allocate(this.latlon(1:2, - 1 - step:2*dim + step + 2, - 1 - step:2*dim + step + 2, 1:6))
+			Allocate(this.square(1:2*dim, 1:2*dim))
+			Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
+			Allocate(this.triangle_angles(1:6, 1:2*dim, 1:2*dim))
+			Allocate(this.square_angles(1:4, 1:2*dim, 1:2*dim))
 			Allocate(this.four_order_const_x(1:5, f_x:l_x , f_y:l_y))
 			Allocate(this.four_order_const_y(1:5, f_x:l_x , f_y:l_y))
 	end subroutine
@@ -123,50 +125,37 @@ CONTAINS
 		do face = 1, 6 ! Only longitude
 			do x = this.ns_xy(1), this.nf_xy(1)
 				do y = this.ns_xy(2), this.nf_xy(2)
-					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.points_latlon_c(1, x, y, face)) ! function of latitude
+					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.latlon_c(1, x, y, face)) ! function of latitude
 				end do
 			end do
 		end do
 
 
-		do y = 1, 2*dim
-			do x = 1, 2*dim
-				this.points_dist(:, x, y) = this.points_latlon_c(:, x, y, 2) ! face = 2
-				x_1 = this.points_latlon_c(1, x, y, 2)
-				x_2 = this.points_latlon_c(2, x, y, 2)
-				this.rho(x, y) = 1 + (dtan(x_1))**2 + (dtan(x_2))**2
-				this.G_sqr(x, y) = (this.r_sphere**3)/(dsqrt(3d0)*this.rho(x, y))
-				g_coef = (this.r_sphere**3)/((this.rho(x, y)**4) * dcos(x_1) * dcos(x_2))
-				this.G(x, y, 1, 1) = g_coef * (1 + (dtan(x_1))**2)
-				this.G(x, y, 1, 2) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
-				this.G(x, y, 2, 1) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
-				this.G(x, y, 2, 2) = g_coef * (1 + (dtan(x_2))**2)
 
-				this.G_invers(x, y, 1, 1) = g_coef * (1 + (dtan(x_2))**2)/this.rho(x, y)
-				this.G_invers(x, y, 1, 2) = g_coef * (dtan(x_1))*(dtan(x_2))/this.rho(x, y)
-				this.G_invers(x, y, 2, 1) = g_coef * (dtan(x_1))*(dtan(x_2))/this.rho(x, y)
-				this.G_invers(x, y, 2, 2) = g_coef * (1 + (dtan(x_1))**2)/this.rho(x, y)
+		do y = this.first_y, this.last_y
+			do x = this.first_x, this.last_x
+
+			x_1 = this.equiang_c(1, x, y, 2)
+			x_2 = this.equiang_c(2, x, y, 2)
+
+			this.rho(x, y) = 1 + (dtan(x_1))**2 + (dtan(x_2))**2
+			this.G_sqr(x, y) = (this.r_sphere**2)/(this.rho(x, y)**3 * ((dcos(x_1))**2) * (dcos(x_2)**2))
+			g_coef = (this.r_sphere**2)/((this.rho(x, y)**4) * ((dcos(x_1))**2) * (dcos(x_2)**2))
+
+			this.G_tensor(x, y, 1, 1) = g_coef * (1 + (dtan(x_1))**2)
+			this.G_tensor(x, y, 1, 2) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
+			this.G_tensor(x, y, 2, 1) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
+			this.G_tensor(x, y, 2, 2) = g_coef * (1 + (dtan(x_2))**2)
+
+			this.G_inverse(x, y, 1, 1) = this.G_tensor(x, y, 2, 2)/(this.G_sqr(x, y)**2)
+			this.G_inverse(x, y, 1, 2) = -this.G_tensor(x, y, 2, 1)/(this.G_sqr(x, y)**2)
+			this.G_inverse(x, y, 2, 1) = -this.G_tensor(x, y, 1, 2)/(this.G_sqr(x, y)**2)
+			this.G_inverse(x, y, 2, 2) = this.G_tensor(x, y, 1, 1)/(this.G_sqr(x, y)**2)
+
 			end do
-
-! 			do x = 2*dim + 1, 2*dim + this.step
-! 				this.points_dist(:, x, y) = this.points_latlon_c(:, x - 2*dim, y, 3) ! face = 3
-! 			end do
-
-! 			do x = 1-this.step, 0
-! 				this.points_dist(:, x, y) = this.points_latlon_c(:, 2*dim + x, y, 5)
-! 			end do
 		end do
 
 
-! 		do x = 1, 2*dim
-! 			do y = 2*dim + 1, 2*dim + this.step
-! 				this.points_dist(:, x, y) = this.points_latlon_c(:, x, y - 2*dim, 6) ! face = 6
-! 			end do
-
-! 			do y = 1-this.step, 0
-! 				this.points_dist(:, x, y) = this.points_latlon_c(:, x, 2*dim + y, 1)
-! 			end do
-! 		end do
 
 		! ____________________
 		! | 1, 2d     2d, 2d |
@@ -180,119 +169,100 @@ CONTAINS
 		! --------------------
 
 
+		do y = this.first_y, this.last_y
+			do x = this.first_x+1, this.last_x
 
-! 		do x = 1, 2*dim
-! 			do y = 1, 2*dim
-
-
-! ! 				do x = this.ns_xy(1), this.nf_xy(1)
-! ! 					do y = this.first_y+1, this.last_y
-
-! 	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x, y-1), dist)
-! 	this.y_dist(x, y) = dist
-
-! 			end do
-! 		end do
-
-! 		do x = this.first_x+1, this.last_x
-! 			do y = this.ns_xy(2), this.nf_xy(2)
-
-		do x = 1, 2*dim
-			do y = 1, 2*dim
-
-	call g.dist(this.points_dist(:, x, y), this.points_dist(:, x-1, y), dist)
+	call g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2), dist)
 	this.x_dist(x, y) = dist
 	this.y_dist(y, x) = dist
-
-! 	print *, dist
 
 			end do
 		end do
 
-! 		do x = this.ns_xy(1), this.nf_xy(1)
-! 			do y = this.ns_xy(2), this.nf_xy(2) ! Gamet et al. 1999 Apendix A. Approx. of derivat.
+		do x = this.ns_xy(1), this.nf_xy(1)
+			do y = this.ns_xy(2), this.nf_xy(2) ! Gamet et al. 1999 Apendix A. Approx. of derivat.
 
-! 				h(-1) = this.x_dist(x-1, y);  h(0) = this.x_dist(x, y)
-! 				h(1) = this.x_dist(x+1, y);  h(2) = this.x_dist(x+2, y)
+				h(-1) = this.x_dist(x-1, y);  h(0) = this.x_dist(x, y)
+				h(1) = this.x_dist(x+1, y);  h(2) = this.x_dist(x+2, y)
 
-! this.four_order_const_x( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
+this.four_order_const_x( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
 
-! this.four_order_const_x( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
+this.four_order_const_x( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
 
-! this.four_order_const_x( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
+this.four_order_const_x( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
 
-! this.four_order_const_x( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
+this.four_order_const_x( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
 
-! this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this.four_order_const_x( B, x, y) + this.four_order_const_x( C, x, y) + this.four_order_const_x( D, x, y) )
+this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this.four_order_const_x( B, x, y) + this.four_order_const_x( C, x, y) + this.four_order_const_x( D, x, y) )
 
+				end do
+			end do
+
+			do x = this.ns_xy(1), this.nf_xy(1)
+				do y = this.ns_xy(2), this.nf_xy(2)
+
+				h(-1) = this.y_dist(x, y-1);  h(0) = this.y_dist(x, y)
+				h(1) = this.y_dist(x, y+1);  h(2) = this.y_dist(x, y+2)
+
+this.four_order_const_y( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
+
+this.four_order_const_y( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this.four_order_const_y( B, x, y) + this.four_order_const_y( C, x, y) + this.four_order_const_y( D, x, y) )
+
+				end do
+			end do
+
+
+
+		sphere_area = 0
+
+
+		if (this.rescale == 1) then
+			istring = '_tan'
+		else if (this.rescale == 0) then
+			istring = '_simple'
+		else if (this.rescale == 2) then
+			istring = '_exp'
+		end if
+
+! 		open (20, file = 'datFiles/angle'//trim(istring)//'.dat')
+! 		open (21, file = 'datFiles/cell'//trim(istring)//'.dat')
+! 		open (22, file = 'datFiles/dist'//trim(istring)//'.dat')
+
+		do x = 1, 2*dim
+			do y = 1, 2*dim
+
+				call g.triangle(this.latlon(:, y, x, 2), this.latlon(:, y, x+1, 2), this.latlon(:, y+1, x, 2), S1, this.triangle_angles(1:3, y, x))
+				call g.triangle(this.latlon(:, y+1, x+1, 2), this.latlon(:, y, x+1, 2), this.latlon(:, y+1, x, 2), S2, this.triangle_angles(4:6, y, x))
+
+				this.square(x, y) = S1 + S2
+				this.triangle_area(1, x, y) = S1
+				this.triangle_area(2, x, y) = S2
+
+				sphere_area = sphere_area + this.square(x,y)
+
+				this.square_angles(1, x, y) = this.triangle_angles(2, y, x)
+				this.square_angles(2, x, y) = this.triangle_angles(3, y, x) + this.triangle_angles(6, y, x)
+				this.square_angles(3, x, y) = this.triangle_angles(5, y, x)
+				this.square_angles(4, x, y) = this.triangle_angles(1, y, x) + this.triangle_angles(4, y, x)
+
+! 				do k=1,4
+! 					write(20,*) this.square_angles(k, x, y)*180d0/this.pi
+! 					write(22,*) this.h_dist(k, 1, y, x)
 ! 				end do
-! 			end do
+! 				write(21, *) this.square(x, y)
 
-! 			do x = this.ns_xy(1), this.nf_xy(1)
-! 				do y = this.ns_xy(2), this.nf_xy(2)
+			end do
+		end do
 
-! 				h(-1) = this.y_dist(x, y-1);  h(0) = this.y_dist(x, y)
-! 				h(1) = this.y_dist(x, y+1);  h(2) = this.y_dist(x, y+2)
+		close(20);  close(21);  close(22)
 
-! this.four_order_const_y( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
-
-! this.four_order_const_y( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
-
-! this.four_order_const_y( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-! this.four_order_const_y( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-! this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this.four_order_const_y( B, x, y) + this.four_order_const_y( C, x, y) + this.four_order_const_y( D, x, y) )
-
-! 				end do
-! 			end do
-
-
-
-! 		sphere_area = 0
-
-
-! 		if (this.rescale == 1) then
-! 			istring = '_tan'
-! 		else if (this.rescale == 0) then
-! 			istring = '_simple'
-! 		else if (this.rescale == 2) then
-! 			istring = '_exp'
-! 		end if
-
-! ! 		open (20, file = 'datFiles/angle'//trim(istring)//'.dat')
-! ! 		open (21, file = 'datFiles/cell'//trim(istring)//'.dat')
-! ! 		open (22, file = 'datFiles/dist'//trim(istring)//'.dat')
-
-! 		do x = 1, 2*dim
-! 			do y = 1, 2*dim
-
-! 				call g.triangle(this.points_latlon(:, y, x, 2), this.points_latlon(:, y, x+1, 2), this.points_latlon(:, y+1, x, 2), S1, this.triangle_angles(1:3, y, x))
-! 				call g.triangle(this.points_latlon(:, y+1, x+1, 2), this.points_latlon(:, y, x+1, 2), this.points_latlon(:, y+1, x, 2), S2, this.triangle_angles(4:6, y, x))
-
-! 				this.square(x, y) = S1 + S2
-! 				this.triangle_area(1, x, y) = S1
-! 				this.triangle_area(2, x, y) = S2
-
-! 				sphere_area = sphere_area + this.square(x,y)
-
-! 				this.square_angles(1, x, y) = this.triangle_angles(2, y, x)
-! 				this.square_angles(2, x, y) = this.triangle_angles(3, y, x) + this.triangle_angles(6, y, x)
-! 				this.square_angles(3, x, y) = this.triangle_angles(5, y, x)
-! 				this.square_angles(4, x, y) = this.triangle_angles(1, y, x) + this.triangle_angles(4, y, x)
-
-! ! 				do k=1,4
-! ! 					write(20,*) this.square_angles(k, x, y)*180d0/this.pi
-! ! 					write(22,*) this.h_dist(k, 1, y, x)
-! ! 				end do
-! ! 				write(21, *) this.square(x, y)
-
-! 			end do
-! 		end do
-
-! 		close(20);  close(21);  close(22)
-
-		! print '(" sphere_area = ", f20.2)', sphere_area*6d0
+		print '(" sphere_area = ", f20.2)', sphere_area*6d0
 
 	end subroutine
 
@@ -303,9 +273,9 @@ CONTAINS
 			if (Allocated(this.x_dist)) Deallocate(this.x_dist)
 			if (Allocated(this.y_dist)) Deallocate(this.y_dist)
 			if (Allocated(this.f_cor)) Deallocate(this.f_cor)
-			if (Allocated(this.points_latlon_c)) Deallocate(this.points_latlon_c)
-			if (Allocated(this.points_latlon)) Deallocate(this.points_latlon)
-			if (Allocated(this.points_dist)) Deallocate(this.points_dist)
+			if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
+			if (Allocated(this.equiang_c)) Deallocate(this.equiang_c)
+			if (Allocated(this.latlon)) Deallocate(this.latlon)
 			if (Allocated(this.square)) Deallocate(this.square)
 			if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
 			if (Allocated(this.triangle_angles)) Deallocate(this.triangle_angles)
@@ -335,17 +305,56 @@ CONTAINS
 	end function
 
 
-	real(8) function div_2(this, fun1, fun2, x, y)
+	real(8) function div_2(this, u1, u2, x, y)
 		Class(g_var) :: this
-		real(8), intent(in) :: fun1(-1:1), fun2(-1:1)
-		integer, intent(in) :: x, y
-		real(8) u_1(-1:1), u_2(-1:1)
+		real(8), intent(in) :: u1(-1:1), u2(-1:1)
+		integer(4), intent(in) :: x, y
+		integer(4) i
+		real(8) u_1(-1:1), u_2(-1:1), G_11, G_12, G_21, G_22
+
+		do i = -1, 1
+			G_11 = this.G_inverse(x+i, y, 1, 1)
+			G_12 = this.G_inverse(x, y+i, 1, 2)
+			G_21 = this.G_inverse(x+i, y, 2, 1)
+			G_22 = this.G_inverse(x, y+i, 2, 2)
+			u_1(i) = G_11*u1(i) + G_12*u2(i)
+			u_2(i) = G_21*u1(i) + G_22*u2(i)
+		end do
 
 
 		div_2 = ((u_1(1) * this.x_dist(x, y)*this.G_sqr(x+1,y) - u_1(-1)*this.x_dist(x+1, y)*this.G_sqr(x-1,y))/&
 			(this.x_dist(x, y) + this.x_dist(x+1, y))**2 &
 		+ (u_2(1) * this.y_dist(x, y)*this.G_sqr(x,y+1) - u_2(-1)*this.y_dist(x, y+1)*this.G_sqr(x,y-1))/&
 			(this.y_dist(x, y) + this.y_dist(x, y+1))**2)/this.G_sqr(x,y)
+
+	end function
+
+
+
+	real(8) function div_4(this, u1, u2, x, y)
+		Class(g_var) :: this
+		real(8), intent(in) :: u1(-2:2), u2(-2:2)
+		integer(4), intent(in) :: x, y
+		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+		integer(4) i
+		real(8) u_1(-2:2), u_2(-2:2), G_11, G_12, G_21, G_22, J_1(-2:2), J_2(-2:2)
+
+		do i = -2, 2
+			G_11 = this.G_inverse(x+i, y, 1, 1)
+			G_12 = this.G_inverse(x, y+i, 1, 2)
+			G_21 = this.G_inverse(x+i, y, 2, 1)
+			G_22 = this.G_inverse(x, y+i, 2, 2)
+			u_1(i) = G_11*u1(i)! + G_12*u2(i)
+			u_2(i) = G_22*u2(i)! + G_21*u1(i)
+			J_1(i) = this.G_sqr(x+i, y)
+			J_2(i) = this.G_sqr(x, y+i)
+		end do
+
+
+		div_4 = (this.four_order_const_x( A, x, y)*u_1(1)*J_1(1) + this.four_order_const_x( B, x, y)*u_1(-1)*J_1(-1) +&
+			 this.four_order_const_x( C, x, y)*u_1(2)*J_1(2) +  this.four_order_const_x( D, x, y)*u_1(-2)*J_1(-2) +  this.four_order_const_x( E, x, y)*u_1(0)*J_1(0) + &
+			 this.four_order_const_y( A, x, y)*u_2(1)*J_2(1) + this.four_order_const_y( B, x, y)*u_2(-1)*J_2(-1) +&
+			 this.four_order_const_y( C, x, y)*u_2(2)*J_2(2) +  this.four_order_const_y( D, x, y)*u_2(-2)*J_2(-2) +  this.four_order_const_y( E, x, y)*u_2(0)*J_2(0))/J_1(0)
 
 	end function
 

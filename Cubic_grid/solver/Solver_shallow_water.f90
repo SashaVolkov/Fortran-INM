@@ -36,7 +36,7 @@ implicit none
 	dim = 45;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 100000;  speedup = 100;  dt = 5d0
+	Tmax = 200000;  speedup = 100;  dt = 5d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 !480000
 
@@ -64,7 +64,7 @@ implicit none
 
 
 	do time = 1, Tmax
-		call sch.Linear(var, var_prev, grid)
+		call sch.RungeKutta(var, var_prev, grid)
 ! 		call msg.msg(var_prev, paral)
 		call diagn.L_norm(var_prev, grid, time)
 		call diagn.Courant(var_prev, grid, time)
@@ -79,14 +79,20 @@ implicit none
 
 	if(id == 0) then
 		print '(" Grid step =  ", f10.2, " m")', step
-		print '(" Y max step = ", f10.2, " m")', grid.dy_max
-		print '(" Y min step = ", f10.2, " m")', grid.dy_min
-		print '(" X max step = ", f10.2, " m")', grid.dx_max
-		print '(" X min step = ", f10.2, " m")', grid.dx_min
-		print '(" Y max/min = ", f5.2)', grid.dy_max/grid.dy_min
-		print '(" X max/min = ", f5.2)', grid.dx_max/grid.dx_min
-		! print '(" latlon = ", f10.2, f10.2)', grid.points_latlon(:, dim+1, 1, 4) * 180.0/pi
-		! print '(" latlon = ", f10.2, f10.2)', grid.points_latlon(:, dim+1, 2*dim+1, 4) * 180.0/pi
+		print '(" Y max step = ", f10.2, " m")', grid.dy_max * r_sphere
+		! print '(" Y min step = ", f10.2, " m")', grid.dy_min
+		! print '(" X max step = ", f10.2, " m")', grid.dx_max
+		! print '(" X min step = ", f10.2, " m")', grid.dx_min
+		print '(" Y max/min = ", f6.4)', grid.dy_max/grid.dy_min
+		print '(" X max/min = ", f6.4)', grid.dx_max/grid.dx_min
+		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, dim+1, 2) * 180.0/pi
+		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, 2*dim+2, 2) * 180.0/pi
+		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, dim+1, 3) * 180.0/pi
+		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, 2*dim+2, 3) * 180.0/pi
+		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, dim+1, 4) * 180.0/pi
+		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, 2*dim+2, 4) * 180.0/pi
+		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, dim+1, 5) * 180.0/pi
+		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, 2*dim+3, 5) * 180.0/pi
 		print '(" np = ", I5)', np
 		print '(" time = ", f10.2, " sec")', end_init - start_init
 	end if

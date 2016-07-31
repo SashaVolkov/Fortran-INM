@@ -54,15 +54,14 @@ subroutine Linear(this, var, var_pr, grid)
 	Class(g_var) :: grid
 
 	real(8) g, height, dt, partial(1:2), temp1(-1:1), temp2(-1:1), div
-	integer(4) face, x, y, dim, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier
+	integer(4) face, x, y, dim, i, j, stat, ier
 
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
-	dt = grid.dt;  ns_x = var.ns_x;  ns_y = var.ns_y
-	nf_x = var.nf_x;  nf_y = var.nf_y
+	dt = grid.dt
 
 	do face = 2, 2
-		do y = 1, 2*dim
-			do x = 1, 2*dim
+	do y = var.ns_y, var.nf_y
+		do x = var.ns_x, var.nf_x
 
 				partial(1) = grid.partial_c2_x(var_pr.h_height(x-1:x+1, y, face), x, y)
 				var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) - dt*g*partial(1)
@@ -74,7 +73,7 @@ subroutine Linear(this, var, var_pr, grid)
 				temp1(:) = var_pr.x_vel(x-1:x+1, y, face)
 				temp2(:) = var_pr.y_vel(x, y-1:y+1, face)
 				div = grid.div_2(temp1, temp2, x, y)
-				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*(div)
+				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*div
 
 
 			end do
@@ -101,7 +100,7 @@ Subroutine RungeKutta(this, var, var_pr, grid)
 	nf_x = var.nf_x;  nf_y = var.nf_y
 
 
-	do face = 1, 6
+	do face = 2, 2
 
 	this.ku(:, :, 0) = var_pr.x_vel(:, :, face)
 	this.kv(:, :, 0) = var_pr.y_vel(:, :, face)
@@ -132,7 +131,7 @@ Subroutine FRunge(this, grid, var, face, i)
 	Class(g_var) :: grid
 
 	integer(4), intent(in) :: face, i
-	real(8) g, height, dt, partial(1:2), temp(-2:2), coef(0:3), temp1(-1:1)
+	real(8) g, height, dt, partial(1:2), temp1(-2:2), temp2(-2:2), coef(0:3), div
 	integer(4) x,y
 
 	coef(0) = 0d0;  coef(1) = 0d5;  coef(2) = 0d5;  coef(3) = 1d0;
@@ -142,38 +141,18 @@ Subroutine FRunge(this, grid, var, face, i)
 	do y = var.ns_y, var.nf_y
 		do x = var.ns_x, var.nf_x
 
-			temp(:) = this.kh(x-2:x+2, y, 0) + coef(i-1)*this.kh(x-2:x+2, y, i-1)
-			partial(1) = grid.partial_c4_x(temp, x, y)
+			temp1(:) = this.kh(x-2:x+2, y, 0) + coef(i-1)*this.kh(x-2:x+2, y, i-1)
+			partial(1) = grid.partial_c4_x(temp1, x, y)
 			this.ku(x, y, i) = - dt*g*partial(1)
 
-			temp(:) = this.kh(x, y-2:y+2, 0) + coef(i-1)*this.kh(x, y-2:y+2, i-1)
-			partial(1) = grid.partial_c4_y(temp, x, y)
+			temp2(:) = this.kh(x, y-2:y+2, 0) + coef(i-1)*this.kh(x, y-2:y+2, i-1)
+			partial(1) = grid.partial_c4_y(temp2, x, y)
 			this.kv(x, y, i) =  - dt*g*partial(1)
 
-			temp(:) = this.ku(x-2:x+2, y, 0) + coef(i-1)*this.ku(x-2:x+2, y, i-1)
-			partial(1) = grid.partial_c4_x(temp, x, y)
-			temp(:) = this.kv(x, y-2:y+2, 0) + coef(i-1)*this.kv(x, y-2:y+2, i-1)
-			partial(2) = grid.partial_c4_y(temp, x, y)
-			this.kh(x, y, i) = - dt*height*(partial(1) + partial(2))
-
-			if((y <=2 .or. y >= 2*var.dim-1) .and. (x <=2 .or. x >= 2*var.dim-1)) then
-
-				temp1(:) = this.kh(x-1:x+1, y, 0) + coef(i-1)*this.kh(x-1:x+1, y, i-1)
-				partial(1) = grid.partial_c2_x(temp1, x, y)
-				this.ku(x, y, i) = - dt*g*partial(1)
-
-				temp1(:) = this.kh(x, y-1:y+1, 0) + coef(i-1)*this.kh(x, y-1:y+1, i-1)
-				partial(1) = grid.partial_c2_y(temp1, x, y)
-				this.kv(x, y, i) =  - dt*g*partial(1)
-
-				temp1(:) = this.ku(x-1:x+1, y, 0) + coef(i-1)*this.ku(x-1:x+1, y, i-1)
-				partial(1) = grid.partial_c2_x(temp1, x, y)
-				temp1(:) = this.kv(x, y-1:y+1, 0) + coef(i-1)*this.kv(x, y-1:y+1, i-1)
-				partial(2) = grid.partial_c2_y(temp1, x, y)
-				this.kh(x, y, i) = - dt*height*(partial(1) + partial(2))
-
-			end if
-
+			temp1(:) = this.ku(x-2:x+2, y, 0) + coef(i-1)*this.ku(x-2:x+2, y, i-1)
+			temp2(:) = this.kv(x, y-2:y+2, 0) + coef(i-1)*this.kv(x, y-2:y+2, i-1)
+			div = grid.div_4(temp1(:), temp2(:), x, y)
+			this.kh(x, y, i) = - dt*height*div
 
 		end do
 	end do

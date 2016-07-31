@@ -25,12 +25,12 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere(this, dim, ns_xy, nf_xy, r_sphere, rescale, grid_points_latlon_c, grid_points_latlon)
+	subroutine conformal_cubed_sphere(this, dim, ns_xy, nf_xy, r_sphere, rescale, latlon_c, latlon)
 		Class(generator) :: this
 		integer, intent(in) :: dim, rescale, ns_xy(2), nf_xy(2)
 		real(8), intent(in) :: r_sphere
-		real(8), intent(out) :: grid_points_latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
-		real(8), intent(out) :: grid_points_latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)
+		real(8), intent(out) :: latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
+		real(8), intent(out) :: latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)
 
 		character*14 filename
 		character istring
@@ -73,11 +73,11 @@ CONTAINS
 						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, latitude, longitude)
 
 						if(abs(mod(j,2)) == 1 .and. abs(mod(k,2)) == 1) then
-							grid_points_latlon_c(1, dim + (j+1)/2, dim + (k+1)/2, face_index) = latitude
-							grid_points_latlon_c(2, dim + (j+1)/2, dim + (k+1)/2, face_index) = longitude
+							latlon_c(1, dim + (j+1)/2, dim + (k+1)/2, face_index) = latitude
+							latlon_c(2, dim + (j+1)/2, dim + (k+1)/2, face_index) = longitude
 						else if(abs(mod(j,2)) == 0 .and. abs(mod(k,2)) == 0) then
-							grid_points_latlon(1, dim + j/2 + 1, dim + k/2 + 1, face_index) = latitude
-							grid_points_latlon(2, dim + j/2 + 1, dim + k/2 + 1, face_index) = longitude
+							latlon(1, dim + j/2 + 1, dim + k/2 + 1, face_index) = latitude
+							latlon(2, dim + j/2 + 1, dim + k/2 + 1, face_index) = longitude
 						end if
 
 					end do
@@ -130,32 +130,41 @@ CONTAINS
 
 
 
-	subroutine equiangular_cubed_sphere(this, dim, grid_points_latlon_c, grid_points_latlon)
+	subroutine equiangular_cubed_sphere(this, dim, step, equiang_c, latlon_c, latlon)
 
 		Class(generator) :: this
-		integer, intent(in) :: dim
-		real(8), intent(out) :: grid_points_latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
-		real(8), intent(out) :: grid_points_latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)
-		integer face, j, k, pi
-		real(8) x,y,z, x_face,y_face
+		Type(projection) :: projection
+		integer, intent(in) :: dim, step
+		real(8), intent(out) :: latlon_c(1:2, - step:2*dim + step + 1, - step:2*dim + step + 1, 1:6)
+		real(8), intent(out) :: equiang_c(1:2, - step:2*dim + step + 1, - step:2*dim + step + 1, 1:6)
+		real(8), intent(out) :: latlon(1:2, - 1 - step:2*dim + step + 2, - 1 - step:2*dim + step + 2, 1:6)
+		integer face, j, k, pi, min, max
+		real(8) x,y,z,a, r_vector(3), x_ang,y_ang, latitude, longitude, radius
 
-		pi = 314159265358979323846d-20
+		pi = 314159265358979323846d-20;  min =  -2*dim - 2*step - 2;  max = - min
 
-		face = 2
+		radius=1d0;  a = 1.0/(sqrt(3.0))
 
-		do j= -2*dim, 2*dim
-			do k= -2*dim, 2*dim
-				x_face = (pi*j/dble(4))/dble(2*dim);  y_face= (pi*k/dble(4))/dble(2*dim)
+		do face = 2, 5
+			do j= min, max
+				do k= min, max
+					x_ang = (pi*j/4.0)/dble(2*dim) - (pi/2.0)*(face - 2);  y_ang= (pi*k/4.0)/dble(2*dim)
+					
+					x = a*dtan(x_ang);  y = a*dtan(y_ang)
 
+					latitude = datan(x/a);  longitude = datan(y/a*sqrt(1 + x**2))
 
-		if(abs(mod(j,2)) == 1 .and. abs(mod(k,2)) == 1) then
-			grid_points_latlon_c(1, dim + (j+1)/2, dim + (k+1)/2, face) = y_face
-			grid_points_latlon_c(2, dim + (j+1)/2, dim + (k+1)/2, face) = x_face
-		else if(abs(mod(j,2)) == 0 .and. abs(mod(k,2)) == 0) then
-			grid_points_latlon(1, dim + j/2 + 1, dim + k/2 + 1, face) = y_face
-			grid_points_latlon(2, dim + j/2 + 1, dim + k/2 + 1, face) = x_face
-		end if
+						if(abs(mod(j,2)) == 1 .and. abs(mod(k,2)) == 1) then
+							equiang_c(1, dim + (j+1)/2, dim + (k+1)/2, face) = x_ang
+							equiang_c(2, dim + (j+1)/2, dim + (k+1)/2, face) = y_ang
+							latlon_c(1, dim + (j+1)/2, dim + (k+1)/2, face) = latitude
+							latlon_c(2, dim + (j+1)/2, dim + (k+1)/2, face) = longitude
+						else if(abs(mod(j,2)) == 0 .and. abs(mod(k,2)) == 0) then
+							latlon(1, dim + j/2 + 1, dim + k/2 + 1, face) = x_ang
+							latlon(2, dim + j/2 + 1, dim + k/2 + 1, face) = y_ang
+						end if
 
+				end do
 			end do
 		end do
 
