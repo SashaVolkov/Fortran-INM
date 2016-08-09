@@ -83,21 +83,23 @@ CONTAINS
 
 	subroutine alloc(this)
 		Class(g_var) :: this
-		integer(4) f_x, f_y, l_x, l_y, dim, step
+		integer(4) f_x, f_y, l_x, l_y, dim, step, f, l
 
 		f_x = this.first_x;  l_x = this.last_x;  f_y = this.first_y;  l_y = this.last_y
-		dim = this.dim;  step = this.step
+		dim = this.dim;  step = this.step;  f = 1-step; l = 2*dim + step
 
-			Allocate(this.x_dist(f_x:l_x , f_y:l_y))
-			Allocate(this.y_dist(f_x:l_x , f_y:l_y))
+			Allocate(this.x_dist(f:l, f:l))
+			Allocate(this.y_dist(f:l, f:l))
 			Allocate(this.G_sqr(f_x:l_x , f_y:l_y))
 			Allocate(this.G_tensor(f_x:l_x , f_y:l_y, 1:2, 1:2))
 			Allocate(this.G_inverse(f_x:l_x , f_y:l_y, 1:2, 1:2))
 			Allocate(this.rho(f_x:l_x , f_y:l_y))
 			Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
-			Allocate(this.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6))
-			Allocate(this.equiang_c(1:2, 1:2*dim, 1:2*dim, 1:6))
-			Allocate(this.latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6))
+
+			Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
+			Allocate(this.equiang_c(1:2, f:l , f:l, 1:6))
+			Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
+
 			Allocate(this.square(1:2*dim, 1:2*dim))
 			Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
 			Allocate(this.triangle_angles(1:6, 1:2*dim, 1:2*dim))
@@ -169,8 +171,8 @@ CONTAINS
 		! --------------------
 
 
-		do y = this.first_y, this.last_y
-			do x = this.first_x+1, this.last_x
+		do y = 1-step, 2*dim + step
+			do x = 2-step, 2*dim + step
 
 	call g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2), dist)
 	this.x_dist(x, y) = dist

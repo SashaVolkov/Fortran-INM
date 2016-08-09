@@ -33,10 +33,10 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 980616d-5
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 45;  gr_step = 2;  height = 100.0
+	dim = 25;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 20000;  speedup = 100;  dt = 5d0
+	Tmax = 5000;  speedup = 50;  dt = 5d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 !480000
 
@@ -63,34 +63,26 @@ implicit none
 	call diagn.init( grid, paral, Tmax, rescale, id)
 
 
-! 	do time = 1, Tmax
-! 		call sch.RungeKutta(var, var_prev, grid)
-! 		call msg.msg(var_prev, paral)
-! 		call diagn.L_norm(var_prev, grid, time)
-! 		call diagn.Courant(var_prev, grid, time)
-! 			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
-! 			if(mod(time, Tmax/10) == 0 .and. id == 0) then
-! 				end_init = MPI_Wtime()
-! 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
-! 			end if
-! 	end do
+	do time = 1, Tmax
+		call sch.RungeKutta(var, var_prev, grid)
+		call msg.msg(var_prev, paral)
+		call diagn.L_norm(var_prev, grid, time)
+		call diagn.Courant(var_prev, grid, time)
+			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
+			if(mod(time, Tmax/10) == 0 .and. id == 0) then
+				end_init = MPI_Wtime()
+				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
+			end if
+	end do
 
 	end_init = MPI_Wtime()
 
 	if(id == 0) then
 		print '(" Grid step =  ", f10.2, " m")', step
 		print '(" Y max step = ", f10.2, " m")', grid.dy_max * r_sphere
-		! print '(" Y min step = ", f10.2, " m")', grid.dy_min
-		! print '(" X max step = ", f10.2, " m")', grid.dx_max
-		! print '(" X min step = ", f10.2, " m")', grid.dx_min
-		print '(" Y max/min = ", f6.4)', grid.dy_max/grid.dy_min
+		print '(" Y min/max = ", f6.4)', grid.dy_min/grid.dy_max
 		print '(" X max/min = ", f6.4)', grid.dx_max/grid.dx_min
-		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, dim+1, 6) * 180.0/pi
-		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, 1, 1, 6) * 180.0/pi
-		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, 1, 2*dim+1, 6) * 180.0/pi
-		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, 2*dim+1, 1, 6) * 180.0/pi
-		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, 2*dim+1, 2*dim+1, 6) * 180.0/pi
-
+! 		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, :, 6) * 180.0/pi
 		print '(" np = ", I5)', np
 		print '(" time = ", f10.2, " sec")', end_init - start_init
 	end if

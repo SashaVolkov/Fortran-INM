@@ -135,36 +135,45 @@ CONTAINS
 		Class(generator) :: this
 		Type(projection) :: projection
 		integer, intent(in) :: dim, step
-		real(8), intent(out) :: latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
-		real(8), intent(out) :: equiang_c(1:2, 1:2*dim, 1:2*dim, 1:6)
-		real(8), intent(out) :: latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)
+		real(8), intent(out) :: latlon_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
+		real(8), intent(out) :: equiang_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
+		real(8), intent(out) :: latlon(1:2, 1-step:2*dim+step+1, 1-step:2*dim+step+1, 1:6)
 		integer(4) face, i, j, k, min, max
-		real(8) x,y,z,a, pi, r_vector(3), alpha,beta, latitude, longitude
+		real(8) x,y,z,a, pi, r_vector(3), alpha,beta, latitude, longitude, radius
 
-		pi = 314159265358979323846d-20;  min = -2*dim;  max = - min
-
+		pi = 314159265358979323846d-20;  min = -2*dim - 2*step;  max = - min
 
 		do face = 1, 6
 			do j= min, max
 				do i= min, max
 					alpha = pi*i/(8d0*dim);  beta= pi*j/(8d0*dim); k = sign(1, face - 3)
 
-					latitude = datan(dtan(beta)*dcos(alpha));  longitude = alpha + (pi/2d0)*(face - 2)
-					if ( face == 1 .or. face == 6 ) then
-						latitude = -k*datan(dtan(alpha)/dtan(beta));  longitude = -datan(dcos(latitude)/dtan(beta))
-					end if
+					select case(face)
+						case(1)
+							z = -1;  y = dtan(alpha);  x = dtan(beta)
+						case(2)
+							x = 1;  y = dtan(alpha);  z = dtan(beta)
+						case(3)
+							y = 1;  x = -dtan(alpha);  z = dtan(beta)
+						case(4)
+							x = -1;  y = -dtan(alpha);  z = dtan(beta)
+						case(5)
+							y = -1;  x = dtan(alpha);  z = dtan(beta)
+						case(6)
+							z = 1;  y = dtan(alpha);  x = -dtan(beta)
+					end select
+
+					call cart2sphere(x, y, z, radius, latitude, longitude)
+
 						if(abs(mod(i,2)) == 1 .and. abs(mod(j,2)) == 1) then
 							equiang_c(1, dim + (i+1)/2, dim + (j+1)/2, face) = alpha
 							equiang_c(2, dim + (i+1)/2, dim + (j+1)/2, face) = beta
 							latlon_c(1, dim + (i+1)/2, dim + (j+1)/2, face) = latitude
 							latlon_c(2, dim + (i+1)/2, dim + (j+1)/2, face) = longitude
-						else if(abs(mod(i,2)) == 0 .and. abs(mod(j,2)) == 0) then
+						else if(abs(mod(i,2)) == 0 .and. abs(mod(j,2)) == 0 ) then
 							latlon(1, dim + i/2 + 1, dim + j/2 + 1, face) = latitude
 							latlon(2, dim + i/2 + 1, dim + j/2 + 1, face) = longitude
 						end if
-
-
-						if ( i==0 .and. j==0 ) print *, latlon(:, dim + 1, dim+1, face), face
 
 				end do
 			end do
