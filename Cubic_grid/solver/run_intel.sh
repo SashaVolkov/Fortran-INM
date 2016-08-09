@@ -25,7 +25,7 @@ else
 
 	if [[ $1 != "compile" ]]; then
 		export OMP_NUM_THREADS=1
-		mpiexec -n $1 ./a.out > out
+		mpiexec -n $1 ./a.out
 
 		cd datFiles
 		# ./plotscript.sh
