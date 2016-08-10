@@ -59,7 +59,7 @@ subroutine Linear(this, var, var_pr, grid)
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
 	dt = grid.dt
 
-	do face = 2, 2
+	do face = 1, 6
 	do y = var.ns_y, var.nf_y
 		do x = var.ns_x, var.nf_x
 
@@ -100,7 +100,7 @@ Subroutine RungeKutta(this, var, var_pr, grid)
 	nf_x = var.nf_x;  nf_y = var.nf_y
 
 
-	do face = 2, 2
+	do face = 1, 6
 
 	this.ku(:, :, 0) = var_pr.x_vel(:, :, face)
 	this.kv(:, :, 0) = var_pr.y_vel(:, :, face)

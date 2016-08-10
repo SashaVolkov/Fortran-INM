@@ -117,8 +117,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/(grid.x_dist(x, y)*grid.r_sphere)) +&
-					 abs(func.y_vel(x, y, face)*grid.dt/(grid.y_dist(x, y)*grid.r_sphere))
+					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/(grid.x_dist(x, y)*grid.G_sqr(x,y))) +&
+					 abs(func.y_vel(x, y, face)*grid.dt/(grid.y_dist(x, y)*grid.G_sqr(x,y)))
 
 				end do
 			end do

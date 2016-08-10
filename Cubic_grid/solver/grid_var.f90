@@ -337,9 +337,16 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		Class(g_var) :: this
 		real(8), intent(in) :: u1(-2:2), u2(-2:2)
 		integer(4), intent(in) :: x, y
-		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+! 		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
 		integer(4) i
 		real(8) u_1(-2:2), u_2(-2:2), G_11, G_12, G_21, G_22, J_1(-2:2), J_2(-2:2)
+		real(8) Ax , Bx, Cx, Dx, Ex, Ay, By, Cy, Dy, Ey
+
+		Ax = this.four_order_const_x( 1, x, y);  Bx = this.four_order_const_x( 2, x, y);  Cx = this.four_order_const_x( 3, x, y)
+		Dx = this.four_order_const_x( 4, x, y);  Ex = this.four_order_const_x( 5, x, y)
+
+		Ay = this.four_order_const_y( 1, x, y);  By = this.four_order_const_y( 2, x, y);  Cy = this.four_order_const_y( 3, x, y)
+		Dy = this.four_order_const_y( 4, x, y);  Ey = this.four_order_const_y( 5, x, y)
 
 		do i = -2, 2
 			G_11 = this.G_inverse(x+i, y, 1, 1)
@@ -353,10 +360,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		end do
 
 
-		div_4 = (this.four_order_const_x( A, x, y)*u_1(1)*J_1(1) + this.four_order_const_x( B, x, y)*u_1(-1)*J_1(-1) +&
-			 this.four_order_const_x( C, x, y)*u_1(2)*J_1(2) +  this.four_order_const_x( D, x, y)*u_1(-2)*J_1(-2) +  this.four_order_const_x( E, x, y)*u_1(0)*J_1(0) + &
-			 this.four_order_const_y( A, x, y)*u_2(1)*J_2(1) + this.four_order_const_y( B, x, y)*u_2(-1)*J_2(-1) +&
-			 this.four_order_const_y( C, x, y)*u_2(2)*J_2(2) +  this.four_order_const_y( D, x, y)*u_2(-2)*J_2(-2) +  this.four_order_const_y( E, x, y)*u_2(0)*J_2(0))/J_1(0)
+		div_4 = (Ax*u_1(1)*J_1(1) + Bx*u_1(-1)*J_1(-1) + Cx*u_1(2)*J_1(2) + Dx*u_1(-2)*J_1(-2) + Ex*u_1(0)*J_1(0) + &
+			 Ay*u_2(1)*J_2(1) + By*u_2(-1)*J_2(-1) + Cy*u_2(2)*J_2(2) + Dy*u_2(-2)*J_2(-2) + Ey*u_2(0)*J_2(0))/J_1(0)
 
 	end function
 
@@ -365,10 +370,12 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		Class(g_var) :: this
 		real(8), intent(in) :: fun(-2:2)
 		integer, intent(in) :: x, y
-		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+		real(8) A , B, C, D, E
 
-		partial_c4_x = this.four_order_const_x( A, x, y)*fun(1) + this.four_order_const_x( B, x, y)*fun(-1) +&
-			 this.four_order_const_x( C, x, y)*fun(2) +  this.four_order_const_x( D, x, y)*fun(-2) +  this.four_order_const_x( E, x, y)*fun(0)
+		A = this.four_order_const_x( 1, x, y);  B = this.four_order_const_x( 2, x, y);  C = this.four_order_const_x( 3, x, y)
+		D = this.four_order_const_x( 4, x, y);  E = this.four_order_const_x( 5, x, y)
+
+		partial_c4_x = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
 
 	end function
 
@@ -377,10 +384,12 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		Class(g_var) :: this
 		real(8), intent(in) :: fun(-2:2)
 		integer, intent(in) :: x, y
-		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+		real(8) A , B, C, D, E
 
-		partial_c4_y =  this.four_order_const_y( A, x, y)*fun(1) + this.four_order_const_y( B, x, y)*fun(-1) +&
-			 this.four_order_const_y( C, x, y)*fun(2) +  this.four_order_const_y( D, x, y)*fun(-2) +  this.four_order_const_y( E, x, y)*fun(0)
+		A = this.four_order_const_y( 1, x, y);  B = this.four_order_const_y( 2, x, y);  C = this.four_order_const_y( 3, x, y)
+		D = this.four_order_const_y( 4, x, y);  E = this.four_order_const_y( 5, x, y)
+
+		partial_c4_y = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
 
 	end function
 
