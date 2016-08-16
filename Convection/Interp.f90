@@ -32,12 +32,8 @@ Module Interp
 
 		n=1
 		set_x = floor(x_wave)
-! 		print*, set_x, "set_x"
 		x0 = set_x - floor(((n*1.0)/2.0))
-! 		print*, x0, "x0"
-		xk = x0
-		temp2=0.0
-		temp1=1.0
+		xk = x0;  temp2=0.0;  temp1=1.0
 
 		do k=1,n+1
 			xj=x0
@@ -48,16 +44,12 @@ Module Interp
 			end do
 
 			temp2 = temp2 + (Mass_in(xk)*temp1)
-! 			print*, temp2, "temp2", x_wave, "x"
 			temp1=1.0
 			xk=xk+1
 
 		end do
 
-
 		res = temp2
-
-! 		print*, res, "res", x_wave, "x"
 
 	End Subroutine
 

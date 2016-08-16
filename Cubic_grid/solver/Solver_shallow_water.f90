@@ -36,7 +36,7 @@ implicit none
 	dim = 25;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 5000;  speedup = 100;  dt = 5d0
+	Tmax = 150000;  speedup = 250;  dt = 5d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 !480000
 
@@ -82,7 +82,8 @@ implicit none
 		print '(" Y max step = ", f10.2, " m")', grid.dy_max * r_sphere
 		print '(" Y min/max = ", f6.4)', grid.dy_min/grid.dy_max
 		print '(" X max/min = ", f6.4)', grid.dx_max/grid.dx_min
-! 		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, dim+1, :, 6) * 180.0/pi
+! 		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, 1, :, 2) * 180.0/pi
+! 		print '(" latlon = ", f8.3, f8.3)', grid.latlon(:, 0, :, 2) * 180.0/pi
 		print '(" np = ", I5)', np
 		print '(" time = ", f10.2, " sec")', end_init - start_init
 	end if
