@@ -30,14 +30,13 @@ CONTAINS
 
 
 
-	subroutine distance_sphere(this, latlon1, latlon2, dist)
+	real(8) function distance_sphere(this, latlon1, latlon2)
 		Class(geometry) :: this
 		real(8), intent(in) :: latlon1(1:2), latlon2(1:2)
-		real(8), intent(out) :: dist
 
-		dist = dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
+		distance_sphere = dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
 
-	end subroutine
+	end function
 
 
 

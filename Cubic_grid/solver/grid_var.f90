@@ -38,6 +38,7 @@ implicit none
 		Procedure, Public :: deinit => deinit
 
 		Procedure, Private :: step_minmax => step_minmax
+		Procedure, Private :: transformation_matrix_equiang => transformation_matrix_equiang
 		Procedure, Public :: div_2 => div_2
 		Procedure, Public :: div_4 => div_4
 		Procedure, Public :: partial_c2_x => partial_c2_x
@@ -110,28 +111,10 @@ CONTAINS
 
 
 
-	subroutine const_def(this, g)
+	subroutine transformation_matrix_equiang(this)
 		Class(g_var) :: this
-		Class(geometry) :: g
-		real(8) dist, omega_cor, S1, S2, sphere_area
-		real(8) h(-1:2), x_1, x_2, g_coef
-		integer(4) face, x, y, dim, step, k
-		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
-		character(8) istring
-
-
-		omega_cor = this.omega_cor
-		dim = this.dim;  step = this.step
-
-
-		do face = 1, 6 ! Only longitude
-			do x = this.ns_xy(1), this.nf_xy(1)
-				do y = this.ns_xy(2), this.nf_xy(2)
-					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.latlon_c(1, x, y, face)) ! function of latitude
-				end do
-			end do
-		end do
-
+		real(8) x_1, x_2, g_coef
+		integer(4) x, y
 
 
 		do y = this.first_y, this.last_y
@@ -157,7 +140,33 @@ CONTAINS
 			end do
 		end do
 
+	end subroutine
 
+
+
+	subroutine const_def(this, g)
+		Class(g_var) :: this
+		Class(geometry) :: g
+		real(8) dist, omega_cor, S1, S2, sphere_area
+		real(8) h(-1:2), x_1, x_2, g_coef
+		integer(4) face, x, y, dim, step, k
+		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+		character(8) istring
+
+
+		omega_cor = this.omega_cor
+		dim = this.dim;  step = this.step
+
+
+		do face = 1, 6 ! Only longitude
+			do x = this.ns_xy(1), this.nf_xy(1)
+				do y = this.ns_xy(2), this.nf_xy(2)
+					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.latlon_c(1, x, y, face)) ! function of latitude
+				end do
+			end do
+		end do
+
+		call this.transformation_matrix_equiang()
 
 		! ____________________
 		! | 1, 2d     2d, 2d |
@@ -174,9 +183,9 @@ CONTAINS
 		do y = 1-step, 2*dim + step
 			do x = 2-step, 2*dim + step
 
-	call g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2), dist)
-	this.x_dist(x, y) = dist
-	this.y_dist(y, x) = dist
+	
+	this.x_dist(x, y) = g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2))
+	this.y_dist(y, x) = this.x_dist(x, y)
 
 			end do
 		end do
@@ -307,6 +316,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 	end function
 
 
+
 	real(8) function div_2(this, u1, u2, x, y)
 		Class(g_var) :: this
 		real(8), intent(in) :: u1(-1:1), u2(-1:1)
@@ -322,6 +332,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			u_1(i) = G_11*u1(i) + G_12*u2(i)
 			u_2(i) = G_21*u1(i) + G_22*u2(i)
 		end do
+
 
 
 		div_2 = ((u_1(1) * this.x_dist(x, y)*this.G_sqr(x+1,y) - u_1(-1)*this.x_dist(x+1, y)*this.G_sqr(x-1,y))/&
@@ -366,6 +377,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 	end function
 
 
+
 	real(8) function partial_c4_x(this, fun, x, y)
 		Class(g_var) :: this
 		real(8), intent(in) :: fun(-2:2)
@@ -392,6 +404,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		partial_c4_y = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
 
 	end function
+
 
 
 subroutine step_minmax(this)
