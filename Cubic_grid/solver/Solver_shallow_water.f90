@@ -38,7 +38,7 @@ implicit none
 	dim = 25;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 250;  speedup = 250;  dt = 5d0
+	Tmax = 100000;  speedup = 50;  dt = 5d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 !480000
 
@@ -66,17 +66,18 @@ implicit none
 	call diagn.init( grid, paral, Tmax, rescale, id)
 
 
-	! do time = 1, Tmax
-	! 	call sch.RungeKutta(var, var_prev, grid)
-	! 	call msg.msg(var_prev, paral)
-	! 	call diagn.L_norm(var_prev, grid, time)
-	! 	call diagn.Courant(var_prev, grid, time)
-	! 		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
-	! 		if(mod(time, Tmax/10) == 0 .and. id == 0) then
-	! 			end_init = MPI_Wtime()
-	! 			print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
-	! 		end if
-	! end do
+	do time = 1, Tmax
+		call sch.RungeKutta(var, var_prev, grid)
+		call msg.msg(var_prev, paral)
+		! call var_prev.interpolate(inter)
+		call diagn.L_norm(var_prev, grid, time)
+		call diagn.Courant(var_prev, grid, time)
+			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
+			if(mod(time, Tmax/10) == 0 .and. id == 0) then
+				end_init = MPI_Wtime()
+				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
+			end if
+	end do
 
 	end_init = MPI_Wtime()
 

@@ -4,7 +4,7 @@ rm -rf *.o *.mod *.out *.file analyze grid *~ 2>/dev/null
 
 Files="geometry.f90 matmul.f90 simple_rotations.f90 spherical.f90"
 Files=$Files" projections.f90 matrix_rotation.f90"
-Files=$Files" parallel_cubic.f90 grid_generator.f90 grid_var.f90 func_var.f90 messenger.f90 printer.f90 schemes.f90 diagnostic.f90 interpolation.f90"
+Files=$Files" parallel_cubic.f90 grid_generator.f90 grid_var.f90 interpolation.f90 func_var.f90 messenger.f90 printer.f90 schemes.f90 diagnostic.f90"
 Files=$Files" Solver_shallow_water.f90"
 
 netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"

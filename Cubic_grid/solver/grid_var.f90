@@ -17,14 +17,19 @@ implicit none
 		Real(8), Allocatable :: G_tensor(:, :, :, :)
 		Real(8), Allocatable :: G_inverse(:, :, :, :)
 		Real(8), Allocatable :: rho(:, :)
+		Real(8), Allocatable :: To_sph_coord(:, :, :)
+		Real(8), Allocatable :: Form_sph_coord(:, :, :)
+
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: equiang_c(:, :, :, :)
 		Real(8), Allocatable :: latlon(:, :, :, :)
+
 		Real(8), Allocatable :: square(:, :)
 		Real(8), Allocatable :: triangle_area(:, :, :)
 		Real(8), Allocatable :: triangle_angles(:, :, :)
 		Real(8), Allocatable :: square_angles(:, :, :)
+
 		Real(8), Allocatable :: four_order_const_x(:, :, :)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
 		Real(8), Allocatable :: four_order_const_y(:, :, :)
 		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
@@ -95,8 +100,8 @@ CONTAINS
 			Allocate(this.G_tensor(f_x:l_x , f_y:l_y, 1:2, 1:2))
 			Allocate(this.G_inverse(f_x:l_x , f_y:l_y, 1:2, 1:2))
 			Allocate(this.rho(f_x:l_x , f_y:l_y))
-			Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
 
+			Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
 			Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
 			Allocate(this.equiang_c(1:2, f:l , f:l, 1:6))
 			Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
@@ -105,6 +110,7 @@ CONTAINS
 			Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
 			Allocate(this.triangle_angles(1:6, 1:2*dim, 1:2*dim))
 			Allocate(this.square_angles(1:4, 1:2*dim, 1:2*dim))
+
 			Allocate(this.four_order_const_x(1:5, f_x:l_x , f_y:l_y))
 			Allocate(this.four_order_const_y(1:5, f_x:l_x , f_y:l_y))
 	end subroutine
@@ -348,7 +354,6 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		Class(g_var) :: this
 		real(8), intent(in) :: u1(-2:2), u2(-2:2)
 		integer(4), intent(in) :: x, y
-! 		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
 		integer(4) i
 		real(8) u_1(-2:2), u_2(-2:2), G_11, G_12, G_21, G_22, J_1(-2:2), J_2(-2:2)
 		real(8) Ax , Bx, Cx, Dx, Ex, Ay, By, Cy, Dy, Ey

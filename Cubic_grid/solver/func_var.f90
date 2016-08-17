@@ -1,6 +1,7 @@
 module func_var
 
 	use parallel_cubic, Only: parallel
+	use interpolation, Only: interp
 
 implicit none
 
@@ -14,7 +15,7 @@ implicit none
 		Real(8), Allocatable :: y_vel(:, :, :)
 		! Real(8), Allocatable :: distance_grid(:, :, :, :)
 		real(8) height
-		integer(4) step, dim, Xsize, Ysize
+		integer(4) step, dim, Xsize, Ysize, interp_factor(1:4)
 		integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y
 
 		CONTAINS
@@ -23,6 +24,8 @@ implicit none
 		Procedure, Public :: deinit => deinit
 		Procedure, Public :: equal => equal
 		Procedure, Public :: start_conditions => start_conditions
+		Procedure, Public :: interpolate => interpolate
+		Procedure, Public :: transf_edge => transf_edge
 	End Type
 
 
@@ -35,6 +38,7 @@ CONTAINS
 		Class(f_var) :: this
 		Class(parallel) :: paral
 		real(8), intent(in) :: height
+		integer(4) :: i
 
 		this.ns_x = paral.ns_xy(1);  this.ns_y = paral.ns_xy(2)
 		this.nf_x = paral.nf_xy(1);  this.nf_y = paral.nf_xy(2)
@@ -44,6 +48,12 @@ CONTAINS
 
 		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
 		this.step = paral.step;  this.height = height;  this.dim = paral.dim
+
+		this.interp_factor(:) = 0
+
+		do i = 1, 4
+			if(paral.Neighbours_face(6, i) /= 6) this.interp_factor(i) = 1
+		end do
 
 		call this.alloc()
 
@@ -117,6 +127,23 @@ CONTAINS
 
 		end do
 
+	end subroutine
+
+
+
+
+	subroutine interpolate(this, i)
+		Class(f_var) :: this
+		Class(interp) :: i
+		call i.Lagrange(this.h_height, this.interp_factor)
+		call i.Lagrange(this.x_vel, this.interp_factor)
+		call i.Lagrange(this.y_vel, this.interp_factor)
+	end subroutine
+
+
+
+	subroutine transf_edge(this)
+		Class(f_var) :: this
 	end subroutine
 
 

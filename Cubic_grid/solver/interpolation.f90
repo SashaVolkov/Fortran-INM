@@ -13,8 +13,8 @@ module interpolation
 	Type interp
 
 		Real(8), Allocatable :: weight(:, :, :)
-		Integer(8), Allocatable :: x0_mass(:, :)
-		integer(4) ns, nf, n
+		Integer(4), Allocatable :: x0_mass(:, :)
+		integer(4) ns_x, ns_y, nf_x, nf_y, n, dim, step, first_x, first_y, last_x, last_y
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -31,24 +31,26 @@ module interpolation
 		Class(interp) :: this
 		Class(g_var) :: g
 		Integer(4) :: n
-		Integer(4) :: k, i, j, xk, x, x0
+		Integer(4) :: k, i, j, xk, x, x0, dim
 
-		this.ns = g.ns_xy(1);  this.nf = g.nf_xy(1);  this.n = n
+		this.ns_x = g.ns_xy(1);  this.nf_x = g.nf_xy(1);  this.ns_y = g.ns_xy(2);  this.nf_y = g.nf_xy(2)
+		this.n = n;  this.dim = g.dim;  dim = this.dim; this.step = g.step
 
-		Allocate(this.x0_mass(this.ns: this.nf, 1: g.step))
-		Allocate(this.weight(this.ns: this.nf, this.ns: this.nf, 1: g.step))
+		this.first_x = this.ns_x - g.step;  this.first_y = this.ns_y - g.step
+		this.last_x = this.nf_x + g.step;  this.last_y = this.nf_y + g.step
+
+		Allocate(this.x0_mass(1: 2*dim, 1: g.step))
+		Allocate(this.weight(1: 2*dim, 1: 2*dim, 1: g.step))
 
 		do i = 1, g.step
-			do x = this.ns, this.nf
+			do x = 1, 2*dim
 				call this.X0_find(g, x, i, x0)
 				this.x0_mass(x, i) = x0
-				print *,  this.x0_mass(x, i), x
 			end do
 		end do
 
-
 		do i = 1, g.step
-			do x = this.ns, this.nf
+			do x = 1, 2*dim
 				do xk = this.x0_mass(x, i) - n/2, this.x0_mass(x, i) + (n+1)/2
 					this.weight(xk, x, i) = this.weight_find(g, xk, x, i)
 				end do
@@ -58,30 +60,87 @@ module interpolation
 	End Subroutine
 
 
-	Subroutine Lagrange(this, Mass, step)
+
+	Subroutine Lagrange(this, Mass, interp_factor)
 
 		Class(interp) :: this
 
-		Real(8), Intent(inout) :: Mass(this.ns: this.nf)
-		Integer(4), intent(in) :: step
-		Integer(4) xj, xk, k, j, n, x0, set_x, x, s
-		Real(8) :: temp, Mass_temp(this.ns: this.nf)
+		Real(8), Intent(inout) :: Mass(this.first_x:this.last_x, this.first_y:this.last_y, 6)
+		Integer(4), Intent(in) :: interp_factor(1:4)
+		Integer(4) xj, xk, k, j, n, x0, set_x, x, s, y, yk
+		Real(8) :: temp(1:6), Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6)
 
 		n=this.n
+		Mass_temp(:, :, :) = Mass(:, :, :)
 
-		do x = this.ns, this.nf
-			x0 = this.x0_mass(x, step)
-			s = x0 - n/2
-			temp=0.0
+		if(interp_factor(1) == 1) then !up
+			do x = this.ns_x, this.nf_x
+				do y = this.nf_y + 1, this.nf_y + this.step
+					x0 = this.x0_mass(x, y - this.nf_y)
+					s = x0 - n/2
+					temp=0.0
 
-			do xk=s, s + n
-				temp = temp + (Mass(xk)*this.weight(xk, x, step))
+					do xk=s, s + n
+						temp(:) = temp(:) + (Mass(xk, y, :)*this.weight(xk, x, y - this.nf_y))
+					end do
+
+					Mass_temp(x, y, :) = temp(:)
+				end do
 			end do
+		end if
 
-			Mass_temp(x) = temp
-		end do
 
-		Mass(:) = Mass_temp(:)
+		if(interp_factor(2) == 1) then !right
+			do y = this.ns_y, this.nf_y
+				do x = this.nf_x + 1, this.nf_x + this.step
+					x0 = this.x0_mass(y, x - this.nf_x)
+					s = x0 - n/2
+					temp=0.0
+
+					do yk=s, s + n
+						temp(:) = temp(:) + (Mass(x, yk, :)*this.weight(yk, y, x - this.nf_x))
+					end do
+
+					Mass_temp(x, y, :) = temp(:)
+				end do
+			end do
+		end if
+
+
+		if(interp_factor(3) == 1) then !down
+			do x = this.ns_x, this.nf_x
+				do y = this.ns_y - 1, this.ns_y - this.step
+					x0 = this.x0_mass(x, this.ns_y - y)
+					s = x0 - n/2
+					temp=0.0
+
+					do xk=s, s + n
+						temp(:) = temp(:) + (Mass(xk, y, :)*this.weight(xk, x, this.ns_y - y))
+					end do
+
+					Mass_temp(x, y, :) = temp(:)
+				end do
+			end do
+		end if
+
+
+		if(interp_factor(4) == 1) then !left
+			do y = this.ns_y, this.nf_y
+				do x = this.ns_x - 1, this.ns_x - this.step
+					x0 = this.x0_mass(y, this.ns_x - x)
+					s = x0 - n/2
+					temp=0.0
+
+					do yk=s, s + n
+						temp(:) = temp(:) + (Mass(x, yk, :)*this.weight(yk, y, this.ns_x - x))
+					end do
+
+					Mass_temp(x, y, :) = temp(:)
+				end do
+			end do
+		end if
+
+		Mass(:, :, :) = Mass_temp(:, :, :)
 
 	End Subroutine
 
@@ -96,10 +155,9 @@ module interpolation
 		Integer(4) :: xk
 		Real(8) :: gap
 
-		do xk = this.ns, this.nf
+		do xk = 1, 2*this.dim
 
 			gap = (g.latlon_c(1, 1 - step, x, 2)) - (g.latlon_c(1, step, xk, 2))
-			! print *, g.latlon_c(1, 1 - step, x, 2), g.latlon_c(1, step, xk, 2), gap
 			if(gap >= 0.0) then
 				x0 = xk
 			end if
