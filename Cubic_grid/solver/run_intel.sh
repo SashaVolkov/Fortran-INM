@@ -8,7 +8,7 @@ Files=$Files" parallel_cubic.f90 grid_generator.f90 grid_var.f90 interpolation.f
 Files=$Files" Solver_shallow_water.f90"
 
 netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
-netcdf="/home/sasha/netcdf"
+# netcdf="/home/sasha/netcdf"
 
  # -check all -traceback -ftrapuv
 mpiifort -O3 $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file

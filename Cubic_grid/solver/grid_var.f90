@@ -17,8 +17,8 @@ implicit none
 		Real(8), Allocatable :: G_tensor(:, :, :, :)
 		Real(8), Allocatable :: G_inverse(:, :, :, :)
 		Real(8), Allocatable :: rho(:, :)
-		Real(8), Allocatable :: To_sph_coord(:, :, :)
-		Real(8), Allocatable :: Form_sph_coord(:, :, :)
+		Real(8), Allocatable :: To_sph_coord(:, :, :, :, :)
+		Real(8), Allocatable :: Form_sph_coord(:, :, :, :, :)
 
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
@@ -32,7 +32,7 @@ implicit none
 
 		Real(8), Allocatable :: four_order_const_x(:, :, :)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
 		Real(8), Allocatable :: four_order_const_y(:, :, :)
-		Real(8)  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
+		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
 		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2)
 		integer(4) first_x, first_y, last_x, last_y
 
@@ -44,6 +44,7 @@ implicit none
 
 		Procedure, Private :: step_minmax => step_minmax
 		Procedure, Private :: transformation_matrix_equiang => transformation_matrix_equiang
+		Procedure, Private :: transformation_sph_equiang => transformation_sph_equiang
 		Procedure, Public :: div_2 => div_2
 		Procedure, Public :: div_4 => div_4
 		Procedure, Public :: partial_c2_x => partial_c2_x
@@ -100,6 +101,8 @@ CONTAINS
 			Allocate(this.G_tensor(f_x:l_x , f_y:l_y, 1:2, 1:2))
 			Allocate(this.G_inverse(f_x:l_x , f_y:l_y, 1:2, 1:2))
 			Allocate(this.rho(f_x:l_x , f_y:l_y))
+			Allocate(this.To_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
+			Allocate(this.Form_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
 
 			Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
 			Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
@@ -117,10 +120,37 @@ CONTAINS
 
 
 
+	subroutine deinit(this)
+		Class(g_var) :: this
+			if (Allocated(this.x_dist)) Deallocate(this.x_dist)
+			if (Allocated(this.y_dist)) Deallocate(this.y_dist)
+			if (Allocated(this.G_sqr)) Deallocate(this.G_sqr)
+			if (Allocated(this.G_tensor)) Deallocate(this.G_tensor)
+			if (Allocated(this.G_inverse)) Deallocate(this.G_inverse)
+			if (Allocated(this.rho)) Deallocate(this.rho)
+			if (Allocated(this.To_sph_coord)) Deallocate(this.To_sph_coord)
+			if (Allocated(this.Form_sph_coord)) Deallocate(this.Form_sph_coord)
+
+			if (Allocated(this.f_cor)) Deallocate(this.f_cor)
+			if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
+			if (Allocated(this.equiang_c)) Deallocate(this.equiang_c)
+			if (Allocated(this.latlon)) Deallocate(this.latlon)
+
+			if (Allocated(this.square)) Deallocate(this.square)
+			if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
+			if (Allocated(this.triangle_angles)) Deallocate(this.triangle_angles)
+			if (Allocated(this.square_angles)) Deallocate(this.square_angles)
+
+			if (Allocated(this.four_order_const_x)) Deallocate(this.four_order_const_x)
+			if (Allocated(this.four_order_const_y)) Deallocate(this.four_order_const_y)
+	end subroutine
+
+
+
 	subroutine transformation_matrix_equiang(this)
 		Class(g_var) :: this
-		real(8) x_1, x_2, g_coef
-		integer(4) x, y
+		real(8) x_1, x_2, g_coef, g_inv_coef
+		integer(4) x, y, face
 
 
 		do y = this.first_y, this.last_y
@@ -132,17 +162,76 @@ CONTAINS
 			this.rho(x, y) = 1 + (dtan(x_1))**2 + (dtan(x_2))**2
 			this.G_sqr(x, y) = (this.r_sphere**2)/(this.rho(x, y)**3 * ((dcos(x_1))**2) * (dcos(x_2)**2))
 			g_coef = (this.r_sphere**2)/((this.rho(x, y)**4) * ((dcos(x_1))**2) * (dcos(x_2)**2))
+			g_inv_coef = ((this.rho(x, y)**2) * ((dcos(x_1))**2) * (dcos(x_2)**2))/(this.r_sphere**2)
 
 			this.G_tensor(x, y, 1, 1) = g_coef * (1 + (dtan(x_1))**2)
 			this.G_tensor(x, y, 1, 2) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
 			this.G_tensor(x, y, 2, 1) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
 			this.G_tensor(x, y, 2, 2) = g_coef * (1 + (dtan(x_2))**2)
 
-			this.G_inverse(x, y, 1, 1) = this.G_tensor(x, y, 2, 2)/(this.G_sqr(x, y)**2)
-			this.G_inverse(x, y, 1, 2) = -this.G_tensor(x, y, 2, 1)/(this.G_sqr(x, y)**2)
-			this.G_inverse(x, y, 2, 1) = -this.G_tensor(x, y, 1, 2)/(this.G_sqr(x, y)**2)
-			this.G_inverse(x, y, 2, 2) = this.G_tensor(x, y, 1, 1)/(this.G_sqr(x, y)**2)
+			this.G_inverse(x, y, 1, 1) = g_inv_coef * (1 + (dtan(x_2))**2)
+			this.G_inverse(x, y, 1, 2) = g_inv_coef * (dtan(x_1))*(dtan(x_2))
+			this.G_inverse(x, y, 2, 1) = g_inv_coef * (dtan(x_1))*(dtan(x_2))
+			this.G_inverse(x, y, 2, 2) = g_inv_coef * (1 + (dtan(x_1))**2)
 
+			end do
+		end do
+
+! 		x = 1
+! 		y = this.dim
+
+! 		print *, this.G_inverse(x, y, 1, 1), this.G_inverse(x, y, 1, 2)
+
+		call this.transformation_sph_equiang()
+
+	end subroutine
+
+
+
+	subroutine transformation_sph_equiang(this)
+		Class(g_var) :: this
+		real(8) x_1, x_2, g_coef, s(6)
+		integer(4) x, y, face, delta
+		s(1) = - 1d0;  s(6) = 1d0
+
+
+		do face = 2,4
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
+					delta = this.rho(x,y)
+					x_1 = this.equiang_c(1, x, y, face)
+					x_2 = this.equiang_c(2, x, y, face)
+
+					this.To_sph_coord(1,1,x,y,face) = 1d0
+					this.To_sph_coord(1,2,x,y,face) = 0d0
+					this.To_sph_coord(2,1,x,y,face) = dtan(x_1)*dtan(x_2)*((dcos(x_2))**2)
+					this.To_sph_coord(2,2,x,y,face) = (delta**2)*((dcos(x_2))**2)*abs(dcos(x_1))
+
+					this.Form_sph_coord(1,1,x,y,face) = 1d0
+					this.Form_sph_coord(1,2,x,y,face) = 0d0
+					this.Form_sph_coord(2,1,x,y,face) = dtan(x_1)*dtan(x_2)/(abs(dcos(x_1))*(delta**2))
+					this.Form_sph_coord(2,2,x,y,face) = 1d0/this.To_sph_coord(2,2,x,y,face)
+				end do
+			end do
+		end do
+
+		do face = 1, 6, 5
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
+					delta = this.rho(x,y)
+					x_1 = this.equiang_c(1, x, y, face)
+					x_2 = this.equiang_c(2, x, y, face)
+
+					this.To_sph_coord(1,1,x,y,face) = -s(face)*dtan(x_2)*((dcos(x_1))**2)
+					this.To_sph_coord(1,2,x,y,face) = -s(face)*(delta**2)*dtan(x_1)*((dcos(x_1))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
+					this.To_sph_coord(2,1,x,y,face) = s(face)*dtan(x_1)*((dcos(x_2))**2)
+					this.To_sph_coord(2,2,x,y,face) = -s(face)*(delta**2)*dtan(x_2)*((dcos(x_2))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
+
+! 					this.Form_sph_coord(1,1,x,y,face) = 
+! 					this.Form_sph_coord(1,2,x,y,face) = 
+! 					this.Form_sph_coord(2,1,x,y,face) = 
+! 					this.Form_sph_coord(2,2,x,y,face) = 
+				end do
 			end do
 		end do
 
@@ -279,25 +368,10 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 
 		close(20);  close(21);  close(22)
 
-		print '(" sphere_area = ", f20.2)', sphere_area*6d0
+! 		print '(" sphere_area = ", f20.2)', sphere_area*6d0
 
 	end subroutine
 
-
-
-	subroutine deinit(this)
-		Class(g_var) :: this
-			if (Allocated(this.x_dist)) Deallocate(this.x_dist)
-			if (Allocated(this.y_dist)) Deallocate(this.y_dist)
-			if (Allocated(this.f_cor)) Deallocate(this.f_cor)
-			if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
-			if (Allocated(this.equiang_c)) Deallocate(this.equiang_c)
-			if (Allocated(this.latlon)) Deallocate(this.latlon)
-			if (Allocated(this.square)) Deallocate(this.square)
-			if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
-			if (Allocated(this.triangle_angles)) Deallocate(this.triangle_angles)
-			if (Allocated(this.square_angles)) Deallocate(this.square_angles)
-	end subroutine
 
 
 
