@@ -2,6 +2,7 @@ module func_var
 
 	use parallel_cubic, Only: parallel
 	use interpolation, Only: interp
+	use grid_var, Only: g_var
 
 implicit none
 
@@ -15,7 +16,7 @@ implicit none
 		Real(8), Allocatable :: y_vel(:, :, :)
 		! Real(8), Allocatable :: distance_grid(:, :, :, :)
 		real(8) height
-		integer(4) step, dim, Xsize, Ysize, interp_factor(1:4)
+		integer(4) step, dim, Xsize, Ysize, interp_factor(1:4), Neighbours_face(6, 4)
 		integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y
 
 		CONTAINS
@@ -25,7 +26,7 @@ implicit none
 		Procedure, Public :: equal => equal
 		Procedure, Public :: start_conditions => start_conditions
 		Procedure, Public :: interpolate => interpolate
-		Procedure, Public :: transf_edge => transf_edge
+		Procedure, Public :: Velocity_edge => Velocity_edge
 	End Type
 
 
@@ -48,6 +49,8 @@ CONTAINS
 
 		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
 		this.step = paral.step;  this.height = height;  this.dim = paral.dim
+
+		this.Neighbours_face = paral.Neighbours_face
 
 		this.interp_factor(:) = 0
 
@@ -132,9 +135,11 @@ CONTAINS
 
 
 
-	subroutine interpolate(this, i)
+	subroutine interpolate(this, i, g)
 		Class(f_var) :: this
 		Class(interp) :: i
+		Class(g_var) :: g
+! 		call this.Velocity_edge(g)
 		call i.Lagrange(this.h_height, this.interp_factor)
 		call i.Lagrange(this.x_vel, this.interp_factor)
 		call i.Lagrange(this.y_vel, this.interp_factor)
@@ -142,9 +147,44 @@ CONTAINS
 
 
 
-	subroutine transf_edge(this)
+
+	subroutine Velocity_edge(this, g)
 		Class(f_var) :: this
+		Class(g_var) :: g
+		Real(8) :: vel_lon, vel_lat
+		Integer(4) :: x, y, face, i, neib_face, x_start(4), y_start(4), x_fin(4), y_fin(4)
+! 		To_sph_coord From_sph_coord this.x_vel(x, y, face)
+
+		x_start(1) = this.ns_x;  x_start(2) = this.nf_x + 1;  x_start(3) = this.ns_x;  x_start(4) = this.ns_x - 1
+		y_start(1) = this.nf_y + 1;  y_start(2) = this.ns_y;  y_start(3) = this.ns_y - 1;  y_start(4) = this.ns_y
+
+		x_fin(1) = this.nf_x;  x_fin(2) = this.nf_x + this.step;  x_fin(3) = this.nf_x;  x_fin(4) = this.ns_x - this.step
+		y_fin(1) = this.nf_y + this.step;  y_fin(2) = this.nf_y;  y_fin(3) = this.ns_y - this.step;  y_fin(4) = this.nf_y
+
+		do face = 1, 6
+			do i = 1, 4
+
+				neib_face = this.Neighbours_face(face, i)
+
+				if(this.interp_factor(i) == 1) then 
+					do x = x_start(i), x_fin(i)
+						do y = y_start(i), y_fin(i)
+
+							vel_lon = g.To_sph_coord(1, 1, x, y, neib_face) * this.x_vel(x, y, face) + g.To_sph_coord(1, 2, x, y, neib_face) * this.y_vel(x, y, face)
+							vel_lat = g.To_sph_coord(2, 1, x, y, neib_face) * this.x_vel(x, y, face) + g.To_sph_coord(2, 2, x, y, neib_face) * this.y_vel(x, y, face)
+
+							this.x_vel(x, y, face) = g.From_sph_coord(1, 1, x, y, face) * vel_lon + g.From_sph_coord(1, 2, x, y, face) * vel_lat
+							this.y_vel(x, y, face) = g.From_sph_coord(2, 1, x, y, face) * vel_lon + g.From_sph_coord(2, 2, x, y, face) * vel_lat
+
+						end do
+					end do
+				end if
+
+			end do
+		end do
+
 	end subroutine
+
 
 
 

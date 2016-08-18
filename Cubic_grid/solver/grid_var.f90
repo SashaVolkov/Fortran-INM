@@ -18,7 +18,7 @@ implicit none
 		Real(8), Allocatable :: G_inverse(:, :, :, :)
 		Real(8), Allocatable :: rho(:, :)
 		Real(8), Allocatable :: To_sph_coord(:, :, :, :, :)
-		Real(8), Allocatable :: Form_sph_coord(:, :, :, :, :)
+		Real(8), Allocatable :: From_sph_coord(:, :, :, :, :)
 
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
@@ -102,7 +102,7 @@ CONTAINS
 			Allocate(this.G_inverse(f_x:l_x , f_y:l_y, 1:2, 1:2))
 			Allocate(this.rho(f_x:l_x , f_y:l_y))
 			Allocate(this.To_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
-			Allocate(this.Form_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
+			Allocate(this.From_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
 
 			Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
 			Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
@@ -129,7 +129,7 @@ CONTAINS
 			if (Allocated(this.G_inverse)) Deallocate(this.G_inverse)
 			if (Allocated(this.rho)) Deallocate(this.rho)
 			if (Allocated(this.To_sph_coord)) Deallocate(this.To_sph_coord)
-			if (Allocated(this.Form_sph_coord)) Deallocate(this.Form_sph_coord)
+			if (Allocated(this.From_sph_coord)) Deallocate(this.From_sph_coord)
 
 			if (Allocated(this.f_cor)) Deallocate(this.f_cor)
 			if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
@@ -177,11 +177,6 @@ CONTAINS
 			end do
 		end do
 
-! 		x = 1
-! 		y = this.dim
-
-! 		print *, this.G_inverse(x, y, 1, 1), this.G_inverse(x, y, 1, 2)
-
 		call this.transformation_sph_equiang()
 
 	end subroutine
@@ -195,22 +190,22 @@ CONTAINS
 		s(1) = - 1d0;  s(6) = 1d0
 
 
-		do face = 2,4
+		do face = 2,5
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					delta = this.rho(x,y)
 					x_1 = this.equiang_c(1, x, y, face)
 					x_2 = this.equiang_c(2, x, y, face)
 
+					this.From_sph_coord(1,1,x,y,face) = 1d0
+					this.From_sph_coord(1,2,x,y,face) = 0d0
+					this.From_sph_coord(2,1,x,y,face) = dtan(x_1)*dtan(x_2)*((dcos(x_2))**2)
+					this.From_sph_coord(2,2,x,y,face) = (delta**2)*((dcos(x_2))**2)*abs(dcos(x_1))
+
 					this.To_sph_coord(1,1,x,y,face) = 1d0
 					this.To_sph_coord(1,2,x,y,face) = 0d0
-					this.To_sph_coord(2,1,x,y,face) = dtan(x_1)*dtan(x_2)*((dcos(x_2))**2)
-					this.To_sph_coord(2,2,x,y,face) = (delta**2)*((dcos(x_2))**2)*abs(dcos(x_1))
-
-					this.Form_sph_coord(1,1,x,y,face) = 1d0
-					this.Form_sph_coord(1,2,x,y,face) = 0d0
-					this.Form_sph_coord(2,1,x,y,face) = dtan(x_1)*dtan(x_2)/(abs(dcos(x_1))*(delta**2))
-					this.Form_sph_coord(2,2,x,y,face) = 1d0/this.To_sph_coord(2,2,x,y,face)
+					this.To_sph_coord(2,1,x,y,face) = dtan(x_1)*dtan(x_2)/(abs(dcos(x_1))*(delta**2))
+					this.To_sph_coord(2,2,x,y,face) = 1d0/this.From_sph_coord(2,2,x,y,face)
 				end do
 			end do
 		end do
@@ -222,15 +217,15 @@ CONTAINS
 					x_1 = this.equiang_c(1, x, y, face)
 					x_2 = this.equiang_c(2, x, y, face)
 
-					this.To_sph_coord(1,1,x,y,face) = -s(face)*dtan(x_2)*((dcos(x_1))**2)
-					this.To_sph_coord(1,2,x,y,face) = -s(face)*(delta**2)*dtan(x_1)*((dcos(x_1))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
-					this.To_sph_coord(2,1,x,y,face) = s(face)*dtan(x_1)*((dcos(x_2))**2)
-					this.To_sph_coord(2,2,x,y,face) = -s(face)*(delta**2)*dtan(x_2)*((dcos(x_2))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
+					this.From_sph_coord(1,1,x,y,face) = -s(face)*dtan(x_2)*((dcos(x_1))**2)
+					this.From_sph_coord(1,2,x,y,face) = -s(face)*(delta**2)*dtan(x_1)*((dcos(x_1))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
+					this.From_sph_coord(2,1,x,y,face) = s(face)*dtan(x_1)*((dcos(x_2))**2)
+					this.From_sph_coord(2,2,x,y,face) = -s(face)*(delta**2)*dtan(x_2)*((dcos(x_2))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
 
-! 					this.Form_sph_coord(1,1,x,y,face) = 
-! 					this.Form_sph_coord(1,2,x,y,face) = 
-! 					this.Form_sph_coord(2,1,x,y,face) = 
-! 					this.Form_sph_coord(2,2,x,y,face) = 
+					this.To_sph_coord(1,1,x,y,face) = - s(face)*dtan(x_2)/(((dcos(x_1))**2) * (dtan(x_1)**2 + dtan(x_2)**2))
+					this.To_sph_coord(1,2,x,y,face) = s(face)*dtan(x_1)/(((dcos(x_2))**2) * (dtan(x_1)**2 + dtan(x_2)**2))
+					this.To_sph_coord(2,1,x,y,face) = - s(face)*dtan(x_1)/(((dcos(x_1))**2) * dsqrt(dtan(x_1)**2 + dtan(x_2)**2) * (delta**2))
+					this.To_sph_coord(2,2,x,y,face) = - s(face)*dtan(x_2)/(((dcos(x_2))**2) * dsqrt(dtan(x_1)**2 + dtan(x_2)**2) * (delta**2))
 				end do
 			end do
 		end do
