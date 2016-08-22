@@ -105,7 +105,7 @@ CONTAINS
 
 				var_pr.x_vel_msg(:, :, :)=var_pr.x_vel(:, :, :)
 				var_pr.y_vel_msg(:, :, :)=var_pr.y_vel(:, :, :)
-				! call var_pr.Velocity_to_spherical(grid)
+				call var_pr.Velocity_to_spherical(grid)
 
 
 	end subroutine
@@ -137,6 +137,7 @@ CONTAINS
 				do x = this.first_x, this.last_x
 					this.h_height(x, y, face) =&
 					 h0*exp(-((((10.0/dim)*((x-dim - 0.5)*0.5))**2)+(((10.0/dim)*((y-dim - 0.5)*0.5))**2)))
+					! this.y_vel(x, y, face) = 40.0
 				end do
 			end do
 			end if
@@ -152,7 +153,7 @@ CONTAINS
 		Class(f_var) :: this
 		Class(interp) :: i
 		Class(g_var) :: g
-		! call this.Velocity_from_spherical(g)
+		call this.Velocity_from_spherical(g)
 		call i.Lagrange(this.h_height, this.interp_factor)
 		call i.Lagrange(this.x_vel, this.interp_factor)
 		call i.Lagrange(this.y_vel, this.interp_factor)
@@ -216,8 +217,8 @@ CONTAINS
 					do x = x_start(i), x_fin(i)
 						do y = y_start(i), y_fin(i)
 
-							vel_x_contr = g.From_sph_coord(1, 1, x, y, face) * this.x_vel_msg(x, y, face) + g.From_sph_coord(1, 2, x, y, face) * this.y_vel_msg(x, y, face)
-							vel_y_contr = g.From_sph_coord(2, 1, x, y, face) * this.x_vel_msg(x, y, face) + g.From_sph_coord(2, 2, x, y, face) * this.y_vel_msg(x, y, face)
+							vel_x_contr = g.From_sph_coord(1, 1, x, y, face) * this.x_vel(x, y, face) + g.From_sph_coord(1, 2, x, y, face) * this.y_vel(x, y, face)
+							vel_y_contr = g.From_sph_coord(2, 1, x, y, face) * this.x_vel(x, y, face) + g.From_sph_coord(2, 2, x, y, face) * this.y_vel(x, y, face)
 
 							this.x_vel(x, y, face) = g.G_tensor(x, y, 1, 1) * vel_x_contr + g.G_tensor(x, y, 1, 2) * vel_y_contr
 							this.y_vel(x, y, face) = g.G_tensor(x, y, 2, 1) * vel_x_contr + g.G_tensor(x, y, 2, 2) * vel_y_contr

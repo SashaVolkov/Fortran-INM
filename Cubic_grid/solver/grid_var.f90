@@ -45,6 +45,8 @@ implicit none
 		Procedure, Private :: step_minmax => step_minmax
 		Procedure, Private :: transformation_matrix_equiang => transformation_matrix_equiang
 		Procedure, Private :: transformation_sph_equiang => transformation_sph_equiang
+		Procedure, Private :: sphere_area => sphere_area_def
+		Procedure, Private :: derivat_4order => derivat_4order
 		Procedure, Public :: div_2 => div_2
 		Procedure, Public :: div_4 => div_4
 		Procedure, Public :: partial_c2_x => partial_c2_x
@@ -147,6 +149,111 @@ CONTAINS
 
 
 
+	subroutine const_def(this, g)
+		Class(g_var) :: this
+		Class(geometry) :: g
+		real(8) dist, omega_cor, sphere_area, h(-1:2)
+		integer(4) face, x, y, dim, step
+		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+
+
+		omega_cor = this.omega_cor
+		dim = this.dim;  step = this.step
+
+
+		do face = 1, 6 ! Only longitude
+			do x = this.ns_xy(1), this.nf_xy(1)
+				do y = this.ns_xy(2), this.nf_xy(2)
+					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.latlon_c(1, x, y, face)) ! function of latitude
+				end do
+			end do
+		end do
+
+		call this.transformation_matrix_equiang()
+
+		! ____________________
+		! | 1, 2d     2d, 2d |
+		! |                  |
+		! |                  |     ___
+		! |       face       |   __|6|____
+		! |    orientation   |   |5|2|3|4| - faces
+		! |                  |     |1|
+		! |                  |
+		! | 1,1        2d, 1 |
+		! --------------------
+
+
+		do y = 1-step, 2*dim + step
+			do x = 2-step, 2*dim + step
+
+	
+	this.x_dist(x, y) = g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2))
+	this.y_dist(y, x) = this.x_dist(x, y)
+
+			end do
+		end do
+
+		! print *, this.x_dist(dim, :)
+
+		call this.derivat_4order()
+		call this.sphere_area(g)
+
+	end subroutine
+
+
+
+
+	subroutine derivat_4order(this)
+		Class(g_var) :: this
+		real(8) dist, sphere_area, h(-1:2)
+		integer(4) face, x, y, dim, step
+		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+
+		dim = this.dim;  step = this.step
+
+		do x = this.ns_xy(1), this.nf_xy(1)
+			do y = this.ns_xy(2), this.nf_xy(2) ! Gamet et al. 1999 Apendix A. Approx. of derivat.
+
+				h(-1) = this.x_dist(x-1, y);  h(0) = this.x_dist(x, y)
+				h(1) = this.x_dist(x+1, y);  h(2) = this.x_dist(x+2, y)
+
+this.four_order_const_x( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
+
+this.four_order_const_x( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
+
+this.four_order_const_x( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_x( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this.four_order_const_x( B, x, y) + this.four_order_const_x( C, x, y) + this.four_order_const_x( D, x, y) )
+
+				end do
+			end do
+
+			do x = this.ns_xy(1), this.nf_xy(1)
+				do y = this.ns_xy(2), this.nf_xy(2)
+
+				h(-1) = this.y_dist(x, y-1);  h(0) = this.y_dist(x, y)
+				h(1) = this.y_dist(x, y+1);  h(2) = this.y_dist(x, y+2)
+
+this.four_order_const_y( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
+
+this.four_order_const_y( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
+
+this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this.four_order_const_y( B, x, y) + this.four_order_const_y( C, x, y) + this.four_order_const_y( D, x, y) )
+
+				end do
+			end do
+
+
+	end subroutine
+
+
+
 	subroutine transformation_matrix_equiang(this)
 		Class(g_var) :: this
 		real(8) x_1, x_2, g_coef, g_inv_coef
@@ -177,6 +284,8 @@ CONTAINS
 
 			end do
 		end do
+
+		! print *, this.G_tensor(this.dim, this.dim, 1, 1), this.G_inverse(this.dim, this.dim, 1, 1)
 
 		call this.transformation_sph_equiang()
 
@@ -235,102 +344,26 @@ CONTAINS
 
 
 
-	subroutine const_def(this, g)
+	subroutine sphere_area_def(this, g)
 		Class(g_var) :: this
 		Class(geometry) :: g
 		real(8) dist, omega_cor, S1, S2, sphere_area
-		real(8) h(-1:2), x_1, x_2, g_coef
-		integer(4) face, x, y, dim, step, k
-		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
+		integer(4) x, y, dim, k
 		character(8) istring
 
 
 		omega_cor = this.omega_cor
-		dim = this.dim;  step = this.step
-
-
-		do face = 1, 6 ! Only longitude
-			do x = this.ns_xy(1), this.nf_xy(1)
-				do y = this.ns_xy(2), this.nf_xy(2)
-					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.latlon_c(1, x, y, face)) ! function of latitude
-				end do
-			end do
-		end do
-
-		call this.transformation_matrix_equiang()
-
-		! ____________________
-		! | 1, 2d     2d, 2d |
-		! |                  |
-		! |                  |     ___
-		! |       face       |   __|6|____
-		! |    orientation   |   |5|2|3|4| - faces
-		! |                  |     |1|
-		! |                  |
-		! | 1,1        2d, 1 |
-		! --------------------
-
-
-		do y = 1-step, 2*dim + step
-			do x = 2-step, 2*dim + step
-
-	
-	this.x_dist(x, y) = g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2))
-	this.y_dist(y, x) = this.x_dist(x, y)
-
-			end do
-		end do
-
-		do x = this.ns_xy(1), this.nf_xy(1)
-			do y = this.ns_xy(2), this.nf_xy(2) ! Gamet et al. 1999 Apendix A. Approx. of derivat.
-
-				h(-1) = this.x_dist(x-1, y);  h(0) = this.x_dist(x, y)
-				h(1) = this.x_dist(x+1, y);  h(2) = this.x_dist(x+2, y)
-
-this.four_order_const_x( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
-
-this.four_order_const_x( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
-
-this.four_order_const_x( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-this.four_order_const_x( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this.four_order_const_x( B, x, y) + this.four_order_const_x( C, x, y) + this.four_order_const_x( D, x, y) )
-
-				end do
-			end do
-
-			do x = this.ns_xy(1), this.nf_xy(1)
-				do y = this.ns_xy(2), this.nf_xy(2)
-
-				h(-1) = this.y_dist(x, y-1);  h(0) = this.y_dist(x, y)
-				h(1) = this.y_dist(x, y+1);  h(2) = this.y_dist(x, y+2)
-
-this.four_order_const_y( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
-
-this.four_order_const_y( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
-
-this.four_order_const_y( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-this.four_order_const_y( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this.four_order_const_y( B, x, y) + this.four_order_const_y( C, x, y) + this.four_order_const_y( D, x, y) )
-
-				end do
-			end do
-
-
-
+		dim = this.dim
 		sphere_area = 0
 
 
-		if (this.rescale == 1) then
-			istring = '_tan'
-		else if (this.rescale == 0) then
-			istring = '_simple'
-		else if (this.rescale == 2) then
-			istring = '_exp'
-		end if
+		! if (this.rescale == 1) then
+		! 	istring = '_tan'
+		! else if (this.rescale == 0) then
+		! 	istring = '_simple'
+		! else if (this.rescale == 2) then
+		! 	istring = '_exp'
+		! end if
 
 ! 		open (20, file = 'datFiles/angle'//trim(istring)//'.dat')
 ! 		open (21, file = 'datFiles/cell'//trim(istring)//'.dat')
@@ -362,11 +395,13 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			end do
 		end do
 
-		close(20);  close(21);  close(22)
+		! close(20);  close(21);  close(22)
 
 ! 		print '(" sphere_area = ", f20.2)', sphere_area*6d0
 
 	end subroutine
+
+
 
 
 
