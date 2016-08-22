@@ -15,7 +15,7 @@ module diagnostic_mod
 
 		Real(8), Allocatable :: CFL(:,:,:)
 		integer(4) Tmax, dim, step
-		real(8) convert_time
+		real(8) convert_time, L10, L20, L_inf0
 
 
 		CONTAINS
@@ -141,9 +141,12 @@ CONTAINS
 		integer(4), intent(in) :: time
 
 		integer(4) face, x, y, id, ier
-		real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square, L10, L20, L_inf0
+		real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square
 
-		L1 = 0;  L2 = 0;  L_inf = 0;  L10 = 0;  L20 = 0;  L_inf0 = 0
+		L1 = 0;  L2 = 0;  L_inf = 0
+		if(time == 1) then
+			this.L10 = 0;  this.L20 = 0;  this.L_inf0 = 0
+		end if
 
 		do face = 1, 6
 			do y = func.ns_y, func.nf_y
@@ -158,21 +161,25 @@ CONTAINS
 			end do
 		end do
 
-		L2 = dsqrt(L2)
-
 		L_inf = MAXVAL(abs(func.h_height))
+
 		call MPI_Allreduce(L_inf, L_inf_all, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
 		call MPI_Allreduce(L1, L1_all, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
 		call MPI_Allreduce(L2, L2_all, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
 		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 
-		if (id == 0) then
-			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, L1_all - L10
-			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, L2_all - L20
-			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, L_inf_all - L_inf0
+		L2_all = dsqrt(L2_all)
+
+		if(time == 1) then
+			this.L10 = L1_all;  this.L20 = L2_all; this.L_inf0 = L_inf_all
 		end if
 
-		if(time == 0) L10 = L1_all;  L20 = L2_all; L_inf0 = L_inf_all
+		if (id == 0) then
+			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, (L1_all - this.L10)/this.L10
+			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, (L2_all - this.L20)/this.L20
+			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, (L_inf_all - this.L_inf0)/this.L_inf0
+		end if
+
 
 	end subroutine
 

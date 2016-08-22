@@ -14,19 +14,26 @@ set xlabel "Days"
 plot "L1_simple.dat" w l ti "L1", "L2_simple.dat" w l ti "L2", "L_inf_simple.dat" w l ti "L_inf"
 EOF
 
-# gnuplot <<EOF
-# set term png
-# set output "L2.png"
-# set xlabel "Days"
-# plot "L2_tan.dat" w l ti "L2_tan", "L2_simple.dat" w l ti "L2_simple"
-# EOF
+gnuplot <<EOF
+set term png
+set output "L1.png"
+set xlabel "Days"
+plot "L1_simple.dat" w l ti "L1_simple"
+EOF
 
-# gnuplot <<EOF
-# set term png
-# set output "L_inf.png"
-# set xlabel "Days"
-# plot "L_inf_tan.dat" w l ti "L_inf_tan", "L_inf_simple.dat" w l ti "L_inf_simple"
-# EOF
+gnuplot <<EOF
+set term png
+set output "L2.png"
+set xlabel "Days"
+plot "L2_simple.dat" w l ti "L2_simple"
+EOF
+
+gnuplot <<EOF
+set term png
+set output "L_inf.png"
+set xlabel "Days"
+plot "L_inf_simple.dat" w l ti "L_inf_simple"
+EOF
 
 # gnuplot <<EOF
 # set term png

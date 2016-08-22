@@ -159,7 +159,7 @@ CONTAINS
 			x_1 = this.equiang_c(1, x, y, 2)
 			x_2 = this.equiang_c(2, x, y, 2)
 
-			this.rho(x, y) = 1 + (dtan(x_1))**2 + (dtan(x_2))**2
+			this.rho(x, y) = dsqrt(1 + (dtan(x_1))**2 + (dtan(x_2))**2)
 			this.G_sqr(x, y) = (this.r_sphere**2)/(this.rho(x, y)**3 * ((dcos(x_1))**2) * (dcos(x_2)**2))
 			g_coef = (this.r_sphere**2)/((this.rho(x, y)**4) * ((dcos(x_1))**2) * (dcos(x_2)**2))
 			g_inv_coef = ((this.rho(x, y)**2) * ((dcos(x_1))**2) * (dcos(x_2)**2))/(this.r_sphere**2)
@@ -173,6 +173,7 @@ CONTAINS
 			this.G_inverse(x, y, 1, 2) = g_inv_coef * (dtan(x_1))*(dtan(x_2))
 			this.G_inverse(x, y, 2, 1) = g_inv_coef * (dtan(x_1))*(dtan(x_2))
 			this.G_inverse(x, y, 2, 2) = g_inv_coef * (1 + (dtan(x_1))**2)
+
 
 			end do
 		end do
@@ -404,8 +405,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			G_12 = this.G_inverse(x, y+i, 1, 2)
 			G_21 = this.G_inverse(x+i, y, 2, 1)
 			G_22 = this.G_inverse(x, y+i, 2, 2)
-			u_1(i) = G_11*u1(i) + G_12*u2(i)
-			u_2(i) = G_21*u1(i) + G_22*u2(i)
+			u_1(i) = G_11*u1(i)! + G_12*u2(i)
+			u_2(i) = G_22*u2(i)! + G_21*u1(i)
 		end do
 
 
@@ -438,8 +439,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			G_12 = this.G_inverse(x, y+i, 1, 2)
 			G_21 = this.G_inverse(x+i, y, 2, 1)
 			G_22 = this.G_inverse(x, y+i, 2, 2)
-			u_1(i) = G_11*u1(i)! + G_12*u2(i)
-			u_2(i) = G_22*u2(i)! + G_21*u1(i)
+			u_1(i) = G_11*u1(i) + G_12*u2(i)
+			u_2(i) = G_22*u2(i) + G_21*u1(i)
 			J_1(i) = this.G_sqr(x+i, y)
 			J_2(i) = this.G_sqr(x, y+i)
 		end do

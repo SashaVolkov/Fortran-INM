@@ -35,10 +35,10 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 980616d-5
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 32;  gr_step = 2;  height = 100.0
+	dim = 25;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 100000;  speedup = 500;  dt = 5d0
+	Tmax = 10000;  speedup = 100;  dt = 20d0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 !480000
 
@@ -67,7 +67,8 @@ implicit none
 
 
 	do time = 1, Tmax
-		call sch.RungeKutta(var, var_prev, grid)
+		call sch.Linear(var, var_prev, grid)
+		call var_prev.equal(var, grid)
 		call msg.msg(var_prev, paral)
 		call var_prev.interpolate(inter, grid)
 		call diagn.L_norm(var_prev, grid, time)
@@ -78,6 +79,7 @@ implicit none
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
 			end if
 	end do
+
 
 	end_init = MPI_Wtime()
 
@@ -92,7 +94,6 @@ implicit none
 		print '(" time = ", f10.2, " sec")', end_init - start_init
 	end if
 
-	! print *, "threads = ", omp_get_num_threads()
 
 	call grid.deinit()
 	call var.deinit()

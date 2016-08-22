@@ -91,8 +91,8 @@ subroutine Simple_msg(this, paral, f)
 			end if
 
 			call MPI_ISend(f.h_height(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(1), this.snd_req(1, i, face), this.ier)
-			call MPI_ISend(f.x_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(2), this.snd_req(2, i, face), this.ier)
-			call MPI_ISend(f.y_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(3), this.snd_req(3, i, face), this.ier)
+			call MPI_ISend(f.x_vel_msg(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(2), this.snd_req(2, i, face), this.ier)
+			call MPI_ISend(f.y_vel_msg(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(3), this.snd_req(3, i, face), this.ier)
 
 			! print *, snd_tag, ";", face, ";", i
 
