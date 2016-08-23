@@ -186,8 +186,10 @@ CONTAINS
 		do y = 1-step, 2*dim + step
 			do x = 2-step, 2*dim + step
 
-	
-	this.x_dist(x, y) = g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2))
+	! this.x_dist(x, y) = g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2))
+	! this.y_dist(y, x) = this.x_dist(x, y)
+
+	this.x_dist(x, y) = this.equiang_c(1, x, y, 2) - this.equiang_c(1, x-1, y, 2)
 	this.y_dist(y, x) = this.x_dist(x, y)
 
 			end do
@@ -474,8 +476,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			G_12 = this.G_inverse(x, y+i, 1, 2)
 			G_21 = this.G_inverse(x+i, y, 2, 1)
 			G_22 = this.G_inverse(x, y+i, 2, 2)
-			u_1(i) = G_11*u1(i) + G_12*u2(i)
-			u_2(i) = G_22*u2(i) + G_21*u1(i)
+			u_1(i) = G_11*u1(i)! + G_12*u2(i)
+			u_2(i) = G_22*u2(i)! + G_21*u1(i)
 			J_1(i) = this.G_sqr(x+i, y)
 			J_2(i) = this.G_sqr(x, y+i)
 		end do

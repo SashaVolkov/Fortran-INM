@@ -54,8 +54,8 @@ subroutine msg(this, f, paral)
 
 	call this.Waiter(paral)
 
-	! call this.Halo_Rotations(paral, f.x_vel, 1, 0)
-	! call this.Halo_Rotations(paral, f.y_vel, 0, 1)
+	call this.Halo_Rotations(paral, f.x_vel, 1, 0)
+	call this.Halo_Rotations(paral, f.y_vel, 0, 1)
 
 end subroutine
 
@@ -82,13 +82,13 @@ subroutine Simple_msg(this, paral, f)
 
 			call MPI_IRecv(f.h_height(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(1), this.rcv_req(1, i, face), this.ier)
 
-			! if(paral.border(face, i) == 0 .or. paral.border(face, i) == 2) then ! coordinate rotation from one face to other if rotation 90 or -90 deg
+			if(paral.border(face, i) == 0 .or. paral.border(face, i) == 2) then ! coordinate rotation from one face to other if rotation 90 or -90 deg
 				call MPI_IRecv(f.x_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(2, i, face), this.ier) ! x -> x
 				call MPI_IRecv(f.y_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(3, i, face), this.ier) ! y -> y
-			! else
-			! 	call MPI_IRecv(f.x_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(3, i, face), this.ier) ! x -> y
-			! 	call MPI_IRecv(f.y_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(2, i, face), this.ier) ! y -> x
-			! end if
+			else
+				call MPI_IRecv(f.x_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(3, i, face), this.ier) ! x -> y
+				call MPI_IRecv(f.y_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(2, i, face), this.ier) ! y -> x
+			end if
 
 			call MPI_ISend(f.h_height(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(1), this.snd_req(1, i, face), this.ier)
 			call MPI_ISend(f.x_vel_msg(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(2), this.snd_req(2, i, face), this.ier)
