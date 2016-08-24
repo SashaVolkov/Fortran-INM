@@ -1,6 +1,7 @@
 module schemes
 
 	use grid_var, Only: g_var
+	use derivatives, Only: der
 	use func_var, Only: f_var
 	use mpi
 
@@ -52,6 +53,7 @@ subroutine Linear(this, var, var_pr, grid)
 	Class(schema) :: this
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
+	Type(der) :: d
 
 	real(8) g, height, dt, partial(1:2), temp1(-1:1), temp2(-1:1), div
 	integer(4) face, x, y, dim, i, j, stat, ier
@@ -63,16 +65,16 @@ subroutine Linear(this, var, var_pr, grid)
 	do y = var.ns_y, var.nf_y
 		do x = var.ns_x, var.nf_x
 
-				partial(1) = grid.partial_c2_x(var_pr.h_height(x-1:x+1, y, face), x, y)
+				partial(1) = d.partial_c2_x(grid, var_pr.h_height(x-1:x+1, y, face), x, y)
 				var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) - dt*g*partial(1)
 
 				temp1(:) = var_pr.h_height(x, y-1:y+1, face)
-				partial(1) = grid.partial_c2_y(temp1, x, y)
+				partial(1) = d.partial_c2_y(grid, temp1, x, y)
 				var.y_vel(x, y, face) = var_pr.y_vel(x, y, face) - dt*g*partial(1)
 
 				temp1(:) = var_pr.x_vel(x-1:x+1, y, face)
 				temp2(:) = var_pr.y_vel(x, y-1:y+1, face)
-				div = grid.div_2(temp1, temp2, x, y)
+				div = d.div_2(grid, temp1, temp2, x, y)
 				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*div
 
 
@@ -127,6 +129,7 @@ Subroutine FRunge(this, grid, var, face, i)
 	Class(schema) :: this
 	Class(f_var) :: var
 	Class(g_var) :: grid
+	Type(der) :: d
 
 	integer(4), intent(in) :: face, i
 	real(8) g, height, dt, partial(1:2), temp1(-2:2), temp2(-2:2), coef(0:3), div
@@ -140,16 +143,16 @@ Subroutine FRunge(this, grid, var, face, i)
 		do x = var.ns_x, var.nf_x
 
 			temp1(:) = this.kh(x-2:x+2, y, 0) + coef(i-1)*this.kh(x-2:x+2, y, i-1)
-			partial(1) = grid.partial_c4_x(temp1, x, y)
+			partial(1) = d.partial_c4_x(grid, temp1, x, y)
 			this.ku(x, y, i) = - dt*g*partial(1)
 
 			temp2(:) = this.kh(x, y-2:y+2, 0) + coef(i-1)*this.kh(x, y-2:y+2, i-1)
-			partial(1) = grid.partial_c4_y(temp2, x, y)
+			partial(1) = d.partial_c4_y(grid, temp2, x, y)
 			this.kv(x, y, i) =  - dt*g*partial(1)
 
 			temp1(:) = this.ku(x-2:x+2, y, 0) + coef(i-1)*this.ku(x-2:x+2, y, i-1)
 			temp2(:) = this.kv(x, y-2:y+2, 0) + coef(i-1)*this.kv(x, y-2:y+2, i-1)
-			div = grid.div_4(temp1(:), temp2(:), x, y)
+			div = d.div_4(grid, temp1(:), temp2(:), x, y)
 			this.kh(x, y, i) = - dt*height*div
 
 

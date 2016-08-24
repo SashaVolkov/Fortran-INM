@@ -33,12 +33,12 @@ implicit none
 
 
 !definition
-	r_sphere= 6371220d0;  g = 980616d-5
+	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
 	dim = 25;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 40000;  speedup = 50;  dt = 20d0
+	Tmax = 4000;  speedup = 10;  dt = 200.0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 !480000
 

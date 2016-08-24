@@ -47,12 +47,6 @@ implicit none
 		Procedure, Private :: transformation_sph_equiang => transformation_sph_equiang
 		Procedure, Private :: sphere_area => sphere_area_def
 		Procedure, Private :: derivat_4order => derivat_4order
-		Procedure, Public :: div_2 => div_2
-		Procedure, Public :: div_4 => div_4
-		Procedure, Public :: partial_c2_x => partial_c2_x
-		Procedure, Public :: partial_c2_y => partial_c2_y
-		Procedure, Public :: partial_c4_x => partial_c4_x
-		Procedure, Public :: partial_c4_y => partial_c4_y
 	End Type
 
 
@@ -186,11 +180,11 @@ CONTAINS
 		do y = 1-step, 2*dim + step
 			do x = 2-step, 2*dim + step
 
-	! this.x_dist(x, y) = g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2))
-	! this.y_dist(y, x) = this.x_dist(x, y)
-
-	this.x_dist(x, y) = this.equiang_c(1, x, y, 2) - this.equiang_c(1, x-1, y, 2)
+	this.x_dist(x, y) = g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2))*this.r_sphere
 	this.y_dist(y, x) = this.x_dist(x, y)
+
+	! this.x_dist(x, y) = (this.equiang_c(1, x, y, 2) - this.equiang_c(1, x-1, y, 2))*this.r_sphere
+	! this.y_dist(y, x) = this.x_dist(x, y)
 
 			end do
 		end do
@@ -269,9 +263,9 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			x_2 = this.equiang_c(2, x, y, 2)
 
 			this.rho(x, y) = dsqrt(1 + (dtan(x_1))**2 + (dtan(x_2))**2)
-			this.G_sqr(x, y) = (this.r_sphere**2)/(this.rho(x, y)**3 * ((dcos(x_1))**2) * (dcos(x_2)**2))
-			g_coef = (this.r_sphere**2)/((this.rho(x, y)**4) * ((dcos(x_1))**2) * (dcos(x_2)**2))
-			g_inv_coef = ((this.rho(x, y)**2) * ((dcos(x_1))**2) * (dcos(x_2)**2))/(this.r_sphere**2)
+			this.G_sqr(x, y) = 1.0/(this.rho(x, y)**3 * ((dcos(x_1))**2) * (dcos(x_2)**2))
+			g_coef = 1.0/((this.rho(x, y)**4) * ((dcos(x_1))**2) * (dcos(x_2)**2))
+			g_inv_coef = ((this.rho(x, y)**2) * ((dcos(x_1))**2) * (dcos(x_2)**2))!/(this.r_sphere**2)
 
 			this.G_tensor(x, y, 1, 1) = g_coef * (1 + (dtan(x_1))**2)
 			this.G_tensor(x, y, 1, 2) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
@@ -404,118 +398,6 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 	end subroutine
 
 
-
-
-
-
-	real(8) function partial_c2_x(this, fun, x, y)
-		Class(g_var) :: this
-		real(8), intent(in) :: fun(-1:1)
-		integer, intent(in) :: x, y
-		partial_c2_x = (fun(1) * this.x_dist(x, y) - fun(-1) * this.x_dist(x+1, y))/&
-		(this.x_dist(x, y) + this.x_dist(x+1, y))**2
-
-	end function
-
-
-
-	real(8) function partial_c2_y(this, fun, x, y)
-		Class(g_var) :: this
-		real(8), intent(in) :: fun(-1:1)
-		integer, intent(in) :: x, y
-		partial_c2_y = (fun(1) * this.y_dist(x, y) - fun(-1)*this.y_dist(x, y+1))/&
-		(this.y_dist(x, y) + this.y_dist(x, y+1))**2
-
-	end function
-
-
-
-	real(8) function div_2(this, u1, u2, x, y)
-		Class(g_var) :: this
-		real(8), intent(in) :: u1(-1:1), u2(-1:1)
-		integer(4), intent(in) :: x, y
-		integer(4) i
-		real(8) u_1(-1:1), u_2(-1:1), G_11, G_12, G_21, G_22
-
-		do i = -1, 1
-			G_11 = this.G_inverse(x+i, y, 1, 1)
-			G_12 = this.G_inverse(x, y+i, 1, 2)
-			G_21 = this.G_inverse(x+i, y, 2, 1)
-			G_22 = this.G_inverse(x, y+i, 2, 2)
-			u_1(i) = G_11*u1(i)! + G_12*u2(i)
-			u_2(i) = G_22*u2(i)! + G_21*u1(i)
-		end do
-
-
-
-		div_2 = ((u_1(1) * this.x_dist(x, y)*this.G_sqr(x+1,y) - u_1(-1)*this.x_dist(x+1, y)*this.G_sqr(x-1,y))/&
-			(this.x_dist(x, y) + this.x_dist(x+1, y))**2 &
-		+ (u_2(1) * this.y_dist(x, y)*this.G_sqr(x,y+1) - u_2(-1)*this.y_dist(x, y+1)*this.G_sqr(x,y-1))/&
-			(this.y_dist(x, y) + this.y_dist(x, y+1))**2)/this.G_sqr(x,y)
-
-	end function
-
-
-
-	real(8) function div_4(this, u1, u2, x, y)
-		Class(g_var) :: this
-		real(8), intent(in) :: u1(-2:2), u2(-2:2)
-		integer(4), intent(in) :: x, y
-		integer(4) i
-		real(8) u_1(-2:2), u_2(-2:2), G_11, G_12, G_21, G_22, J_1(-2:2), J_2(-2:2)
-		real(8) Ax , Bx, Cx, Dx, Ex, Ay, By, Cy, Dy, Ey
-
-		Ax = this.four_order_const_x( 1, x, y);  Bx = this.four_order_const_x( 2, x, y);  Cx = this.four_order_const_x( 3, x, y)
-		Dx = this.four_order_const_x( 4, x, y);  Ex = this.four_order_const_x( 5, x, y)
-
-		Ay = this.four_order_const_y( 1, x, y);  By = this.four_order_const_y( 2, x, y);  Cy = this.four_order_const_y( 3, x, y)
-		Dy = this.four_order_const_y( 4, x, y);  Ey = this.four_order_const_y( 5, x, y)
-
-		do i = -2, 2
-			G_11 = this.G_inverse(x+i, y, 1, 1)
-			G_12 = this.G_inverse(x, y+i, 1, 2)
-			G_21 = this.G_inverse(x+i, y, 2, 1)
-			G_22 = this.G_inverse(x, y+i, 2, 2)
-			u_1(i) = G_11*u1(i)! + G_12*u2(i)
-			u_2(i) = G_22*u2(i)! + G_21*u1(i)
-			J_1(i) = this.G_sqr(x+i, y)
-			J_2(i) = this.G_sqr(x, y+i)
-		end do
-
-
-		div_4 = (Ax*u_1(1)*J_1(1) + Bx*u_1(-1)*J_1(-1) + Cx*u_1(2)*J_1(2) + Dx*u_1(-2)*J_1(-2) + Ex*u_1(0)*J_1(0) + &
-			 Ay*u_2(1)*J_2(1) + By*u_2(-1)*J_2(-1) + Cy*u_2(2)*J_2(2) + Dy*u_2(-2)*J_2(-2) + Ey*u_2(0)*J_2(0))/J_1(0)
-
-	end function
-
-
-
-	real(8) function partial_c4_x(this, fun, x, y)
-		Class(g_var) :: this
-		real(8), intent(in) :: fun(-2:2)
-		integer, intent(in) :: x, y
-		real(8) A , B, C, D, E
-
-		A = this.four_order_const_x( 1, x, y);  B = this.four_order_const_x( 2, x, y);  C = this.four_order_const_x( 3, x, y)
-		D = this.four_order_const_x( 4, x, y);  E = this.four_order_const_x( 5, x, y)
-
-		partial_c4_x = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
-
-	end function
-
-
-	real(8) function partial_c4_y(this, fun, x, y)
-		Class(g_var) :: this
-		real(8), intent(in) :: fun(-2:2)
-		integer, intent(in) :: x, y
-		real(8) A , B, C, D, E
-
-		A = this.four_order_const_y( 1, x, y);  B = this.four_order_const_y( 2, x, y);  C = this.four_order_const_y( 3, x, y)
-		D = this.four_order_const_y( 4, x, y);  E = this.four_order_const_y( 5, x, y)
-
-		partial_c4_y = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
-
-	end function
 
 
 
