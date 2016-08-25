@@ -180,6 +180,11 @@ CONTAINS
 
 		call this.tiles_prop(g)
 		call this.transformation_matrix_equiang()
+		if(grid_type == 0) then
+			call this.transformation_matrix_conf()
+		else if(grid_type == 1)then
+			call this.transformation_matrix_equiang()
+		end if
 		if(this.step > 1) call this.derivat_4order()
 
 	end subroutine
