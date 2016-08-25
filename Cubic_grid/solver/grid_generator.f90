@@ -25,9 +25,9 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere(this, dim, ns_xy, nf_xy, r_sphere, rescale, latlon_c, latlon)
+	subroutine conformal_cubed_sphere(this, dim, r_sphere, rescale, latlon_c, latlon)
 		Class(generator) :: this
-		integer, intent(in) :: dim, rescale, ns_xy(2), nf_xy(2)
+		integer, intent(in) :: dim, rescale
 		real(8), intent(in) :: r_sphere
 		real(8), intent(out) :: latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
 		real(8), intent(out) :: latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)

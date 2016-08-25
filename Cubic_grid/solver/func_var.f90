@@ -152,10 +152,12 @@ CONTAINS
 		Class(f_var) :: this
 		Class(interp) :: i
 		Class(g_var) :: g
-		! call this.Velocity_from_spherical(g)
-		call i.Lagrange(this.h_height, this.interp_factor)
-		call i.Lagrange(this.x_vel, this.interp_factor)
-		call i.Lagrange(this.y_vel, this.interp_factor)
+		if(g.grid_type == 1) then
+			! call this.Velocity_from_spherical(g)
+			call i.Lagrange(this.h_height, this.interp_factor)
+			call i.Lagrange(this.x_vel, this.interp_factor)
+			call i.Lagrange(this.y_vel, this.interp_factor)
+		end if
 	end subroutine
 
 
@@ -180,11 +182,11 @@ CONTAINS
 					do x = x_start(i), x_fin(i)
 						do y = y_start(i), y_fin(i)
 
-							vel_x_contr = g.G_inverse(x, y, 1, 1) * this.x_vel(x, y, face) + g.G_inverse(x, y, 1, 2) * this.y_vel(x, y, face)
-							vel_y_contr = g.G_inverse(x, y, 2, 2) * this.y_vel(x, y, face) + g.G_inverse(x, y, 2, 1) * this.x_vel(x, y, face)
+							vel_x_contr = g.G_inverse(x, y, 1, 1) * this.x_vel(x, y, face)! + g.G_inverse(x, y, 1, 2) * this.y_vel(x, y, face)
+							vel_y_contr = g.G_inverse(x, y, 2, 2) * this.y_vel(x, y, face)! + g.G_inverse(x, y, 2, 1) * this.x_vel(x, y, face)
 
-							this.x_vel_msg(x, y, face) = g.To_sph_coord(1, 1, x, y, face) * vel_x_contr + g.To_sph_coord(1, 2, x, y, face) * vel_y_contr
-							this.y_vel_msg(x, y, face) = g.To_sph_coord(2, 1, x, y, face) * vel_x_contr + g.To_sph_coord(2, 2, x, y, face) * vel_y_contr
+							this.x_vel_msg(x, y, face) = g.To_sph_coord(1, 1, x, y, face) * vel_x_contr! + g.To_sph_coord(1, 2, x, y, face) * vel_y_contr
+							this.y_vel_msg(x, y, face) = g.To_sph_coord(2, 2, x, y, face) * vel_y_contr! + g.To_sph_coord(2, 1, x, y, face) * vel_x_contr
 
 						end do
 					end do
@@ -216,11 +218,11 @@ CONTAINS
 					do x = x_start(i), x_fin(i)
 						do y = y_start(i), y_fin(i)
 
-							vel_x_contr = g.From_sph_coord(1, 1, x, y, face) * this.x_vel(x, y, face) + g.From_sph_coord(1, 2, x, y, face) * this.y_vel(x, y, face)
-							vel_y_contr = g.From_sph_coord(2, 1, x, y, face) * this.x_vel(x, y, face) + g.From_sph_coord(2, 2, x, y, face) * this.y_vel(x, y, face)
+							vel_x_contr = g.From_sph_coord(1, 1, x, y, face) * this.x_vel(x, y, face)! + g.From_sph_coord(1, 2, x, y, face) * this.y_vel(x, y, face)
+							vel_y_contr = g.From_sph_coord(2, 2, x, y, face) * this.y_vel(x, y, face)! + g.From_sph_coord(2, 1, x, y, face) * this.x_vel(x, y, face)
 
-							this.x_vel(x, y, face) = g.G_tensor(x, y, 1, 1) * vel_x_contr + g.G_tensor(x, y, 1, 2) * vel_y_contr
-							this.y_vel(x, y, face) = g.G_tensor(x, y, 2, 2) * vel_y_contr + g.G_tensor(x, y, 2, 1) * vel_x_contr
+							this.x_vel(x, y, face) = g.G_tensor(x, y, 1, 1) * vel_x_contr! + g.G_tensor(x, y, 1, 2) * vel_y_contr
+							this.y_vel(x, y, face) = g.G_tensor(x, y, 2, 2) * vel_y_contr! + g.G_tensor(x, y, 2, 1) * vel_x_contr
 
 						end do
 					end do

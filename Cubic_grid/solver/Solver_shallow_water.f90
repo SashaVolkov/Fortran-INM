@@ -17,7 +17,7 @@ implicit none
 
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, faceid, ncid, rescale, face
+	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, faceid, ncid, rescale, face, grid_type
 
 	integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
 
@@ -35,12 +35,12 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 25;  gr_step = 2;  height = 100.0
+	dim = 16;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
 	Tmax = 4000;  speedup = 10;  dt = 200.0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
-!480000
+	grid_type = 0 ! 0 - conformal, 1 - equiangular
 
 	call MPI_Init(ier)
 	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
@@ -52,7 +52,7 @@ implicit none
 
 	call paral.init(dim, gr_step, np, id)
 	call geom.init(r_sphere, pi)
-	call grid.init(geom, paral, omega_cor, g, dt, rescale)
+	call grid.init(geom, paral, omega_cor, g, dt, rescale, grid_type)
 	call var.init(paral, height)
 	call var_prev.init(paral, height)
 	call sch.init(var_prev, grid)
@@ -67,7 +67,7 @@ implicit none
 
 
 	do time = 1, Tmax
-		call sch.RungeKutta(var, var_prev, grid)
+		call sch.Linear(var, var_prev, grid)
 		call var_prev.equal(var, grid)
 		call msg.msg(var_prev, paral)
 		call var_prev.interpolate(inter, grid)

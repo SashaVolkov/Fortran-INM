@@ -27,8 +27,7 @@ CONTAINS
 		Class(g_var) :: g
 		real(8), intent(in) :: fun(-1:1)
 		integer, intent(in) :: x, y
-		partial_c2_x = (fun(1) * g.x_dist(x, y) - fun(-1) * g.x_dist(x+1, y))/&
-		(g.x_dist(x, y) + g.x_dist(x+1, y))**2
+		partial_c2_x = (fun(1) - fun(-1))/(g.x_dist(x, y) + g.x_dist(x+1, y))
 
 	end function
 
@@ -39,48 +38,45 @@ CONTAINS
 		Class(g_var) :: g
 		real(8), intent(in) :: fun(-1:1)
 		integer, intent(in) :: x, y
-		partial_c2_y = (fun(1) * g.y_dist(x, y) - fun(-1)*g.y_dist(x, y+1))/&
-		(g.y_dist(x, y) + g.y_dist(x, y+1))**2
+		partial_c2_y = (fun(1) - fun(-1))/(g.y_dist(x, y) + g.y_dist(x, y+1))
 
 	end function
 
 
 
-	real(8) function div_2(this, g, u1, u2, x, y)
+	real(8) function div_2(this, g, u1_cov, u2_cov, x, y)
 		Class(der) :: this
 		Class(g_var) :: g
-		real(8), intent(in) :: u1(-1:1), u2(-1:1)
+		real(8), intent(in) :: u1_cov(-1:1), u2_cov(-1:1)
 		integer(4), intent(in) :: x, y
 		integer(4) i
-		real(8) u_1(-1:1), u_2(-1:1), G_11, G_12, G_21, G_22
+		real(8) u1_con(-1:1), u2_con(-1:1), G_11, G_12, G_21, G_22
 
 		do i = -1, 1
 			G_11 = g.G_inverse(x+i, y, 1, 1)
 			G_12 = g.G_inverse(x, y+i, 1, 2)
 			G_21 = g.G_inverse(x+i, y, 2, 1)
 			G_22 = g.G_inverse(x, y+i, 2, 2)
-			u_1(i) = G_11*u1(i)! + G_12*u2(i)
-			u_2(i) = G_22*u2(i)! + G_21*u1(i)
+			u1_con(i) = G_11*u1_cov(i)! + G_12*u2_cov(i)
+			u2_con(i) = G_22*u2_cov(i)! + G_21*u1_cov(i)
 		end do
 
 
-
-		div_2 = ((u_1(1) * g.x_dist(x, y)*g.G_sqr(x+1,y) - u_1(-1)*g.x_dist(x+1, y)*g.G_sqr(x-1,y))/&
-			(g.x_dist(x, y) + g.x_dist(x+1, y))**2 &
-		+ (u_2(1) * g.y_dist(x, y)*g.G_sqr(x,y+1) - u_2(-1)*g.y_dist(x, y+1)*g.G_sqr(x,y-1))/&
-			(g.y_dist(x, y) + g.y_dist(x, y+1))**2)/g.G_sqr(x,y)
+		div_2 = ( (u1_con(1) * g.G_sqr(x+1,y) - u1_con(-1) * g.G_sqr(x-1,y))/(g.x_dist(x, y) + g.x_dist(x+1, y)) + &
+		 (u2_con(1) * g.G_sqr(x,y+1) - u2_con(-1) * g.G_sqr(x,y-1))/(g.y_dist(x, y) + g.y_dist(x, y+1)) )/g.G_sqr(x,y)
 
 	end function
 
 
 
-	real(8) function div_4(this, g, u1, u2, x, y)
+
+	real(8) function div_4(this, g, u1_cov, u2_cov, x, y)
 		Class(der) :: this
 		Class(g_var) :: g
-		real(8), intent(in) :: u1(-2:2), u2(-2:2)
+		real(8), intent(in) :: u1_cov(-2:2), u2_cov(-2:2)
 		integer(4), intent(in) :: x, y
 		integer(4) i
-		real(8) u_1(-2:2), u_2(-2:2), G_11, G_12, G_21, G_22, J_1(-2:2), J_2(-2:2)
+		real(8) u1_con(-2:2), u2_con(-2:2), G_11, G_12, G_21, G_22, J_1(-2:2), J_2(-2:2)
 		real(8) Ax , Bx, Cx, Dx, Ex, Ay, By, Cy, Dy, Ey
 
 		Ax = g.four_order_const_x( 1, x, y);  Bx = g.four_order_const_x( 2, x, y);  Cx = g.four_order_const_x( 3, x, y)
@@ -94,15 +90,15 @@ CONTAINS
 			G_12 = g.G_inverse(x, y+i, 1, 2)
 			G_21 = g.G_inverse(x+i, y, 2, 1)
 			G_22 = g.G_inverse(x, y+i, 2, 2)
-			u_1(i) = G_11*u1(i)! + G_12*u2(i)
-			u_2(i) = G_22*u2(i)! + G_21*u1(i)
+			u1_con(i) = G_11*u1_cov(i)! + G_12*u2_cov(i)
+			u2_con(i) = G_22*u2_cov(i)! + G_21*u1_cov(i)
 			J_1(i) = g.G_sqr(x+i, y)
 			J_2(i) = g.G_sqr(x, y+i)
 		end do
 
 
-		div_4 = (Ax*u_1(1)*J_1(1) + Bx*u_1(-1)*J_1(-1) + Cx*u_1(2)*J_1(2) + Dx*u_1(-2)*J_1(-2) + Ex*u_1(0)*J_1(0) + &
-			 Ay*u_2(1)*J_2(1) + By*u_2(-1)*J_2(-1) + Cy*u_2(2)*J_2(2) + Dy*u_2(-2)*J_2(-2) + Ey*u_2(0)*J_2(0))/J_1(0)
+		div_4 = ( Ax*u1_con(1)*J_1(1) + Bx*u1_con(-1)*J_1(-1) + Cx*u1_con(2)*J_1(2) + Dx*u1_con(-2)*J_1(-2) + Ex*u1_con(0)*J_1(0) + &
+			 Ay*u2_con(1)*J_2(1) + By*u2_con(-1)*J_2(-1) + Cy*u2_con(2)*J_2(2) + Dy*u2_con(-2)*J_2(-2) + Ey*u2_con(0)*J_2(0) )/J_1(0)
 
 	end function
 
