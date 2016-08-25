@@ -85,8 +85,6 @@ CONTAINS
 		this.last_x = paral.last_x;  this.last_y = paral.last_y
 
 
-				! print '(" rad = ", f10.2, " pi = ", f10.7)', geom.radius, geom.pi
-
 		call this.alloc()
 		if(grid_type == 0) then
 			call generate.conformal_cubed_sphere(this.dim, this.r_sphere, rescale, this.latlon_c, this.latlon)
@@ -403,6 +401,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 	this.square_angles(4, x, y) = this.triangle_angles(1, y, x) + this.triangle_angles(4, y, x)
 			end do
 		end do
+
+		print *, sphere_area, "sphere_area m^2"
 
 
 	end subroutine
