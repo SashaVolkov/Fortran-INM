@@ -1,6 +1,6 @@
 #/bin/bash
 
-rm -rf *.o *.mod *.out *.file analyze grid *~ 2>/dev/null
+rm -rf *.o *.mod *.out *.file analyze *~ 2>/dev/null
 
 Files="geometry.f90 matmul.f90 simple_rotations.f90 spherical.f90"
 Files=$Files" projections.f90 matrix_rotation.f90"

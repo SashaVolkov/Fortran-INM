@@ -34,7 +34,7 @@ CONTAINS
 		Class(geometry) :: this
 		real(8), intent(in) :: latlon1(1:2), latlon2(1:2)
 
-		distance_sphere = dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
+		distance_sphere = this.radius*dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
 
 	end function
 

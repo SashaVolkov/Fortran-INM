@@ -35,12 +35,12 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 16;  gr_step = 2;  height = 100.0
+	dim = 25;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
 	Tmax = 4000;  speedup = 10;  dt = 200.0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
-	grid_type = 1 ! 0 - conformal, 1 - equiangular
+	grid_type = 0 ! 0 - conformal, 1 - equiangular
 
 	call MPI_Init(ier)
 	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
@@ -66,19 +66,19 @@ implicit none
 	call diagn.init( grid, paral, Tmax, rescale, id)
 
 
-	do time = 1, Tmax
-		call sch.Linear(var, var_prev, grid)
-		call var_prev.equal(var, grid)
-		call msg.msg(var_prev, paral)
-		call var_prev.interpolate(inter, grid)
-		call diagn.L_norm(var_prev, grid, time)
-		call diagn.Courant(var_prev, grid, time)
-			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
-			if(mod(time, Tmax/10) == 0 .and. id == 0) then
-				end_init = MPI_Wtime()
-				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
-			end if
-	end do
+	! do time = 1, Tmax
+	! 	call sch.Linear(var, var_prev, grid)
+	! 	call var_prev.equal(var, grid)
+	! 	call msg.msg(var_prev, paral)
+	! 	call var_prev.interpolate(inter, grid)
+	! 	call diagn.L_norm(var_prev, grid, time)
+	! 	call diagn.Courant(var_prev, grid, time)
+	! 		if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
+	! 		if(mod(time, Tmax/10) == 0 .and. id == 0) then
+	! 			end_init = MPI_Wtime()
+	! 			print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
+	! 		end if
+	! end do
 
 
 	end_init = MPI_Wtime()
@@ -86,6 +86,7 @@ implicit none
 	if(id == 0) then
 		print '(" Grid step =  ", f10.2, " m")', step
 		print '(" Y max step = ", f10.2, " m")', grid.dy_max
+		print '(" Y min step = ", f10.2, " m")', grid.dy_min
 		print '(" Y min/max = ", f6.4)', grid.dy_min/grid.dy_max
 		print '(" X max/min = ", f6.4)', grid.dx_max/grid.dx_min
 		! print '(" latlon = ", f8.3, f8.3)', grid.latlon(1, 1, 1, 2) * 180.0/pi

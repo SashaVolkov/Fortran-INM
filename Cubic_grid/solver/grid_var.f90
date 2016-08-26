@@ -35,6 +35,7 @@ implicit none
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: equiang_c(:, :, :, :)
 		Real(8), Allocatable :: latlon(:, :, :, :)
+		Real(8), Allocatable :: points_dist(:, :, :)
 
 		Real(8), Allocatable :: square(:, :)
 		Real(8), Allocatable :: triangle_area(:, :, :)
@@ -87,7 +88,7 @@ CONTAINS
 
 		call this.alloc()
 		if(grid_type == 0) then
-			call generate.conformal_cubed_sphere(this.dim, this.r_sphere, rescale, this.latlon_c, this.latlon)
+			call generate.conformal_cubed_sphere(this.dim, this.step, this.r_sphere, rescale, this.latlon_c, this.latlon)
 		else if(grid_type == 1)then
 			call generate.equiangular_cubed_sphere(this.dim, this.step, this.equiang_c, this.latlon_c, this.latlon)
 		end if
@@ -118,6 +119,7 @@ CONTAINS
 			Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
 			Allocate(this.equiang_c(1:2, f:l , f:l, 1:6))
 			Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
+			Allocate(this.points_dist(1:2, f:l, f:l))
 
 			Allocate(this.square(1:2*dim, 1:2*dim))
 			Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
@@ -145,6 +147,7 @@ CONTAINS
 			if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
 			if (Allocated(this.equiang_c)) Deallocate(this.equiang_c)
 			if (Allocated(this.latlon)) Deallocate(this.latlon)
+			if (Allocated(this.points_dist)) Deallocate(this.points_dist)
 
 			if (Allocated(this.square)) Deallocate(this.square)
 			if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
@@ -168,6 +171,7 @@ CONTAINS
 		omega_cor = this.omega_cor
 		dim = this.dim
 
+		call this.tiles_prop(g)
 
 		do face = 1, 6 ! Only longitude
 			do x = this.ns_xy(1), this.nf_xy(1)
@@ -177,7 +181,6 @@ CONTAINS
 			end do
 		end do
 
-		call this.tiles_prop(g)
 		if(this.grid_type == 0) then
 			call this.transformation_matrix_conf()
 		else if(this.grid_type == 1)then
@@ -366,21 +369,66 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		dim = this.dim;  step = this.step
 		sphere_area = 0
 
-		do y = 1-step, 2*dim + step
+		if(this.grid_type == 0) then
+
+			do y = 1, 2*dim
+				do x = 1, 2*dim
+					this.points_dist(:, x, y) = this.latlon_c(:, x, y, 2) ! face = 2
+				end do
+
+				do x = 2*dim + 1, 2*dim + this.step
+					this.points_dist(:, x, y) = this.latlon_c(:, x - 2*dim, y, 3) ! face = 3
+				end do
+
+				do x = 1-this.step, 0
+					this.points_dist(:, x, y) = this.latlon_c(:, 2*dim + x, y, 5)
+				end do
+			end do
+
+
+			do x = 1, 2*dim
+				do y = 2*dim + 1, 2*dim + this.step
+					this.points_dist(:, x, y) = this.latlon_c(:, x, y - 2*dim, 6) ! face = 6
+				end do
+
+				do y = 1-this.step, 0
+					this.points_dist(:, x, y) = this.latlon_c(:, x, 2*dim + y, 1)
+				end do
+			end do
+
+
+
+		! 	do x = 1-step, 2*dim + step
+		! 		do y = 2-step, 2*dim + step
+
+		! this.y_dist(x, y) = g.dist(this.points_dist(:, x, y), this.points_dist(:, x, y-1))*this.r_sphere
+
+		! 		end do
+		! 	end do
+
 			do x = 2-step, 2*dim + step
-				if(this.grid_type == 0) then
+				do y = 1-step, 2*dim + step
 
-					this.x_dist(x, y) = g.dist(this.latlon_c(:, x, y, 2), this.latlon_c(:, x-1, y, 2))*this.r_sphere
-					this.y_dist(y, x) = this.x_dist(x, y)
+		dist = g.dist(this.points_dist(:, x, y), this.points_dist(:, x-1, y))
+		this.x_dist(x, y) = dist
+		this.y_dist(y, x) = dist
+		! print *, dist*this.r_sphere
 
-				else if(this.grid_type == 1)then
+				end do
+			end do
 
+
+
+		else if(this.grid_type == 1)then
+
+			do y = 1-step, 2*dim + step
+				do x = 2-step, 2*dim + step
 					this.x_dist(x, y) = (this.equiang_c(1, x, y, 2) - this.equiang_c(1, x-1, y, 2))*this.r_sphere
 					this.y_dist(y, x) = this.x_dist(x, y)
-
-				end if
+				end do
 			end do
-		end do
+
+		end if
 
 
 		do x = 1, 2*dim
@@ -402,7 +450,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			end do
 		end do
 
-		print *, sphere_area, "sphere_area m^2"
+		! print '(" sphere_area = ", f20.2)', sphere_area*6d0
 
 
 	end subroutine

@@ -25,12 +25,12 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere(this, dim, r_sphere, rescale, latlon_c, latlon)
+	subroutine conformal_cubed_sphere(this, dim, step, r_sphere, rescale, latlon_c, latlon)
 		Class(generator) :: this
-		integer, intent(in) :: dim, rescale
+		integer, intent(in) :: dim, step, rescale
 		real(8), intent(in) :: r_sphere
-		real(8), intent(out) :: latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6)
-		real(8), intent(out) :: latlon(1:2, 1:2*dim+1, 1:2*dim+1, 1:6)
+		real(8), intent(out) :: latlon_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
+		real(8), intent(out) :: latlon(1:2, 1-step:2*dim+step+1, 1-step:2*dim+step+1, 1:6)
 
 		character*14 filename
 		character istring
@@ -50,6 +50,12 @@ CONTAINS
 		x_min = -2*dim; x_max = 2*dim; y_min = -2*dim; y_max = 2*dim
 
 		do face_index= 1, 6
+
+		! channel = face_index
+		! write(istring(1:1), '(i1.1)') face_index
+		! filename = "grid/face" // istring // ".dat" 
+		! open (channel, file = filename)
+
 			do j= x_min, x_max
 				do k= y_min, y_max
 
@@ -69,6 +75,7 @@ CONTAINS
 
 						r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 						! grid_points_xyz(:, j, k, face_index) = r_vector
+						! write(channel,*) r_vector(1),r_vector(2),r_vector(3)
 
 						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, latitude, longitude)
 
@@ -81,7 +88,9 @@ CONTAINS
 						end if
 
 					end do
+					! write(channel,*)
 			end do
+			! close(channel)
 		end do
 
 
