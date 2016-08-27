@@ -106,56 +106,56 @@ CONTAINS
 		f_x = this.first_x;  l_x = this.last_x;  f_y = this.first_y;  l_y = this.last_y
 		dim = this.dim;  step = this.step;  f = 1-step; l = 2*dim + step
 
-			Allocate(this.x_dist(f:l, f:l))
-			Allocate(this.y_dist(f:l, f:l))
-			Allocate(this.G_sqr(f_x:l_x , f_y:l_y))
-			Allocate(this.G_tensor(f_x:l_x , f_y:l_y, 1:2, 1:2))
-			Allocate(this.G_inverse(f_x:l_x , f_y:l_y, 1:2, 1:2))
-			Allocate(this.rho(f_x:l_x , f_y:l_y))
-			Allocate(this.To_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
-			Allocate(this.From_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
+		Allocate(this.x_dist(f:l, f:l))
+		Allocate(this.y_dist(f:l, f:l))
+		Allocate(this.G_sqr(f_x:l_x , f_y:l_y))
+		Allocate(this.G_tensor(f_x:l_x , f_y:l_y, 1:2, 1:2))
+		Allocate(this.G_inverse(f_x:l_x , f_y:l_y, 1:2, 1:2))
+		Allocate(this.rho(f_x:l_x , f_y:l_y))
+		Allocate(this.To_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
+		Allocate(this.From_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
 
-			Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
-			Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
-			Allocate(this.equiang_c(1:2, f:l , f:l, 1:6))
-			Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
-			Allocate(this.points_dist(1:2, f:l, f:l))
+		Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
+		Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
+		Allocate(this.equiang_c(1:2, f:l , f:l, 1:6))
+		Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
+		Allocate(this.points_dist(1:2, f:l, f:l))
 
-			Allocate(this.square(1:2*dim, 1:2*dim))
-			Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
-			Allocate(this.triangle_angles(1:6, 1:2*dim, 1:2*dim))
-			Allocate(this.square_angles(1:4, 1:2*dim, 1:2*dim))
+		Allocate(this.square(1:2*dim, 1:2*dim))
+		Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
+		Allocate(this.triangle_angles(1:6, 1:2*dim, 1:2*dim))
+		Allocate(this.square_angles(1:4, 1:2*dim, 1:2*dim))
 
-			Allocate(this.four_order_const_x(1:5, f_x:l_x , f_y:l_y))
-			Allocate(this.four_order_const_y(1:5, f_x:l_x , f_y:l_y))
+		Allocate(this.four_order_const_x(1:5, f_x:l_x , f_y:l_y))
+		Allocate(this.four_order_const_y(1:5, f_x:l_x , f_y:l_y))
 	end subroutine
 
 
 
 	subroutine deinit(this)
 		Class(g_var) :: this
-			if (Allocated(this.x_dist)) Deallocate(this.x_dist)
-			if (Allocated(this.y_dist)) Deallocate(this.y_dist)
-			if (Allocated(this.G_sqr)) Deallocate(this.G_sqr)
-			if (Allocated(this.G_tensor)) Deallocate(this.G_tensor)
-			if (Allocated(this.G_inverse)) Deallocate(this.G_inverse)
-			if (Allocated(this.rho)) Deallocate(this.rho)
-			if (Allocated(this.To_sph_coord)) Deallocate(this.To_sph_coord)
-			if (Allocated(this.From_sph_coord)) Deallocate(this.From_sph_coord)
+		if (Allocated(this.x_dist)) Deallocate(this.x_dist)
+		if (Allocated(this.y_dist)) Deallocate(this.y_dist)
+		if (Allocated(this.G_sqr)) Deallocate(this.G_sqr)
+		if (Allocated(this.G_tensor)) Deallocate(this.G_tensor)
+		if (Allocated(this.G_inverse)) Deallocate(this.G_inverse)
+		if (Allocated(this.rho)) Deallocate(this.rho)
+		if (Allocated(this.To_sph_coord)) Deallocate(this.To_sph_coord)
+		if (Allocated(this.From_sph_coord)) Deallocate(this.From_sph_coord)
 
-			if (Allocated(this.f_cor)) Deallocate(this.f_cor)
-			if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
-			if (Allocated(this.equiang_c)) Deallocate(this.equiang_c)
-			if (Allocated(this.latlon)) Deallocate(this.latlon)
-			if (Allocated(this.points_dist)) Deallocate(this.points_dist)
+		if (Allocated(this.f_cor)) Deallocate(this.f_cor)
+		if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
+		if (Allocated(this.equiang_c)) Deallocate(this.equiang_c)
+		if (Allocated(this.latlon)) Deallocate(this.latlon)
+		if (Allocated(this.points_dist)) Deallocate(this.points_dist)
 
-			if (Allocated(this.square)) Deallocate(this.square)
-			if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
-			if (Allocated(this.triangle_angles)) Deallocate(this.triangle_angles)
-			if (Allocated(this.square_angles)) Deallocate(this.square_angles)
+		if (Allocated(this.square)) Deallocate(this.square)
+		if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
+		if (Allocated(this.triangle_angles)) Deallocate(this.triangle_angles)
+		if (Allocated(this.square_angles)) Deallocate(this.square_angles)
 
-			if (Allocated(this.four_order_const_x)) Deallocate(this.four_order_const_x)
-			if (Allocated(this.four_order_const_y)) Deallocate(this.four_order_const_y)
+		if (Allocated(this.four_order_const_x)) Deallocate(this.four_order_const_x)
+		if (Allocated(this.four_order_const_y)) Deallocate(this.four_order_const_y)
 	end subroutine
 
 
@@ -167,10 +167,8 @@ CONTAINS
 		integer(4) face, x, y, dim
 		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
 
-
 		omega_cor = this.omega_cor
 		dim = this.dim
-
 
 		do face = 1, 6 ! Only longitude
 			do x = this.ns_xy(1), this.nf_xy(1)
@@ -438,6 +436,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 	this.square_angles(2, x, y) = this.triangle_angles(3, y, x) + this.triangle_angles(6, y, x)
 	this.square_angles(3, x, y) = this.triangle_angles(5, y, x)
 	this.square_angles(4, x, y) = this.triangle_angles(1, y, x) + this.triangle_angles(4, y, x)
+
 			end do
 		end do
 
@@ -446,17 +445,17 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 
 
 
-subroutine step_minmax(this)
-	Class(g_var) :: this
-	real(8) dim
+	subroutine step_minmax(this)
+		Class(g_var) :: this
+		real(8) dim
 
-	dim = this.dim
-	this.dx_min = MINVAL(this.x_dist(2:2*dim, 1:2*dim))
-	this.dy_min = MINVAL(this.y_dist(1:2*dim, 2:2*dim))
-	this.dx_max = MAXVAL(this.x_dist(2:2*dim, 1:2*dim))
-	this.dy_max = MAXVAL(this.y_dist(1:2*dim, 2:2*dim))
+		dim = this.dim
+		this.dx_min = MINVAL(this.x_dist(2:2*dim, 1:2*dim))
+		this.dy_min = MINVAL(this.y_dist(1:2*dim, 2:2*dim))
+		this.dx_max = MAXVAL(this.x_dist(2:2*dim, 1:2*dim))
+		this.dy_max = MAXVAL(this.y_dist(1:2*dim, 2:2*dim))
 
-end subroutine
+	end subroutine
 
 
 
