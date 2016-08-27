@@ -171,7 +171,6 @@ CONTAINS
 		omega_cor = this.omega_cor
 		dim = this.dim
 
-		call this.tiles_prop(g)
 
 		do face = 1, 6 ! Only longitude
 			do x = this.ns_xy(1), this.nf_xy(1)
@@ -181,6 +180,7 @@ CONTAINS
 			end do
 		end do
 
+		call this.tiles_prop(g)
 		if(this.grid_type == 0) then
 			call this.transformation_matrix_conf()
 		else if(this.grid_type == 1)then
@@ -357,6 +357,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 
 
 
+
 	subroutine tiles_prop(this, g)
 		Class(g_var) :: this
 		Class(geometry) :: g
@@ -397,22 +398,12 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			end do
 
 
-
-		! 	do x = 1-step, 2*dim + step
-		! 		do y = 2-step, 2*dim + step
-
-		! this.y_dist(x, y) = g.dist(this.points_dist(:, x, y), this.points_dist(:, x, y-1))*this.r_sphere
-
-		! 		end do
-		! 	end do
-
 			do x = 2-step, 2*dim + step
 				do y = 1-step, 2*dim + step
 
 		dist = g.dist(this.points_dist(:, x, y), this.points_dist(:, x-1, y))
 		this.x_dist(x, y) = dist
 		this.y_dist(y, x) = dist
-		! print *, dist*this.r_sphere
 
 				end do
 			end do
@@ -423,8 +414,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 
 			do y = 1-step, 2*dim + step
 				do x = 2-step, 2*dim + step
-					this.x_dist(x, y) = (this.equiang_c(1, x, y, 2) - this.equiang_c(1, x-1, y, 2))*this.r_sphere
-					this.y_dist(y, x) = this.x_dist(x, y)
+		this.x_dist(x, y) = (this.equiang_c(1, x, y, 2) - this.equiang_c(1, x-1, y, 2))*this.r_sphere
+		this.y_dist(y, x) = this.x_dist(x, y)
 				end do
 			end do
 
@@ -450,10 +441,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			end do
 		end do
 
-		! print '(" sphere_area = ", f20.2)', sphere_area*6d0
-
-
 	end subroutine
+
 
 
 

@@ -188,11 +188,12 @@ module interpolation
 					latlon_x(2) = g.latlon_c(2, step, xk, 2)
 					latlon_xk(:) = g.latlon_c(:, step, xk, 2)
 					latlon_xj(:) = g.latlon_c(:, step, xj, 2)
-					temp = (geom.dist(latlon_x(:), latlon_xk(:)))/(geom.dist(latlon_xj(:), latlon_xk(:)))
+					temp = (geom.angle(latlon_x(:), latlon_xk(:)))/(geom.angle(latlon_xj(:), latlon_xk(:)))
 				end if
 			end do
 
 		weight_find = temp
+		! print *, temp, x
 
 
 	end function

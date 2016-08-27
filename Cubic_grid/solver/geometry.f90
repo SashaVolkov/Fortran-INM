@@ -34,21 +34,20 @@ CONTAINS
 		Class(geometry) :: this
 		real(8), intent(in) :: latlon1(1:2), latlon2(1:2)
 
-		distance_sphere = this.radius*dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
+		distance_sphere = this.radius*this.angle(latlon1, latlon2)
 
 	end function
 
 
 
 
-	subroutine angle_sphere(this, latlon1, latlon2, angle)
+	real(8) function angle_sphere(this, latlon1, latlon2)
 		Class(geometry) :: this
 		real(8), intent(in) :: latlon1(1:2),latlon2(1:2)
-		real(8), intent(out) :: angle
 
-		angle = dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
+		angle_sphere = dacos(dsin(latlon1(1))*dsin(latlon2(1)) + dcos(latlon1(1))*dcos(latlon2(1))*dcos(latlon1(2) - latlon2(2)))
 
-	end subroutine
+	end function
 
 
 
@@ -60,9 +59,9 @@ CONTAINS
 		real(8) a, b, c  ! angles between radiuses
 		real(8) alpha, beta, gamma, eps
 
-		call this.angle(latlon1, latlon2, a)
-		call this.angle(latlon2, latlon3, b)
-		call this.angle(latlon1, latlon3, c)
+		a = this.angle(latlon1, latlon2)
+		b = this.angle(latlon2, latlon3)
+		c = this.angle(latlon1, latlon3)
 
 		alpha = dacos( ( dcos(a) - dcos(b)*dcos(c) )/( dsin(b)*dsin(c) ) )
 		beta = dacos( ( dcos(b) - dcos(a)*dcos(c) )/( dsin(a)*dsin(c) ) )
