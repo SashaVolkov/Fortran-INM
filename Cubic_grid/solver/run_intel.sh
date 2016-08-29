@@ -28,7 +28,7 @@ else
 		mpiexec -n $1 ./a.out
 
 		cd datFiles
-		# ./plotscript.sh
+		./plotscript.sh
 	fi
 
 
