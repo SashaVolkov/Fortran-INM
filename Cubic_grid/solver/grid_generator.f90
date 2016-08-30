@@ -158,7 +158,6 @@ CONTAINS
 				do i= min, max
 					alpha = pi*i/(8d0*dim);  beta= pi*j/(8d0*dim); k = sign(1, face - 3)
 
-
 					if ( face > 1 .and. face < 6 ) then
 						longitude = alpha + (pi/2.0)*(face - 2); latitude = datan(dtan(beta)*dcos(alpha))
 					else

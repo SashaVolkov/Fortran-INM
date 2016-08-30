@@ -107,7 +107,7 @@ CONTAINS
 				var_pr.y_vel_msg(:, :, :)=var_pr.y_vel(:, :, :)
 
 				if(grid.grid_type == 1) then
-					call var_pr.Velocity_to_spherical(grid)
+					! call var_pr.Velocity_to_spherical(grid)
 				end if
 
 
@@ -156,7 +156,7 @@ CONTAINS
 		Class(interp) :: i
 		Class(g_var) :: g
 		if(g.grid_type == 1) then
-			call this.Velocity_from_spherical(g)
+			! call this.Velocity_from_spherical(g)
 			call i.Lagrange(this.h_height, this.interp_factor)
 			call i.Lagrange(this.x_vel, this.interp_factor)
 			call i.Lagrange(this.y_vel, this.interp_factor)

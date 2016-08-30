@@ -251,23 +251,23 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		do y = this.first_y, this.last_y
 			do x = this.first_x, this.last_x
 
-			x_1 = this.equiang_c(1, x, y)
-			x_2 = this.equiang_c(2, x, y)
+			x_1 = dtan(this.equiang_c(1, x, y))
+			x_2 = dtan(this.equiang_c(2, x, y))
 
-			this.rho(x, y) = dsqrt(1 + (dtan(x_1))**2 + (dtan(x_2))**2)
-			this.G_sqr(x, y) = 1.0/(this.rho(x, y)**3 * ((dcos(x_1))**2) * (dcos(x_2)**2))
-			g_coef = 1.0/((this.rho(x, y)**4) * ((dcos(x_1))**2) * (dcos(x_2)**2))
-			g_inv_coef = ((this.rho(x, y)**2) * ((dcos(x_1))**2) * (dcos(x_2)**2))
+			this.rho(x, y) = dsqrt(1.0 + x_1**2 + x_2**2)
+			this.G_sqr(x, y) = (1.0 + x_1**2)*(1.0 + x_2**2)/(this.rho(x, y)**3)
+			g_coef = (1.0 + x_1**2)*(1.0 + x_2**2)/(this.rho(x, y)**4)
+			g_inv_coef = (this.rho(x, y)**2)/((1.0 + x_1**2)*(1.0 + x_2**2))
 
-			this.G_tensor(x, y, 1, 1) = g_coef * (1 + (dtan(x_1))**2)
-			this.G_tensor(x, y, 1, 2) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
-			this.G_tensor(x, y, 2, 1) = g_coef * (- (dtan(x_1))*(dtan(x_2)))
-			this.G_tensor(x, y, 2, 2) = g_coef * (1 + (dtan(x_2))**2)
+			this.G_tensor(x, y, 1, 1) = g_coef * (1 + x_1**2)
+			this.G_tensor(x, y, 1, 2) = g_coef * (- x_1*x_2)
+			this.G_tensor(x, y, 2, 1) = g_coef * (- x_1*x_2)
+			this.G_tensor(x, y, 2, 2) = g_coef * (1 + x_2**2)
 
-			this.G_inverse(x, y, 1, 1) = g_inv_coef * (1 + (dtan(x_2))**2)
-			this.G_inverse(x, y, 1, 2) = g_inv_coef * (dtan(x_1))*(dtan(x_2))
-			this.G_inverse(x, y, 2, 1) = g_inv_coef * (dtan(x_1))*(dtan(x_2))
-			this.G_inverse(x, y, 2, 2) = g_inv_coef * (1 + (dtan(x_1))**2)
+			this.G_inverse(x, y, 1, 1) = g_inv_coef * (1 + x_2**2)
+			this.G_inverse(x, y, 1, 2) = g_inv_coef * (x_1*x_2)
+			this.G_inverse(x, y, 2, 1) = g_inv_coef * (x_1*x_2)
+			this.G_inverse(x, y, 2, 2) = g_inv_coef * (1 + x_1**2)
 
 			end do
 		end do
@@ -281,11 +281,14 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 	subroutine transformation_matrix_conf(this)
 		Class(g_var) :: this
 		integer(4) x, y, face
+		real(8) :: A(2,2)
 
 		do y = this.first_y, this.last_y
 			do x = this.first_x, this.last_x
 
 			this.G_sqr(x, y) = 1.0
+
+			! A(1,1) = 
 
 			this.G_tensor(x, y, 1, 1) = 1.0
 			this.G_tensor(x, y, 1, 2) = 0.0
@@ -315,17 +318,17 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					delta = this.rho(x,y)
-					x_1 = this.equiang_c(1, x, y)
-					x_2 = this.equiang_c(2, x, y)
+					x_1 = dtan(this.equiang_c(1, x, y))
+					x_2 = dtan(this.equiang_c(2, x, y))
 
 					this.From_sph_coord(1,1,x,y,face) = 1d0
 					this.From_sph_coord(1,2,x,y,face) = 0d0
-					this.From_sph_coord(2,1,x,y,face) = dtan(x_1)*dtan(x_2)*((dcos(x_2))**2)
-					this.From_sph_coord(2,2,x,y,face) = (delta**2)*((dcos(x_2))**2)*abs(dcos(x_1))
+					this.From_sph_coord(2,1,x,y,face) = x_1*x_2/(1 + x_2**2)
+					this.From_sph_coord(2,2,x,y,face) = (delta**2)/((1 + x_2**2)*dsqrt(1 + x_1**2))
 
 					this.To_sph_coord(1,1,x,y,face) = 1d0
 					this.To_sph_coord(1,2,x,y,face) = 0d0
-					this.To_sph_coord(2,1,x,y,face) = dtan(x_1)*dtan(x_2)/(abs(dcos(x_1))*(delta**2))
+					this.To_sph_coord(2,1,x,y,face) = - x_1*x_2*dsqrt(1 + x_1**2)/(delta**2)
 					this.To_sph_coord(2,2,x,y,face) = 1d0/this.From_sph_coord(2,2,x,y,face)
 				end do
 			end do
@@ -335,18 +338,18 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					delta = this.rho(x,y)
-					x_1 = this.equiang_c(1, x, y)
-					x_2 = this.equiang_c(2, x, y)
+					x_1 = dtan(this.equiang_c(1, x, y))
+					x_2 = dtan(this.equiang_c(2, x, y))
 
-					this.From_sph_coord(1,1,x,y,face) = -s(face)*dtan(x_2)*((dcos(x_1))**2)
-					this.From_sph_coord(1,2,x,y,face) = -s(face)*(delta**2)*dtan(x_1)*((dcos(x_1))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
-					this.From_sph_coord(2,1,x,y,face) = s(face)*dtan(x_1)*((dcos(x_2))**2)
-					this.From_sph_coord(2,2,x,y,face) = -s(face)*(delta**2)*dtan(x_2)*((dcos(x_2))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
+					this.From_sph_coord(1,1,x,y,face) = -s(face)*x_2/(1 + x_1**2)
+					this.From_sph_coord(1,2,x,y,face) = -s(face)*(delta**2)*x_1/((1 + x_1**2)*(x_2**2 + x_1**2))
+					this.From_sph_coord(2,1,x,y,face) = s(face)*x_1/(1 + x_2**2)
+					this.From_sph_coord(2,2,x,y,face) = -s(face)*(delta**2)*x_2/((1 + x_2**2)*(x_2**2 + x_1**2))
 
-					this.To_sph_coord(1,1,x,y,face) = - s(face)*dtan(x_2)/(((dcos(x_1))**2) * (dtan(x_1)**2 + dtan(x_2)**2))
-					this.To_sph_coord(1,2,x,y,face) = s(face)*dtan(x_1)/(((dcos(x_2))**2) * (dtan(x_1)**2 + dtan(x_2)**2))
-					this.To_sph_coord(2,1,x,y,face) = - s(face)*dtan(x_1)/(((dcos(x_1))**2) * dsqrt(dtan(x_1)**2 + dtan(x_2)**2) * (delta**2))
-					this.To_sph_coord(2,2,x,y,face) = - s(face)*dtan(x_2)/(((dcos(x_2))**2) * dsqrt(dtan(x_1)**2 + dtan(x_2)**2) * (delta**2))
+					this.To_sph_coord(1,1,x,y,face) = -s(face)*x_2*(1 + x_1**2)/(x_2**2 + x_1**2)
+					this.To_sph_coord(1,2,x,y,face) = s(face)*x_1*(1 + x_2**2)/(x_2**2 + x_1**2)
+					this.To_sph_coord(2,1,x,y,face) = - s(face)*x_1*(1 + x_1**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
+					this.To_sph_coord(2,2,x,y,face) = - s(face)*x_2*(1 + x_2**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
 				end do
 			end do
 		end do
