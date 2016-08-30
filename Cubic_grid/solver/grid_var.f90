@@ -33,7 +33,7 @@ implicit none
 
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
-		Real(8), Allocatable :: equiang_c(:, :, :, :)
+		Real(8), Allocatable :: equiang_c(:, :, :)
 		Real(8), Allocatable :: latlon(:, :, :, :)
 		Real(8), Allocatable :: points_dist(:, :, :)
 
@@ -117,7 +117,7 @@ CONTAINS
 
 		Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
 		Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
-		Allocate(this.equiang_c(1:2, f:l , f:l, 1:6))
+		Allocate(this.equiang_c(1:2, f:l , f:l))
 		Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
 		Allocate(this.points_dist(1:2, f:l, f:l))
 
@@ -251,8 +251,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		do y = this.first_y, this.last_y
 			do x = this.first_x, this.last_x
 
-			x_1 = this.equiang_c(1, x, y, 2)
-			x_2 = this.equiang_c(2, x, y, 2)
+			x_1 = this.equiang_c(1, x, y)
+			x_2 = this.equiang_c(2, x, y)
 
 			this.rho(x, y) = dsqrt(1 + (dtan(x_1))**2 + (dtan(x_2))**2)
 			this.G_sqr(x, y) = 1.0/(this.rho(x, y)**3 * ((dcos(x_1))**2) * (dcos(x_2)**2))
@@ -315,8 +315,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					delta = this.rho(x,y)
-					x_1 = this.equiang_c(1, x, y, face)
-					x_2 = this.equiang_c(2, x, y, face)
+					x_1 = this.equiang_c(1, x, y)
+					x_2 = this.equiang_c(2, x, y)
 
 					this.From_sph_coord(1,1,x,y,face) = 1d0
 					this.From_sph_coord(1,2,x,y,face) = 0d0
@@ -335,8 +335,8 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					delta = this.rho(x,y)
-					x_1 = this.equiang_c(1, x, y, face)
-					x_2 = this.equiang_c(2, x, y, face)
+					x_1 = this.equiang_c(1, x, y)
+					x_2 = this.equiang_c(2, x, y)
 
 					this.From_sph_coord(1,1,x,y,face) = -s(face)*dtan(x_2)*((dcos(x_1))**2)
 					this.From_sph_coord(1,2,x,y,face) = -s(face)*(delta**2)*dtan(x_1)*((dcos(x_1))**2)/dsqrt(dtan(x_1)**2 + dtan(x_2)**2)
@@ -412,7 +412,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 
 			do y = 1-step, 2*dim + step
 				do x = 2-step, 2*dim + step
-		this.x_dist(x, y) = (this.equiang_c(1, x, y, 2) - this.equiang_c(1, x-1, y, 2))*this.r_sphere
+		this.x_dist(x, y) = (this.equiang_c(1, x, y) - this.equiang_c(1, x-1, y))*this.r_sphere
 		this.y_dist(y, x) = this.x_dist(x, y)
 				end do
 			end do

@@ -145,38 +145,30 @@ CONTAINS
 		Type(projection) :: projection
 		integer, intent(in) :: dim, step
 		real(8), intent(out) :: latlon_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
-		real(8), intent(out) :: equiang_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
+		real(8), intent(out) :: equiang_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step)
 		real(8), intent(out) :: latlon(1:2, 1-step:2*dim+step+1, 1-step:2*dim+step+1, 1:6)
 		integer(4) face, i, j, k, min, max
-		real(8) x,y,z,a, pi, r_vector(3), alpha,beta, latitude, longitude, radius
+		real(8) x,y,z,a, pi, r_vector(3), alpha,beta, latitude, longitude, radius, s(6)
 
 		pi = 314159265358979323846d-20;  min = -2*dim - 2*step;  max = - min
+		s(1) = - 1d0;  s(6) = 1d0
 
 		do face = 1, 6
 			do j= min, max
 				do i= min, max
 					alpha = pi*i/(8d0*dim);  beta= pi*j/(8d0*dim); k = sign(1, face - 3)
 
-					select case(face)
-						case(1)
-							z = -1;  y = dtan(alpha);  x = dtan(beta)
-						case(2)
-							x = 1;  y = dtan(alpha);  z = dtan(beta)
-						case(3)
-							y = 1;  x = -dtan(alpha);  z = dtan(beta)
-						case(4)
-							x = -1;  y = -dtan(alpha);  z = dtan(beta)
-						case(5)
-							y = -1;  x = dtan(alpha);  z = dtan(beta)
-						case(6)
-							z = 1;  y = dtan(alpha);  x = -dtan(beta)
-					end select
 
-					call cart2sphere(x, y, z, radius, latitude, longitude)
+					if ( face > 1 .and. face < 6 ) then
+						longitude = alpha + (pi/2.0)*(face - 2); latitude = datan(dtan(beta)*dcos(alpha))
+					else
+						longitude = -datan (dtan(alpha)/dtan(beta)); latitude = s(face)*datan(1/dsqrt(dtan(alpha)**2 + dtan(beta)**2))
+					end if
+
 
 						if(abs(mod(i,2)) == 1 .and. abs(mod(j,2)) == 1) then
-							equiang_c(1, dim + (i+1)/2, dim + (j+1)/2, face) = alpha
-							equiang_c(2, dim + (i+1)/2, dim + (j+1)/2, face) = beta
+							equiang_c(1, dim + (i+1)/2, dim + (j+1)/2) = alpha
+							equiang_c(2, dim + (i+1)/2, dim + (j+1)/2) = beta
 							latlon_c(1, dim + (i+1)/2, dim + (j+1)/2, face) = latitude
 							latlon_c(2, dim + (i+1)/2, dim + (j+1)/2, face) = longitude
 						else if(abs(mod(i,2)) == 0 .and. abs(mod(j,2)) == 0 ) then

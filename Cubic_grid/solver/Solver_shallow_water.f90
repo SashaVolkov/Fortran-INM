@@ -35,10 +35,10 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	dim = 50;  gr_step = 2;  height = 100.0
+	dim = 40;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax = 8000;  speedup = 20;  dt = 100.0
+	Tmax = 2000;  speedup = 20;  dt = 100.0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 	grid_type = 1 ! 0 - conformal, 1 - equiangular
 
