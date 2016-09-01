@@ -25,12 +25,13 @@ End Type
 
 CONTAINS
 
-	subroutine conformal_cubed_sphere(this, dim, step, r_sphere, rescale, latlon_c, latlon)
+	subroutine conformal_cubed_sphere(this, dim, step, r_sphere, rescale, cube_coord_c, latlon_c, latlon)
 		Class(generator) :: this
 		integer, intent(in) :: dim, step, rescale
 		real(8), intent(in) :: r_sphere
 		real(8), intent(out) :: latlon_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
 		real(8), intent(out) :: latlon(1:2, 1-step:2*dim+step+1, 1-step:2*dim+step+1, 1:6)
+		real(8), intent(out) :: cube_coord_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step)
 
 		character*14 filename
 		character istring
@@ -80,6 +81,8 @@ CONTAINS
 						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, latitude, longitude)
 
 						if(abs(mod(j,2)) == 1 .and. abs(mod(k,2)) == 1) then
+							cube_coord_c(1, dim + (j+1)/2, dim + (k+1)/2) = x_face
+							cube_coord_c(2, dim + (j+1)/2, dim + (k+1)/2) = y_face
 							latlon_c(1, dim + (j+1)/2, dim + (k+1)/2, face_index) = latitude
 							latlon_c(2, dim + (j+1)/2, dim + (k+1)/2, face_index) = longitude
 						else if(abs(mod(j,2)) == 0 .and. abs(mod(k,2)) == 0) then
@@ -139,13 +142,13 @@ CONTAINS
 
 
 
-	subroutine equiangular_cubed_sphere(this, dim, step, equiang_c, latlon_c, latlon)
+	subroutine equiangular_cubed_sphere(this, dim, step, cube_coord_c, latlon_c, latlon)
 
 		Class(generator) :: this
 		Type(projection) :: projection
 		integer, intent(in) :: dim, step
 		real(8), intent(out) :: latlon_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
-		real(8), intent(out) :: equiang_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step)
+		real(8), intent(out) :: cube_coord_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step)
 		real(8), intent(out) :: latlon(1:2, 1-step:2*dim+step+1, 1-step:2*dim+step+1, 1:6)
 		integer(4) face, i, j, k, min, max
 		real(8) x,y,z,a, pi, r_vector(3), alpha,beta, latitude, longitude, radius, s(6)
@@ -158,16 +161,27 @@ CONTAINS
 				do i= min, max
 					alpha = pi*i/(8d0*dim);  beta= pi*j/(8d0*dim); k = sign(1, face - 3)
 
-					if ( face > 1 .and. face < 6 ) then
-						longitude = alpha + (pi/2.0)*(face - 2); latitude = datan(dtan(beta)*dcos(alpha))
-					else
-						longitude = -datan (dtan(alpha)/dtan(beta)); latitude = s(face)*datan(1/dsqrt(dtan(alpha)**2 + dtan(beta)**2))
-					end if
+					select case(face)
+						case(1)
+							z = -1;  y = dtan(alpha);  x = dtan(beta)
+						case(2)
+							x = 1;  y = dtan(alpha);  z = dtan(beta)
+						case(3)
+							y = 1;  x = -dtan(alpha);  z = dtan(beta)
+						case(4)
+							x = -1;  y = -dtan(alpha);  z = dtan(beta)
+						case(5)
+							y = -1;  x = dtan(alpha);  z = dtan(beta)
+						case(6)
+							z = 1;  y = dtan(alpha);  x = -dtan(beta)
+					end select
+
+					call cart2sphere(x, y, z, radius, latitude, longitude)
 
 
 						if(abs(mod(i,2)) == 1 .and. abs(mod(j,2)) == 1) then
-							equiang_c(1, dim + (i+1)/2, dim + (j+1)/2) = alpha
-							equiang_c(2, dim + (i+1)/2, dim + (j+1)/2) = beta
+							cube_coord_c(1, dim + (i+1)/2, dim + (j+1)/2) = alpha
+							cube_coord_c(2, dim + (i+1)/2, dim + (j+1)/2) = beta
 							latlon_c(1, dim + (i+1)/2, dim + (j+1)/2, face) = latitude
 							latlon_c(2, dim + (i+1)/2, dim + (j+1)/2, face) = longitude
 						else if(abs(mod(i,2)) == 0 .and. abs(mod(j,2)) == 0 ) then

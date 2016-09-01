@@ -1,6 +1,7 @@
 module diagnostic_mod
 
 	use grid_var, Only: g_var
+	use metrics, Only: metric
 	use func_var, Only: f_var
 	use parallel_cubic, Only: parallel
 	use mpi
@@ -103,10 +104,11 @@ CONTAINS
 
 
 
-	subroutine Courant(this, func, grid, time)
+	subroutine Courant(this, func, grid, metr, time)
 		Class(diagnostic) :: this
 		Class(f_var) :: func
 		Class(g_var) :: grid
+		Class(metric) :: metr
 		integer(4), intent(in) :: time
 		integer(4) face, x, y, dim, ier, id
 		real(8) :: Courant_number, Courant_max
@@ -117,8 +119,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/(grid.x_dist(x, y)*grid.G_sqr(x,y))) +&
-					 abs(func.y_vel(x, y, face)*grid.dt/(grid.y_dist(x, y)*grid.G_sqr(x,y)))
+					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/(grid.x_dist(x, y)*metr.G_sqr(x,y))) +&
+					 abs(func.y_vel(x, y, face)*grid.dt/(grid.y_dist(x, y)*metr.G_sqr(x,y)))
 
 				end do
 			end do

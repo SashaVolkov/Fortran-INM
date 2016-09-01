@@ -2,6 +2,7 @@ module func_var
 
 	use parallel_cubic, Only: parallel
 	use interpolation, Only: interp
+	use metrics, Only: metric
 	use grid_var, Only: g_var
 
 implicit none
@@ -151,11 +152,11 @@ CONTAINS
 
 
 
-	subroutine interpolate(this, i, g)
+	subroutine interpolate(this, i, metr)
 		Class(f_var) :: this
 		Class(interp) :: i
-		Class(g_var) :: g
-		if(g.grid_type == 1) then
+		Class(metric) :: metr
+		if(metr.grid_type == 1) then
 			! call this.Velocity_from_spherical(g)
 			call i.Lagrange(this.h_height, this.interp_factor)
 			call i.Lagrange(this.x_vel, this.interp_factor)
@@ -166,9 +167,9 @@ CONTAINS
 
 
 
-	subroutine Velocity_to_spherical(this, g)
+	subroutine Velocity_to_spherical(this, metr)
 		Class(f_var) :: this
-		Class(g_var) :: g
+		Class(metric) :: metr
 		Real(8) :: vel_x_contr, vel_y_contr
 		Integer(4) :: x, y, face, i, x_start(4), y_start(4), x_fin(4), y_fin(4)
 
@@ -185,11 +186,11 @@ CONTAINS
 					do x = x_start(i), x_fin(i)
 						do y = y_start(i), y_fin(i)
 
-							vel_x_contr = g.G_inverse(x, y, 1, 1) * this.x_vel(x, y, face) + g.G_inverse(x, y, 1, 2) * this.y_vel(x, y, face)
-							vel_y_contr = g.G_inverse(x, y, 2, 2) * this.y_vel(x, y, face) + g.G_inverse(x, y, 2, 1) * this.x_vel(x, y, face)
+							vel_x_contr = metr.G_inverse(x, y, 1, 1) * this.x_vel(x, y, face) + metr.G_inverse(x, y, 1, 2) * this.y_vel(x, y, face)
+							vel_y_contr = metr.G_inverse(x, y, 2, 2) * this.y_vel(x, y, face) + metr.G_inverse(x, y, 2, 1) * this.x_vel(x, y, face)
 
-							this.x_vel_msg(x, y, face) = g.To_sph_coord(1, 1, x, y, face) * vel_x_contr + g.To_sph_coord(1, 2, x, y, face) * vel_y_contr
-							this.y_vel_msg(x, y, face) = g.To_sph_coord(2, 2, x, y, face) * vel_y_contr + g.To_sph_coord(2, 1, x, y, face) * vel_x_contr
+							this.x_vel_msg(x, y, face) = metr.J_to_sph(1, 1, x, y, face) * vel_x_contr + metr.J_to_sph(1, 2, x, y, face) * vel_y_contr
+							this.y_vel_msg(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * vel_y_contr + metr.J_to_sph(2, 1, x, y, face) * vel_x_contr
 
 						end do
 					end do
@@ -202,9 +203,9 @@ CONTAINS
 
 
 
-	subroutine Velocity_from_spherical(this, g)
+	subroutine Velocity_from_spherical(this, metr)
 		Class(f_var) :: this
-		Class(g_var) :: g
+		Class(metric) :: metr
 		Real(8) :: vel_x_contr, vel_y_contr
 		Integer(4) :: x, y, face, i, neib_face, x_start(4), y_start(4), x_fin(4), y_fin(4)
 
@@ -221,11 +222,11 @@ CONTAINS
 					do x = x_start(i), x_fin(i)
 						do y = y_start(i), y_fin(i)
 
-							vel_x_contr = g.From_sph_coord(1, 1, x, y, face) * this.x_vel(x, y, face) + g.From_sph_coord(1, 2, x, y, face) * this.y_vel(x, y, face)
-							vel_y_contr = g.From_sph_coord(2, 2, x, y, face) * this.y_vel(x, y, face) + g.From_sph_coord(2, 1, x, y, face) * this.x_vel(x, y, face)
+							vel_x_contr = metr.J_to_cube(1, 1, x, y, face) * this.x_vel(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.y_vel(x, y, face)
+							vel_y_contr = metr.J_to_cube(2, 2, x, y, face) * this.y_vel(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.x_vel(x, y, face)
 
-							this.x_vel(x, y, face) = g.G_tensor(x, y, 1, 1) * vel_x_contr + g.G_tensor(x, y, 1, 2) * vel_y_contr
-							this.y_vel(x, y, face) = g.G_tensor(x, y, 2, 2) * vel_y_contr + g.G_tensor(x, y, 2, 1) * vel_x_contr
+							this.x_vel(x, y, face) = metr.G_tensor(x, y, 1, 1) * vel_x_contr + metr.G_tensor(x, y, 1, 2) * vel_y_contr
+							this.y_vel(x, y, face) = metr.G_tensor(x, y, 2, 2) * vel_y_contr + metr.G_tensor(x, y, 2, 1) * vel_x_contr
 
 						end do
 					end do

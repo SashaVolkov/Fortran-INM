@@ -2,6 +2,7 @@ program solver
 
 	use sphere_geometry, Only: geometry
 	use grid_var, Only: g_var
+	use metrics, Only: metric
 	use parallel_cubic, Only: parallel
 	use func_var, Only: f_var
 	use printer_ncdf, Only: printer
@@ -24,6 +25,7 @@ implicit none
 	Type(geometry) :: geom
 	Type(f_var) :: var, var_prev
 	Type(g_var) :: grid
+	Type(metric) :: metr
 	Type(parallel) :: paral
 	Type(printer) :: printer_nc
 	Type(schema) :: sch
@@ -38,7 +40,7 @@ implicit none
 	dim = 40;  gr_step = 2;  height = 100.0
 	step = 2*pi*r_sphere/(8d0*dim)
 
-	Tmax =8000;  speedup = 20;  dt = 100.0
+	Tmax =16000;  speedup = 20;  dt = 100.0
 	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
 	grid_type = 1 ! 0 - conformal, 1 - equiangular
 
@@ -52,7 +54,8 @@ implicit none
 
 	call paral.init(dim, gr_step, np, id)
 	call geom.init(r_sphere, pi)
-	call grid.init(geom, paral, omega_cor, g, dt, rescale, grid_type)
+	call metr.init(paral)
+	call grid.init(geom, paral, metr, omega_cor, g, dt, rescale, grid_type)
 	call var.init(paral, height)
 	call var_prev.init(paral, height)
 	call sch.init(var_prev, grid)
@@ -67,12 +70,12 @@ implicit none
 
 
 	do time = 1, Tmax
-		call sch.RungeKutta(var, var_prev, grid)
+		call sch.RungeKutta(var, var_prev, grid, metr)
 		call var_prev.equal(var, grid)
 		call msg.msg(var_prev, paral)
-		call var_prev.interpolate(inter, grid)
+		call var_prev.interpolate(inter, metr)
 		call diagn.L_norm(var_prev, grid, time)
-		call diagn.Courant(var_prev, grid, time)
+		call diagn.Courant(var_prev, grid, metr, time)
 			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
 			if(mod(time, Tmax/10) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
@@ -102,6 +105,7 @@ implicit none
 	call printer_nc.deinit()
 	call diagn.deinit()
 	call sch.deinit()
+	call metr.deinit()
 
 
 	call MPI_FINALIZE(ier)

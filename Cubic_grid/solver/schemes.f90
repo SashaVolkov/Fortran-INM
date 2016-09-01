@@ -2,6 +2,7 @@ module schemes
 
 	use grid_var, Only: g_var
 	use derivatives, Only: der
+	use metrics, Only: metric
 	use func_var, Only: f_var
 	use mpi
 
@@ -48,14 +49,15 @@ End Subroutine
 
 
 
-subroutine Linear(this, var, var_pr, grid)
+subroutine Linear(this, var, var_pr, grid, metr)
 
 	Class(schema) :: this
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
+	Class(metric) :: metr
 	Type(der) :: d
 
-	real(8) g, height, dt, partial, temp1(-1:1), temp2(-1:1), div
+	real(8) g, height, dt, partial, temp1(-1:1), temp2(-1:1), div, dist(0:1)
 	integer(4) face, x, y, dim
 
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
@@ -65,16 +67,19 @@ subroutine Linear(this, var, var_pr, grid)
 	do y = var.ns_y, var.nf_y
 		do x = var.ns_x, var.nf_x
 
-				partial = d.partial_c2_x(grid, var_pr.h_height(x-1:x+1, y, face), x, y)
+				dist(0:1) = grid.x_dist(x:x+1, y)
+				temp1(:) = var_pr.h_height(x-1:x+1, y, face)
+				partial = d.partial_c2(temp1, dist)
 				var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) - dt*g*partial
 
+				dist(0:1) = grid.x_dist(x, y:y+1)
 				temp1(:) = var_pr.h_height(x, y-1:y+1, face)
-				partial = d.partial_c2_y(grid, temp1, x, y)
+				partial = d.partial_c2(temp1, dist)
 				var.y_vel(x, y, face) = var_pr.y_vel(x, y, face) - dt*g*partial
 
 				temp1(:) = var_pr.x_vel(x-1:x+1, y, face)
 				temp2(:) = var_pr.y_vel(x, y-1:y+1, face)
-				div = d.div_2(grid, temp1, temp2, x, y)
+				div = d.div_2(grid, metr, temp1, temp2, x, y)
 				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*div
 
 
@@ -89,11 +94,12 @@ end subroutine
 
 
 
-Subroutine RungeKutta(this, var, var_pr, grid)
+Subroutine RungeKutta(this, var, var_pr, grid, metr)
 
 	Class(schema) :: this
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
+	Class(metric) :: metr
 
 	integer(4) face, x, y, dim, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier, iteration
 
@@ -109,7 +115,7 @@ Subroutine RungeKutta(this, var, var_pr, grid)
 	this.kh(:, :, 0) = var_pr.h_height(:, :, face)
 
 		do iteration = 1, 4
-			call this.FRunge(grid, var_pr, face, iteration)
+			call this.FRunge(grid, metr, var_pr, face, iteration)
 		end do
 
 
@@ -125,10 +131,11 @@ var.h_height(x, y, face) = var_pr.h_height(x, y, face) + (this.kh(x, y, 1) + 2.0
 End Subroutine
 
 
-Subroutine FRunge(this, grid, var, face, i)
+Subroutine FRunge(this, grid, metr, var, face, i)
 	Class(schema) :: this
 	Class(f_var) :: var
 	Class(g_var) :: grid
+	Class(metric) :: metr
 	Type(der) :: d
 
 	integer(4), intent(in) :: face, i
@@ -152,7 +159,7 @@ Subroutine FRunge(this, grid, var, face, i)
 
 			temp1(:) = this.ku(x-2:x+2, y, 0) + coef(i-1)*this.ku(x-2:x+2, y, i-1)
 			temp2(:) = this.kv(x, y-2:y+2, 0) + coef(i-1)*this.kv(x, y-2:y+2, i-1)
-			div = d.div_4(grid, temp1(:), temp2(:), x, y)
+			div = d.div_4(grid, metr, temp1(:), temp2(:), x, y)
 			this.kh(x, y, i) = - dt*height*div
 
 

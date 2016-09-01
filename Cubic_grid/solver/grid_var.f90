@@ -14,6 +14,7 @@ module grid_var
 	use sphere_geometry, Only: geometry
 	use grid_generator_solver, Only: generator
 	use parallel_cubic, Only: parallel
+	use metrics, Only: metric
 
 implicit none
 
@@ -24,16 +25,10 @@ implicit none
 
 		Real(8), Allocatable :: x_dist(:, :)
 		Real(8), Allocatable :: y_dist(:, :)
-		Real(8), Allocatable :: G_sqr(:, :)
-		Real(8), Allocatable :: G_tensor(:, :, :, :)
-		Real(8), Allocatable :: G_inverse(:, :, :, :)
-		Real(8), Allocatable :: rho(:, :)
-		Real(8), Allocatable :: To_sph_coord(:, :, :, :, :)
-		Real(8), Allocatable :: From_sph_coord(:, :, :, :, :)
 
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
-		Real(8), Allocatable :: equiang_c(:, :, :)
+		Real(8), Allocatable :: cube_coord_c(:, :, :)
 		Real(8), Allocatable :: latlon(:, :, :, :)
 		Real(8), Allocatable :: points_dist(:, :, :)
 
@@ -54,10 +49,6 @@ implicit none
 		Procedure, Public :: deinit => deinit
 		Procedure, Private :: const_def => const_def
 		Procedure, Private :: step_minmax => step_minmax
-
-		Procedure, Private :: transformation_matrix_equiang => transformation_matrix_equiang
-		Procedure, Private :: transformation_matrix_conf => transformation_matrix_conf
-		Procedure, Private :: transformation_sph_equiang => transformation_sph_equiang
 		Procedure, Private :: tiles_prop => tiles_prop
 		Procedure, Private :: derivat_4order => derivat_4order
 	End Type
@@ -66,11 +57,12 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, geom, paral, omega_cor, g, dt, rescale,grid_type)
+	subroutine init(this, geom, paral, metr, omega_cor, g, dt, rescale,grid_type)
 
 		Class(g_var) :: this
 		Class(geometry) :: geom
 		Class(parallel) :: paral
+		Class(metric) :: metr
 		integer(4), intent(in) :: rescale, grid_type
 		real(8), intent(in) :: omega_cor, g, dt
 		integer(4) x, y
@@ -88,11 +80,11 @@ CONTAINS
 
 		call this.alloc()
 		if(grid_type == 0) then
-			call generate.conformal_cubed_sphere(this.dim, this.step, this.r_sphere, rescale, this.latlon_c, this.latlon)
+			call generate.conformal_cubed_sphere(this.dim, this.step, this.r_sphere, rescale, this.cube_coord_c, this.latlon_c, this.latlon)
 		else if(grid_type == 1)then
-			call generate.equiangular_cubed_sphere(this.dim, this.step, this.equiang_c, this.latlon_c, this.latlon)
+			call generate.equiangular_cubed_sphere(this.dim, this.step, this.cube_coord_c, this.latlon_c, this.latlon)
 		end if
-		call this.const_def(geom)
+		call this.const_def(geom, metr)
 		call this.step_minmax()
 
 	end subroutine
@@ -108,16 +100,10 @@ CONTAINS
 
 		Allocate(this.x_dist(f:l, f:l))
 		Allocate(this.y_dist(f:l, f:l))
-		Allocate(this.G_sqr(f_x:l_x , f_y:l_y))
-		Allocate(this.G_tensor(f_x:l_x , f_y:l_y, 1:2, 1:2))
-		Allocate(this.G_inverse(f_x:l_x , f_y:l_y, 1:2, 1:2))
-		Allocate(this.rho(f_x:l_x , f_y:l_y))
-		Allocate(this.To_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
-		Allocate(this.From_sph_coord(2, 2, f_x:l_x , f_y:l_y, 6))
 
 		Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
 		Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
-		Allocate(this.equiang_c(1:2, f:l , f:l))
+		Allocate(this.cube_coord_c(1:2, f:l , f:l))
 		Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
 		Allocate(this.points_dist(1:2, f:l, f:l))
 
@@ -136,16 +122,11 @@ CONTAINS
 		Class(g_var) :: this
 		if (Allocated(this.x_dist)) Deallocate(this.x_dist)
 		if (Allocated(this.y_dist)) Deallocate(this.y_dist)
-		if (Allocated(this.G_sqr)) Deallocate(this.G_sqr)
-		if (Allocated(this.G_tensor)) Deallocate(this.G_tensor)
-		if (Allocated(this.G_inverse)) Deallocate(this.G_inverse)
-		if (Allocated(this.rho)) Deallocate(this.rho)
-		if (Allocated(this.To_sph_coord)) Deallocate(this.To_sph_coord)
-		if (Allocated(this.From_sph_coord)) Deallocate(this.From_sph_coord)
+
 
 		if (Allocated(this.f_cor)) Deallocate(this.f_cor)
 		if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
-		if (Allocated(this.equiang_c)) Deallocate(this.equiang_c)
+		if (Allocated(this.cube_coord_c)) Deallocate(this.cube_coord_c)
 		if (Allocated(this.latlon)) Deallocate(this.latlon)
 		if (Allocated(this.points_dist)) Deallocate(this.points_dist)
 
@@ -160,9 +141,10 @@ CONTAINS
 
 
 
-	subroutine const_def(this, g)
+	subroutine const_def(this, g, metr)
 		Class(g_var) :: this
 		Class(geometry) :: g
+		Class(metric) :: metr
 		real(8) dist, omega_cor, h(-1:2)
 		integer(4) face, x, y, dim
 		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
@@ -179,11 +161,11 @@ CONTAINS
 		end do
 
 		call this.tiles_prop(g)
-		if(this.grid_type == 0) then
-			call this.transformation_matrix_conf()
-		else if(this.grid_type == 1)then
-			call this.transformation_matrix_equiang()
-		end if
+
+		! metr.cube_coord_c = this.cube_coord_c
+		metr.latlon_c = this.latlon_c
+		call metr.define(this.grid_type)
+
 		if(this.step > 1) call this.derivat_4order()
 
 	end subroutine
@@ -239,124 +221,6 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 
 
 	end subroutine
-
-
-
-	subroutine transformation_matrix_equiang(this)
-		Class(g_var) :: this
-		real(8) x_1, x_2, g_coef, g_inv_coef
-		integer(4) x, y, face
-
-
-		do y = this.first_y, this.last_y
-			do x = this.first_x, this.last_x
-
-			x_1 = dtan(this.equiang_c(1, x, y))
-			x_2 = dtan(this.equiang_c(2, x, y))
-
-			this.rho(x, y) = dsqrt(1.0 + x_1**2 + x_2**2)
-			this.G_sqr(x, y) = (1.0 + x_1**2)*(1.0 + x_2**2)/(this.rho(x, y)**3)
-			g_coef = (1.0 + x_1**2)*(1.0 + x_2**2)/(this.rho(x, y)**4)
-			g_inv_coef = (this.rho(x, y)**2)/((1.0 + x_1**2)*(1.0 + x_2**2))
-
-			this.G_tensor(x, y, 1, 1) = g_coef * (1 + x_1**2)
-			this.G_tensor(x, y, 1, 2) = g_coef * (- x_1*x_2)
-			this.G_tensor(x, y, 2, 1) = g_coef * (- x_1*x_2)
-			this.G_tensor(x, y, 2, 2) = g_coef * (1 + x_2**2)
-
-			this.G_inverse(x, y, 1, 1) = g_inv_coef * (1 + x_2**2)
-			this.G_inverse(x, y, 1, 2) = g_inv_coef * (x_1*x_2)
-			this.G_inverse(x, y, 2, 1) = g_inv_coef * (x_1*x_2)
-			this.G_inverse(x, y, 2, 2) = g_inv_coef * (1 + x_1**2)
-
-			end do
-		end do
-
-		call this.transformation_sph_equiang()
-
-	end subroutine
-
-
-
-	subroutine transformation_matrix_conf(this)
-		Class(g_var) :: this
-		integer(4) x, y, face
-		real(8) :: A(2,2)
-
-		do y = this.first_y, this.last_y
-			do x = this.first_x, this.last_x
-
-			this.G_sqr(x, y) = 1.0
-
-			! A(1,1) = 
-
-			this.G_tensor(x, y, 1, 1) = 1.0
-			this.G_tensor(x, y, 1, 2) = 0.0
-			this.G_tensor(x, y, 2, 1) = 0.0
-			this.G_tensor(x, y, 2, 2) = 1.0
-
-			this.G_inverse(x, y, 1, 1) = 1.0
-			this.G_inverse(x, y, 1, 2) = 0.0
-			this.G_inverse(x, y, 2, 1) = 0.0
-			this.G_inverse(x, y, 2, 2) = 1.0
-
-			end do
-		end do
-
-	end subroutine
-
-
-
-	subroutine transformation_sph_equiang(this)
-		Class(g_var) :: this
-		real(8) x_1, x_2, g_coef, s(6)
-		integer(4) x, y, face, delta
-		s(1) = - 1d0;  s(6) = 1d0
-
-
-		do face = 2,5
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-					delta = this.rho(x,y)
-					x_1 = dtan(this.equiang_c(1, x, y))
-					x_2 = dtan(this.equiang_c(2, x, y))
-
-					this.From_sph_coord(1,1,x,y,face) = 1d0
-					this.From_sph_coord(1,2,x,y,face) = 0d0
-					this.From_sph_coord(2,1,x,y,face) = x_1*x_2/(1 + x_2**2)
-					this.From_sph_coord(2,2,x,y,face) = (delta**2)/((1 + x_2**2)*dsqrt(1 + x_1**2))
-
-					this.To_sph_coord(1,1,x,y,face) = 1d0
-					this.To_sph_coord(1,2,x,y,face) = 0d0
-					this.To_sph_coord(2,1,x,y,face) = - x_1*x_2*dsqrt(1 + x_1**2)/(delta**2)
-					this.To_sph_coord(2,2,x,y,face) = 1d0/this.From_sph_coord(2,2,x,y,face)
-				end do
-			end do
-		end do
-
-		do face = 1, 6, 5
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-					delta = this.rho(x,y)
-					x_1 = dtan(this.equiang_c(1, x, y))
-					x_2 = dtan(this.equiang_c(2, x, y))
-
-					this.From_sph_coord(1,1,x,y,face) = -s(face)*x_2/(1 + x_1**2)
-					this.From_sph_coord(1,2,x,y,face) = -s(face)*(delta**2)*x_1/((1 + x_1**2)*(x_2**2 + x_1**2))
-					this.From_sph_coord(2,1,x,y,face) = s(face)*x_1/(1 + x_2**2)
-					this.From_sph_coord(2,2,x,y,face) = -s(face)*(delta**2)*x_2/((1 + x_2**2)*(x_2**2 + x_1**2))
-
-					this.To_sph_coord(1,1,x,y,face) = -s(face)*x_2*(1 + x_1**2)/(x_2**2 + x_1**2)
-					this.To_sph_coord(1,2,x,y,face) = s(face)*x_1*(1 + x_2**2)/(x_2**2 + x_1**2)
-					this.To_sph_coord(2,1,x,y,face) = - s(face)*x_1*(1 + x_1**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
-					this.To_sph_coord(2,2,x,y,face) = - s(face)*x_2*(1 + x_2**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
-				end do
-			end do
-		end do
-
-	end subroutine
-
-
 
 
 	subroutine tiles_prop(this, g)
@@ -415,7 +279,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 
 			do y = 1-step, 2*dim + step
 				do x = 2-step, 2*dim + step
-		this.x_dist(x, y) = (this.equiang_c(1, x, y) - this.equiang_c(1, x-1, y))*this.r_sphere
+		this.x_dist(x, y) = (this.cube_coord_c(1, x, y) - this.cube_coord_c(1, x-1, y))*this.r_sphere
 		this.y_dist(y, x) = this.x_dist(x, y)
 				end do
 			end do
