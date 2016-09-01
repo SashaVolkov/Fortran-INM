@@ -3,7 +3,6 @@ module func_var
 	use parallel_cubic, Only: parallel
 	use interpolation, Only: interp
 	use metrics, Only: metric
-	use grid_var, Only: g_var
 
 implicit none
 
@@ -95,10 +94,10 @@ CONTAINS
 
 
 
-	subroutine equal(var_pr, var, grid)
+	subroutine equal(var_pr, var, metr)
 
 		Class(f_var) :: var_pr, var
-		Class(g_var) :: grid
+		Class(metric) :: metr
 
 				var_pr.h_height(:, :, :)=var.h_height(:, :, :)
 				var_pr.x_vel(:, :, :)=var.x_vel(:, :, :)
@@ -107,8 +106,8 @@ CONTAINS
 				var_pr.x_vel_msg(:, :, :)=var_pr.x_vel(:, :, :)
 				var_pr.y_vel_msg(:, :, :)=var_pr.y_vel(:, :, :)
 
-				if(grid.grid_type == 1) then
-					! call var_pr.Velocity_to_spherical(grid)
+				if(metr.grid_type == 1) then
+					call var_pr.Velocity_to_spherical(metr)
 				end if
 
 
@@ -157,7 +156,7 @@ CONTAINS
 		Class(interp) :: i
 		Class(metric) :: metr
 		if(metr.grid_type == 1) then
-			! call this.Velocity_from_spherical(g)
+			call this.Velocity_from_spherical(metr)
 			call i.Lagrange(this.h_height, this.interp_factor)
 			call i.Lagrange(this.x_vel, this.interp_factor)
 			call i.Lagrange(this.y_vel, this.interp_factor)
@@ -186,8 +185,8 @@ CONTAINS
 					do x = x_start(i), x_fin(i)
 						do y = y_start(i), y_fin(i)
 
-							vel_x_contr = metr.G_inverse(x, y, 1, 1) * this.x_vel(x, y, face) + metr.G_inverse(x, y, 1, 2) * this.y_vel(x, y, face)
-							vel_y_contr = metr.G_inverse(x, y, 2, 2) * this.y_vel(x, y, face) + metr.G_inverse(x, y, 2, 1) * this.x_vel(x, y, face)
+							vel_x_contr = metr.G_inverse(1, 1, x, y) * this.x_vel(x, y, face) + metr.G_inverse(1, 2, x, y) * this.y_vel(x, y, face)
+							vel_y_contr = metr.G_inverse(2, 2, x, y) * this.y_vel(x, y, face) + metr.G_inverse(2, 1, x, y) * this.x_vel(x, y, face)
 
 							this.x_vel_msg(x, y, face) = metr.J_to_sph(1, 1, x, y, face) * vel_x_contr + metr.J_to_sph(1, 2, x, y, face) * vel_y_contr
 							this.y_vel_msg(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * vel_y_contr + metr.J_to_sph(2, 1, x, y, face) * vel_x_contr
@@ -225,8 +224,8 @@ CONTAINS
 							vel_x_contr = metr.J_to_cube(1, 1, x, y, face) * this.x_vel(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.y_vel(x, y, face)
 							vel_y_contr = metr.J_to_cube(2, 2, x, y, face) * this.y_vel(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.x_vel(x, y, face)
 
-							this.x_vel(x, y, face) = metr.G_tensor(x, y, 1, 1) * vel_x_contr + metr.G_tensor(x, y, 1, 2) * vel_y_contr
-							this.y_vel(x, y, face) = metr.G_tensor(x, y, 2, 2) * vel_y_contr + metr.G_tensor(x, y, 2, 1) * vel_x_contr
+							this.x_vel(x, y, face) = metr.G_tensor(1, 1, x, y) * vel_x_contr + metr.G_tensor(1, 2, x, y) * vel_y_contr
+							this.y_vel(x, y, face) = metr.G_tensor(2, 2, x, y) * vel_y_contr + metr.G_tensor(2, 1, x, y) * vel_x_contr
 
 						end do
 					end do
