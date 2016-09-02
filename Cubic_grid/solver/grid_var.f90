@@ -39,7 +39,7 @@ implicit none
 
 		Real(8), Allocatable :: four_order_const_x(:, :, :)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
 		Real(8), Allocatable :: four_order_const_y(:, :, :)
-		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi
+		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube
 		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type
 		integer(4) first_x, first_y, last_x, last_y
 
@@ -281,6 +281,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 				do x = 2-step, 2*dim + step
 		this.x_dist(x, y) = (this.cube_coord_c(1, x, y) - this.cube_coord_c(1, x-1, y))*this.r_sphere
 		this.y_dist(y, x) = this.x_dist(x, y)
+		this.delta_on_cube = this.x_dist(x, y)
 				end do
 			end do
 

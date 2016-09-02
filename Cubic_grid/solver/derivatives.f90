@@ -37,24 +37,23 @@ CONTAINS
 		real(8), intent(in) :: u1_cov(-1:1), u2_cov(-1:1)
 		integer(4), intent(in) :: x, y
 		integer(4) i, j
-		real(8) u1_con(-1:1), u2_con(-1:1), G_sqr(-1:1, -1:1), G(2,2), dx, dy
+		real(8) u1_con(-1:1), u2_con(-1:1), J_1(-1:1), J_2(-1:1), G(2,2), dx, dy
 
 		do i = -1, 1
-			do j = -1, 1
-				G_sqr(i,j) = metr.G_sqr(x+i,y+j)
-			end do
+			J_1(i) = metr.G_sqr(x+i, y)
+			J_2(i) = metr.G_sqr(x, y+i)
 			G(1,1) = metr.G_inverse(1, 1, x+i, y)
 			G(1,2) = metr.G_inverse(1, 2, x, y+i)
 			G(2,1) = metr.G_inverse(2, 1, x+i, y)
 			G(2,2) = metr.G_inverse(2, 2, x, y+i)
 			u1_con(i) = G(1,1)*u1_cov(i) + G(1,2)*u2_cov(i)
 			u2_con(i) = G(2,2)*u2_cov(i) + G(2,1)*u1_cov(i)
-			dx = grid.x_dist(x, y) + grid.x_dist(x+1, y)
-			dy = grid.y_dist(x, y) + grid.y_dist(x, y+1)
+			dx = 2*grid.delta_on_cube !grid.x_dist(x, y) + grid.x_dist(x+1, y)
+			dy = 2*grid.delta_on_cube !grid.y_dist(x, y) + grid.y_dist(x, y+1)
 		end do
 
 
-		div_2 = ( (u1_con(1)*G_sqr(1,0) - u1_con(-1)*G_sqr(-1,0))/dx + (u2_con(1)*G_sqr(0,1) - u2_con(-1)*G_sqr(0,-1))/dy )/G_sqr(0,0)
+		div_2 = ( (u1_con(1)*J_1(1) - u1_con(-1)*J_1(-1))/dx + (u2_con(1)*J_2(1) - u2_con(-1)*J_2(-1))/dy )/J_1(0)
 
 	end function
 

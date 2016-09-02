@@ -189,6 +189,7 @@ module interpolation
 					latlon_xk(:) = g.latlon_c(:, step, xk, 2)
 					latlon_xj(:) = g.latlon_c(:, step, xj, 2)
 					temp = (geom.angle(latlon_x(:), latlon_xk(:)))/(geom.angle(latlon_xj(:), latlon_xk(:)))
+! 					temp = (g.cube_coord_c(2, 1-step, x) - g.cube_coord_c(2, step, xk))/(g.cube_coord_c(2, step, xk) - g.cube_coord_c(2, step, xj))
 				end if
 			end do
 
