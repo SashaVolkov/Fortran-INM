@@ -229,9 +229,16 @@ CONTAINS
 		end do
 
 		do i = 1, this.step
-			do k = 1, this.step
-				this.G_tensor(:, :, 1-i, 1-k) = this.G_tensor(:, :, 2*dim - i, 2*dim - k)
-				this.G_tensor(:, :, 2*dim + i, 2*dim + k) = this.G_tensor(:, :, i, k)
+			do k = 1, 2*dim
+				this.G_tensor(:, :, k, 2*dim + i) = this.G_tensor(:, :, k, i)
+				this.G_tensor(:, :, 2*dim + i, k) = this.G_tensor(:, :, i, k)
+				this.G_tensor(:, :, k, 1 - i) = this.G_tensor(:, :, k, 2*dim - i + 1)
+				this.G_tensor(:, :, 1 - i, k) = this.G_tensor(:, :, 2*dim - i + 1, k)
+
+				this.G_inverse(:, :, k, 2*dim + i) = this.G_inverse(:, :, k, i)
+				this.G_inverse(:, :, 2*dim + i, k) = this.G_inverse(:, :, i, k)
+				this.G_inverse(:, :, k, 1 - i) = this.G_inverse(:, :, k, 2*dim - i + 1)
+				this.G_inverse(:, :, 1 - i, k) = this.G_inverse(:, :, 2*dim - i + 1, k)
 			end do
 		end do
 
@@ -277,9 +284,11 @@ CONTAINS
 
 
 		do i = 1, this.step
-			do k = 1, this.step
-				this.J_to_sph(:, :, 1-i, 1-k, 2) = this.J_to_sph(:, :, i, k, 2)
-				this.J_to_sph(:, :, 2*dim + i, 2*dim + k, 2) = this.J_to_sph(:, :, 2*dim - i + 1, 2*dim - k + 1, 2)
+			do k = 1, 2*dim
+				this.J_to_sph(:, :, k, 2*dim + i, 2) = this.J_to_sph(:, :, k, i, 2)
+				this.J_to_sph(:, :, 2*dim + i, k, 2) = this.J_to_sph(:, :, i, k, 2)
+				this.J_to_sph(:, :, k, 1 - i, 2) = this.J_to_sph(:, :, k, 2*dim - i + 1, 2)
+				this.J_to_sph(:, :, 1 - i, k, 2) = this.J_to_sph(:, :, 2*dim - i + 1, k, 2)
 			end do
 		end do
 
