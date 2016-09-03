@@ -211,19 +211,17 @@ CONTAINS
 		do y = 1, 2*dim
 			do x = 1, 2*dim
 
-			this.G_sqr(x, y) = 1.0
 			J(:,:) = this.J_to_sph(:, :, x, y, 2)
 
 			this.G_tensor(1, 1, x, y) = J(1, 1)**2 + J(2, 1)**2
-			this.G_tensor(1, 2, x, y) = J(1, 1)*J(1, 2) + J(2, 1)*J(1, 2)
+			this.G_tensor(1, 2, x, y) = 0.0
 			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
 			this.G_tensor(2, 2, x, y) = J(1, 2)**2 + J(2, 2)**2
 
-
-			this.G_inverse(1, 1, x, y) = this.G_tensor(2, 2, x, y)
+			this.G_inverse(1, 1, x, y) = 1.0/this.G_tensor(1, 1, x, y)
 			this.G_inverse(1, 2, x, y) = 0.0
 			this.G_inverse(2, 1, x, y) = 0.0
-			this.G_inverse(2, 2, x, y) = this.G_tensor(1, 1, x, y)
+			this.G_inverse(2, 2, x, y) = 1.0/this.G_tensor(2, 2, x, y)
 
 ! 			print *, this.G_tensor(:, :, x, y)
 
@@ -232,10 +230,17 @@ CONTAINS
 
 		do i = 1, this.step
 			do k = 1, this.step
-				this.G_tensor(:, :, 1-i, 1-k) = this.G_tensor(:, :, i, k)
-				this.G_tensor(:, :, 2*dim + i, 2*dim + k) = this.G_tensor(:, :, 2*dim - i, 2*dim - k)
+				this.G_tensor(:, :, 1-i, 1-k) = this.G_tensor(:, :, 2*dim - i, 2*dim - k)
+				this.G_tensor(:, :, 2*dim + i, 2*dim + k) = this.G_tensor(:, :, i, k)
 			end do
 		end do
+
+		do y = 1 - this.step, 2*dim + this.step
+			do x = 1 - this.step, 2*dim + this.step
+				this.G_sqr(x, y) = dsqrt(this.G_tensor(1, 1, x, y) * this.G_tensor(2, 2, x, y))
+			end do
+		end do
+
 
 	end subroutine
 
@@ -248,6 +253,17 @@ CONTAINS
 
 		dim = this.dim
 		delta = (this.cube_coord_c(1, dim, dim) - this.cube_coord_c(1, dim-1, dim))
+
+		do i = 1, this.step
+			do k = 1, 2*dim
+				this.latlon_c(:, k, 2*dim + i, 2) = this.latlon_c(:,k, i, 6)
+				this.latlon_c(:, 2*dim + i, k, 2) = this.latlon_c(:, i, k, 3)
+				this.latlon_c(:, i, 1 - k, 2) = this.latlon_c(:,i, 2*dim - k, 1)
+				this.latlon_c(:, 1 - i, k, 2) = this.latlon_c(:,2*dim - i, k, 5)
+			end do
+		end do
+
+
 		do y = 1, 2*dim
 			do x = 1, 2*dim
 
