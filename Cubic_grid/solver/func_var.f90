@@ -16,7 +16,6 @@ implicit none
 		Real(8), Allocatable :: y_vel(:, :, :)
 		Real(8), Allocatable :: x_vel_msg(:, :, :)
 		Real(8), Allocatable :: y_vel_msg(:, :, :)
-		! Real(8), Allocatable :: distance_grid(:, :, :, :)
 		real(8) height
 		integer(4) step, dim, Xsize, Ysize, interp_factor(1:4), Neighbours_face(6, 4)
 		integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y

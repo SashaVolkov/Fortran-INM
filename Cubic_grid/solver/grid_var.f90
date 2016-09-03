@@ -23,14 +23,10 @@ implicit none
 
 	Type g_var
 
-		Real(8), Allocatable :: x_dist(:, :)
-		Real(8), Allocatable :: y_dist(:, :)
-
 		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: cube_coord_c(:, :, :)
 		Real(8), Allocatable :: latlon(:, :, :, :)
-		Real(8), Allocatable :: points_dist(:, :, :)
 
 		Real(8), Allocatable :: square(:, :)
 		Real(8), Allocatable :: triangle_area(:, :, :)
@@ -48,7 +44,6 @@ implicit none
 		Procedure, Private :: alloc => alloc
 		Procedure, Public :: deinit => deinit
 		Procedure, Private :: const_def => const_def
-		Procedure, Private :: step_minmax => step_minmax
 		Procedure, Private :: tiles_prop => tiles_prop
 		Procedure, Private :: derivat_4order => derivat_4order
 	End Type
@@ -85,7 +80,6 @@ CONTAINS
 			call generate.equiangular_cubed_sphere(this.dim, this.step, this.cube_coord_c, this.latlon_c, this.latlon)
 		end if
 		call this.const_def(geom, metr)
-		call this.step_minmax()
 
 	end subroutine
 
@@ -98,14 +92,10 @@ CONTAINS
 		f_x = this.first_x;  l_x = this.last_x;  f_y = this.first_y;  l_y = this.last_y
 		dim = this.dim;  step = this.step;  f = 1-step; l = 2*dim + step
 
-		Allocate(this.x_dist(f:l, f:l))
-		Allocate(this.y_dist(f:l, f:l))
-
 		Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
 		Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
 		Allocate(this.cube_coord_c(1:2, f:l , f:l))
 		Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
-		Allocate(this.points_dist(1:2, f:l, f:l))
 
 		Allocate(this.square(1:2*dim, 1:2*dim))
 		Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
@@ -120,15 +110,10 @@ CONTAINS
 
 	subroutine deinit(this)
 		Class(g_var) :: this
-		if (Allocated(this.x_dist)) Deallocate(this.x_dist)
-		if (Allocated(this.y_dist)) Deallocate(this.y_dist)
-
-
 		if (Allocated(this.f_cor)) Deallocate(this.f_cor)
 		if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
 		if (Allocated(this.cube_coord_c)) Deallocate(this.cube_coord_c)
 		if (Allocated(this.latlon)) Deallocate(this.latlon)
-		if (Allocated(this.points_dist)) Deallocate(this.points_dist)
 
 		if (Allocated(this.square)) Deallocate(this.square)
 		if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
@@ -162,7 +147,8 @@ CONTAINS
 
 		call this.tiles_prop(g)
 
-		! metr.cube_coord_c = this.cube_coord_c
+		metr.r_sphere = this.r_sphere
+		metr.cube_coord_c = this.cube_coord_c
 		metr.latlon_c = this.latlon_c
 		call metr.define(this.grid_type)
 
@@ -184,8 +170,8 @@ CONTAINS
 		do x = this.ns_xy(1), this.nf_xy(1)
 			do y = this.ns_xy(2), this.nf_xy(2) ! Gamet et al. 1999 Apendix A. Approx. of derivat.
 
-				h(-1) = this.x_dist(x-1, y);  h(0) = this.x_dist(x, y)
-				h(1) = this.x_dist(x+1, y);  h(2) = this.x_dist(x+2, y)
+				h(-1) = this.delta_on_cube;  h(0) = this.delta_on_cube
+				h(1) = this.delta_on_cube;  h(2) = this.delta_on_cube
 
 this.four_order_const_x( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
 
@@ -203,8 +189,8 @@ this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this
 			do x = this.ns_xy(1), this.nf_xy(1)
 				do y = this.ns_xy(2), this.nf_xy(2)
 
-				h(-1) = this.y_dist(x, y-1);  h(0) = this.y_dist(x, y)
-				h(1) = this.y_dist(x, y+1);  h(2) = this.y_dist(x, y+2)
+				h(-1) = this.delta_on_cube;  h(0) = this.delta_on_cube
+				h(1) = this.delta_on_cube;  h(2) = this.delta_on_cube
 
 this.four_order_const_y( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
 
@@ -235,58 +221,7 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		dim = this.dim;  step = this.step
 		sphere_area = 0
 
-		if(this.grid_type == 0) then
-
-			do y = 1, 2*dim
-				do x = 1, 2*dim
-					this.points_dist(:, x, y) = this.latlon_c(:, x, y, 2) ! face = 2
-				end do
-
-				do x = 2*dim + 1, 2*dim + this.step
-					this.points_dist(:, x, y) = this.latlon_c(:, x - 2*dim, y, 3) ! face = 3
-				end do
-
-				do x = 1-this.step, 0
-					this.points_dist(:, x, y) = this.latlon_c(:, 2*dim + x, y, 5)
-				end do
-			end do
-
-
-			do x = 1, 2*dim
-				do y = 2*dim + 1, 2*dim + this.step
-					this.points_dist(:, x, y) = this.latlon_c(:, x, y - 2*dim, 6) ! face = 6
-				end do
-
-				do y = 1-this.step, 0
-					this.points_dist(:, x, y) = this.latlon_c(:, x, 2*dim + y, 1)
-				end do
-			end do
-
-
-			do x = 2-step, 2*dim + step
-				do y = 1-step, 2*dim + step
-
-		dist = g.dist(this.points_dist(:, x, y), this.points_dist(:, x-1, y))
-		this.x_dist(x, y) = dist
-		this.y_dist(y, x) = dist
-
-				end do
-			end do
-
-
-
-		else if(this.grid_type == 1)then
-
-			do y = 1-step, 2*dim + step
-				do x = 2-step, 2*dim + step
-		this.x_dist(x, y) = (this.cube_coord_c(1, x, y) - this.cube_coord_c(1, x-1, y))*this.r_sphere
-		this.y_dist(y, x) = this.x_dist(x, y)
-		this.delta_on_cube = this.x_dist(x, y)
-				end do
-			end do
-
-		end if
-
+		this.delta_on_cube = (this.cube_coord_c(1, dim, dim) - this.cube_coord_c(1, dim-1, dim))*this.r_sphere
 
 		do x = 1, 2*dim
 			do y = 1, 2*dim
@@ -310,20 +245,6 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 
 	end subroutine
 
-
-
-
-	subroutine step_minmax(this)
-		Class(g_var) :: this
-		real(8) dim
-
-		dim = this.dim
-		this.dx_min = MINVAL(this.x_dist(2:2*dim, 1:2*dim))
-		this.dy_min = MINVAL(this.y_dist(1:2*dim, 2:2*dim))
-		this.dx_max = MAXVAL(this.x_dist(2:2*dim, 1:2*dim))
-		this.dy_max = MAXVAL(this.y_dist(1:2*dim, 2:2*dim))
-
-	end subroutine
 
 
 

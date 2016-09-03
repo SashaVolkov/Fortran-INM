@@ -18,7 +18,7 @@ implicit none
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: cube_coord_c(:, :, :)
 
-
+		real(8) :: r_sphere
 		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2)
 		integer(4) first_x, first_y, last_x, last_y, grid_type
 
@@ -82,12 +82,12 @@ CONTAINS
 		f_x = this.first_x;  l_x = this.last_x;  f_y = this.first_y;  l_y = this.last_y
 		dim = this.dim;  step = this.step;  f = 1-step; l = 2*dim + step
 
-		Allocate(this.G_sqr(f_x:l_x , f_y:l_y))
-		Allocate(this.G_tensor(2, 2, f_x:l_x , f_y:l_y))
-		Allocate(this.G_inverse(2, 2, f_x:l_x , f_y:l_y))
-		Allocate(this.rho(f_x:l_x , f_y:l_y))
-		Allocate(this.J_to_sph(2, 2, f_x:l_x , f_y:l_y, 6))
-		Allocate(this.J_to_cube(2, 2, f_x:l_x , f_y:l_y, 6))
+		Allocate(this.G_sqr(f:l , f:l))
+		Allocate(this.G_tensor(2, 2, f:l , f:l))
+		Allocate(this.G_inverse(2, 2, f:l , f:l))
+		Allocate(this.rho(f:l , f:l))
+		Allocate(this.J_to_sph(2, 2, f:l , f:l, 6))
+		Allocate(this.J_to_cube(2, 2, f:l , f:l, 6))
 		Allocate(this.cube_coord_c(1:2, f:l , f:l))
 		Allocate(this.latlon_c(1:2, f:l , f:l, 1:6))
 
@@ -147,40 +147,6 @@ CONTAINS
 
 
 
-	subroutine metric_tensor_conf(this)
-		Class(metric) :: this
-		integer(4) x, y, face
-		real(8) :: A(2,2)
-
-		call this.transf_matrix_conf()
-
-		do y = this.first_y, this.last_y
-			do x = this.first_x, this.last_x
-
-			this.G_sqr(x, y) = 1.0
-
-			! this.G_tensor(1, 1, x, y) = this.J_to_sph(1, 1, x, y, 2)**2 + this.J_to_sph(2, 1, x, y, 2)**2
-			! this.G_tensor(1, 2, x, y) = this.J_to_sph(1, 1, x, y, 2)*this.J_to_sph(1, 2, x, y, 2) + this.J_to_sph(2, 1, x, y, 2)*this.J_to_sph(1, 2, x, y, 2)
-			! this.G_tensor(2, 1, x, y) = this.J_to_sph(1, 1, x, y, 2)*this.J_to_sph(1, 2, x, y, 2) + this.J_to_sph(2, 1, x, y, 2)*this.J_to_sph(1, 2, x, y, 2)
-			! this.G_tensor(2, 2, x, y) = this.J_to_sph(1, 2, x, y, 2)**2 + this.J_to_sph(2, 2, x, y, 2)**2
-
-			this.G_tensor(1, 1, x, y) = 1.0
-			this.G_tensor(1, 2, x, y) = 0.0
-			this.G_tensor(2, 1, x, y) = 0.0
-			this.G_tensor(2, 2, x, y) = 1.0
-
-			this.G_inverse(1, 1, x, y) = 1.0
-			this.G_inverse(1, 2, x, y) = 0.0
-			this.G_inverse(2, 1, x, y) = 0.0
-			this.G_inverse(2, 2, x, y) = 1.0
-
-			end do
-		end do
-
-	end subroutine
-
-
-
 	subroutine transf_matrix_equiang(this)
 		Class(metric) :: this
 		real(8) x_1, x_2, g_coef, s(6)
@@ -232,27 +198,72 @@ CONTAINS
 
 
 
+	subroutine metric_tensor_conf(this)
+		Class(metric) :: this
+		integer(4) x, y, i, k, dim
+		real(8) :: J(2,2)
+
+		dim = this.dim
+
+
+		call this.transf_matrix_conf()
+
+		do y = 1, 2*dim
+			do x = 1, 2*dim
+
+			this.G_sqr(x, y) = 1.0
+			J(:,:) = this.J_to_sph(:, :, x, y, 2)
+
+			this.G_tensor(1, 1, x, y) = J(1, 1)**2 + J(2, 1)**2
+			this.G_tensor(1, 2, x, y) = J(1, 1)*J(1, 2) + J(2, 1)*J(1, 2)
+			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
+			this.G_tensor(2, 2, x, y) = J(1, 2)**2 + J(2, 2)**2
+
+
+			this.G_inverse(1, 1, x, y) = this.G_tensor(2, 2, x, y)
+			this.G_inverse(1, 2, x, y) = 0.0
+			this.G_inverse(2, 1, x, y) = 0.0
+			this.G_inverse(2, 2, x, y) = this.G_tensor(1, 1, x, y)
+
+! 			print *, this.G_tensor(:, :, x, y)
+
+			end do
+		end do
+
+		do i = 1, this.step
+			do k = 1, this.step
+				this.G_tensor(:, :, 1-i, 1-k) = this.G_tensor(:, :, i, k)
+				this.G_tensor(:, :, 2*dim + i, 2*dim + k) = this.G_tensor(:, :, 2*dim - i, 2*dim - k)
+			end do
+		end do
+
+	end subroutine
+
+
+
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, s(6)
-		integer(4) x, y, face, delta
-		s(1) = - 1d0;  s(6) = 1d0
+		real(8) x_1, x_2, g_coef, delta
+		integer(4) x, y, dim, i, k
+
+		dim = this.dim
+		delta = (this.cube_coord_c(1, dim, dim) - this.cube_coord_c(1, dim-1, dim))
+		do y = 1, 2*dim
+			do x = 1, 2*dim
+
+				this.J_to_sph(1,1,x,y,2) = (this.latlon_c(1, x+1, y, 2) - this.latlon_c(1, x-1, y, 2))/delta
+				this.J_to_sph(1,2,x,y,2) = (this.latlon_c(1, x, y+1, 2) - this.latlon_c(1, x, y-1, 2))/delta
+				this.J_to_sph(2,1,x,y,2) = (this.latlon_c(2, x+1, y, 2) - this.latlon_c(2, x-1, y, 2))/delta
+				this.J_to_sph(2,2,x,y,2) = (this.latlon_c(2, x, y+1, 2) - this.latlon_c(2, x, y-1, 2))/delta
+
+			end do
+		end do
 
 
-		do face = 1,6
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-
-					this.J_to_cube(1,1,x,y,face) = 1d0
-					this.J_to_cube(1,2,x,y,face) = 0d0
-					this.J_to_cube(2,1,x,y,face) = x_1*x_2/(1 + x_2**2)
-					this.J_to_cube(2,2,x,y,face) = (delta**2)/((1 + x_2**2)*dsqrt(1 + x_1**2))
-
-					this.J_to_sph(1,1,x,y,face) = 1d0
-					this.J_to_sph(1,2,x,y,face) = 0d0
-					this.J_to_sph(2,1,x,y,face) = - x_1*x_2*dsqrt(1 + x_1**2)/(delta**2)
-					this.J_to_sph(2,2,x,y,face) = 1d0/this.J_to_cube(2,2,x,y,face)
-				end do
+		do i = 1, this.step
+			do k = 1, this.step
+				this.J_to_sph(:, :, 1-i, 1-k, 2) = this.J_to_sph(:, :, i, k, 2)
+				this.J_to_sph(:, :, 2*dim + i, 2*dim + k, 2) = this.J_to_sph(:, :, 2*dim - i + 1, 2*dim - k + 1, 2)
 			end do
 		end do
 

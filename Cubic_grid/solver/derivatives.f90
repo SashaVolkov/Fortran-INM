@@ -48,8 +48,8 @@ CONTAINS
 			G(2,2) = metr.G_inverse(2, 2, x, y+i)
 			u1_con(i) = G(1,1)*u1_cov(i) + G(1,2)*u2_cov(i)
 			u2_con(i) = G(2,2)*u2_cov(i) + G(2,1)*u1_cov(i)
-			dx = 2*grid.delta_on_cube !grid.x_dist(x, y) + grid.x_dist(x+1, y)
-			dy = 2*grid.delta_on_cube !grid.y_dist(x, y) + grid.y_dist(x, y+1)
+			dx = 2*grid.delta_on_cube
+			dy = 2*grid.delta_on_cube
 		end do
 
 

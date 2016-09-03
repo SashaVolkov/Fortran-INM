@@ -67,12 +67,12 @@ subroutine Linear(this, var, var_pr, grid, metr)
 	do y = var.ns_y, var.nf_y
 		do x = var.ns_x, var.nf_x
 
-				dist(0:1) = grid.x_dist(x:x+1, y)
+				dist(0:1) = grid.delta_on_cube
 				temp1(:) = var_pr.h_height(x-1:x+1, y, face)
 				partial = d.partial_c2(temp1, dist)
 				var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) - dt*g*partial
 
-				dist(0:1) = grid.x_dist(x, y:y+1)
+				dist(0:1) = grid.delta_on_cube
 				temp1(:) = var_pr.h_height(x, y-1:y+1, face)
 				partial = d.partial_c2(temp1, dist)
 				var.y_vel(x, y, face) = var_pr.y_vel(x, y, face) - dt*g*partial
