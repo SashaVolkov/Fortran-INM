@@ -258,7 +258,7 @@ CONTAINS
 			do k = 1, 2*dim
 				this.latlon_c(:, k, 2*dim + i, 2) = this.latlon_c(:,k, i, 6)
 				this.latlon_c(:, 2*dim + i, k, 2) = this.latlon_c(:, i, k, 3)
-				this.latlon_c(:, i, 1 - k, 2) = this.latlon_c(:,i, 2*dim - k, 1)
+				this.latlon_c(:, k, 1 - i, 2) = this.latlon_c(:,k, 2*dim - i, 1)
 				this.latlon_c(:, 1 - i, k, 2) = this.latlon_c(:,2*dim - i, k, 5)
 			end do
 		end do
