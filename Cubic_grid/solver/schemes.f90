@@ -150,11 +150,11 @@ Subroutine FRunge(this, grid, metr, var, face, i)
 		do x = var.ns_x, var.nf_x
 
 			temp1(:) = this.kh(x-2:x+2, y, 0) + coef(i-1)*this.kh(x-2:x+2, y, i-1)
-			partial = d.partial_c4_x(grid, temp1, x, y)
+			partial = d.partial_c4(grid, temp1)
 			this.ku(x, y, i) = - dt*g*partial
 
 			temp2(:) = this.kh(x, y-2:y+2, 0) + coef(i-1)*this.kh(x, y-2:y+2, i-1)
-			partial = d.partial_c4_y(grid, temp2, x, y)
+			partial = d.partial_c4(grid, temp2)
 			this.kv(x, y, i) =  - dt*g*partial
 
 			temp1(:) = this.ku(x-2:x+2, y, 0) + coef(i-1)*this.ku(x-2:x+2, y, i-1)

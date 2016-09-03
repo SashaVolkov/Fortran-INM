@@ -14,8 +14,7 @@ implicit none
 		Procedure, Public :: div_2 => div_2
 		Procedure, Public :: div_4 => div_4
 		Procedure, Public :: partial_c2 => partial_c2
-		Procedure, Public :: partial_c4_x => partial_c4_x
-		Procedure, Public :: partial_c4_y => partial_c4_y
+		Procedure, Public :: partial_c4 => partial_c4
 	End Type
 
 
@@ -28,6 +27,7 @@ CONTAINS
 		partial_c2 = (fun(1) - fun(-1))/(dist(0) + dist(1))
 
 	end function
+
 
 
 	real(8) function div_2(this, grid, metr, u1_cov, u2_cov, x, y)
@@ -68,13 +68,10 @@ CONTAINS
 		integer(4), intent(in) :: x, y
 		integer(4) i
 		real(8) u1_con(-2:2), u2_con(-2:2), G_11, G_12, G_21, G_22, J_1(-2:2), J_2(-2:2)
-		real(8) Ax , Bx, Cx, Dx, Ex, Ay, By, Cy, Dy, Ey
+		real(8) A, B, C, D, E
 
-		Ax = g.four_order_const_x( 1, x, y);  Bx = g.four_order_const_x( 2, x, y);  Cx = g.four_order_const_x( 3, x, y)
-		Dx = g.four_order_const_x( 4, x, y);  Ex = g.four_order_const_x( 5, x, y)
-
-		Ay = g.four_order_const_y( 1, x, y);  By = g.four_order_const_y( 2, x, y);  Cy = g.four_order_const_y( 3, x, y)
-		Dy = g.four_order_const_y( 4, x, y);  Ey = g.four_order_const_y( 5, x, y)
+		A = g.four_order_const(1);  B = g.four_order_const(2);  C = g.four_order_const(3)
+		D = g.four_order_const(4);  E = g.four_order_const(5)
 
 		do i = -2, 2
 			G_11 = metr.G_inverse(1, 1, x+i, y)
@@ -88,39 +85,23 @@ CONTAINS
 		end do
 
 
-		div_4 = ( Ax*u1_con(1)*J_1(1) + Bx*u1_con(-1)*J_1(-1) + Cx*u1_con(2)*J_1(2) + Dx*u1_con(-2)*J_1(-2) + Ex*u1_con(0)*J_1(0) + &
-			 Ay*u2_con(1)*J_2(1) + By*u2_con(-1)*J_2(-1) + Cy*u2_con(2)*J_2(2) + Dy*u2_con(-2)*J_2(-2) + Ey*u2_con(0)*J_2(0) )/J_1(0)
+		div_4 = ( A*u1_con(1)*J_1(1) + B*u1_con(-1)*J_1(-1) + C*u1_con(2)*J_1(2) + D*u1_con(-2)*J_1(-2) + E*u1_con(0)*J_1(0) + &
+			 A*u2_con(1)*J_2(1) + B*u2_con(-1)*J_2(-1) + C*u2_con(2)*J_2(2) + D*u2_con(-2)*J_2(-2) + E*u2_con(0)*J_2(0) )/J_1(0)
 
 	end function
 
 
 
-	real(8) function partial_c4_x(this, g, fun, x, y)
+	real(8) function partial_c4(this, g, fun)
 		Class(der) :: this
 		Class(g_var) :: g
 		real(8), intent(in) :: fun(-2:2)
-		integer, intent(in) :: x, y
 		real(8) A , B, C, D, E
 
-		A = g.four_order_const_x( 1, x, y);  B = g.four_order_const_x( 2, x, y);  C = g.four_order_const_x( 3, x, y)
-		D = g.four_order_const_x( 4, x, y);  E = g.four_order_const_x( 5, x, y)
+		A = g.four_order_const(1);  B = g.four_order_const(2);  C = g.four_order_const(3)
+		D = g.four_order_const(4);  E = g.four_order_const(5)
 
-		partial_c4_x = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
-
-	end function
-
-
-	real(8) function partial_c4_y(this, g, fun, x, y)
-		Class(der) :: this
-		Class(g_var) :: g
-		real(8), intent(in) :: fun(-2:2)
-		integer, intent(in) :: x, y
-		real(8) A , B, C, D, E
-
-		A = g.four_order_const_y( 1, x, y);  B = g.four_order_const_y( 2, x, y);  C = g.four_order_const_y( 3, x, y)
-		D = g.four_order_const_y( 4, x, y);  E = g.four_order_const_y( 5, x, y)
-
-		partial_c4_y = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
+		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
 
 	end function
 

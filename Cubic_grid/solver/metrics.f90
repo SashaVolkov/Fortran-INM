@@ -111,7 +111,7 @@ CONTAINS
 
 
 
-	subroutine metric_tensor_equiang(this)
+	subroutine metric_tensor_equiang(this)   ! Ullrich phd thesis Appendices
 		Class(metric) :: this
 		real(8) x_1, x_2, g_coef, g_inv_coef
 		integer(4) x, y, face
@@ -147,7 +147,7 @@ CONTAINS
 
 
 
-	subroutine transf_matrix_equiang(this)
+	subroutine transf_matrix_equiang(this)   ! Ullrich phd thesis Appendix G.4
 		Class(metric) :: this
 		real(8) x_1, x_2, g_coef, s(6)
 		integer(4) x, y, face, delta
@@ -204,27 +204,21 @@ CONTAINS
 		real(8) :: J(2,2)
 
 		dim = this.dim
-
-
 		call this.transf_matrix_conf()
 
 		do y = 1, 2*dim
 			do x = 1, 2*dim
-
 			J(:,:) = this.J_to_sph(:, :, x, y, 2)
 
 			this.G_tensor(1, 1, x, y) = J(1, 1)**2 + J(2, 1)**2
 			this.G_tensor(1, 2, x, y) = 0.0
-			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
+			this.G_tensor(2, 1, x, y) = 0.0
 			this.G_tensor(2, 2, x, y) = J(1, 2)**2 + J(2, 2)**2
 
 			this.G_inverse(1, 1, x, y) = 1.0/this.G_tensor(1, 1, x, y)
 			this.G_inverse(1, 2, x, y) = 0.0
 			this.G_inverse(2, 1, x, y) = 0.0
 			this.G_inverse(2, 2, x, y) = 1.0/this.G_tensor(2, 2, x, y)
-
-! 			print *, this.G_tensor(:, :, x, y)
-
 			end do
 		end do
 
@@ -270,7 +264,6 @@ CONTAINS
 			end do
 		end do
 
-
 		do y = 1, 2*dim
 			do x = 1, 2*dim
 
@@ -281,7 +274,6 @@ CONTAINS
 
 			end do
 		end do
-
 
 		do i = 1, this.step
 			do k = 1, 2*dim

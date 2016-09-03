@@ -33,8 +33,7 @@ implicit none
 		Real(8), Allocatable :: triangle_angles(:, :, :)
 		Real(8), Allocatable :: square_angles(:, :, :)
 
-		Real(8), Allocatable :: four_order_const_x(:, :, :)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
-		Real(8), Allocatable :: four_order_const_y(:, :, :)
+		Real(8) :: four_order_const(5)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
 		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube
 		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type
 		integer(4) first_x, first_y, last_x, last_y
@@ -102,8 +101,6 @@ CONTAINS
 		Allocate(this.triangle_angles(1:6, 1:2*dim, 1:2*dim))
 		Allocate(this.square_angles(1:4, 1:2*dim, 1:2*dim))
 
-		Allocate(this.four_order_const_x(1:5, f_x:l_x , f_y:l_y))
-		Allocate(this.four_order_const_y(1:5, f_x:l_x , f_y:l_y))
 	end subroutine
 
 
@@ -119,9 +116,6 @@ CONTAINS
 		if (Allocated(this.triangle_area)) Deallocate(this.triangle_area)
 		if (Allocated(this.triangle_angles)) Deallocate(this.triangle_angles)
 		if (Allocated(this.square_angles)) Deallocate(this.square_angles)
-
-		if (Allocated(this.four_order_const_x)) Deallocate(this.four_order_const_x)
-		if (Allocated(this.four_order_const_y)) Deallocate(this.four_order_const_y)
 	end subroutine
 
 
@@ -161,52 +155,18 @@ CONTAINS
 
 	subroutine derivat_4order(this)
 		Class(g_var) :: this
-		real(8) dist, sphere_area, h(-1:2)
+		real(8) dist, sphere_area, h
 		integer(4) face, x, y, dim, step
 		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
 
-		dim = this.dim;  step = this.step
+		h = this.delta_on_cube
 
-		do x = this.ns_xy(1), this.nf_xy(1)
-			do y = this.ns_xy(2), this.nf_xy(2) ! Gamet et al. 1999 Apendix A. Approx. of derivat.
-
-				h(-1) = this.delta_on_cube;  h(0) = this.delta_on_cube
-				h(1) = this.delta_on_cube;  h(2) = this.delta_on_cube
-
-this.four_order_const_x( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
-
-this.four_order_const_x( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
-
-this.four_order_const_x( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-this.four_order_const_x( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-this.four_order_const_x( E, x, y) = - ( this.four_order_const_x( A, x, y) + this.four_order_const_x( B, x, y) + this.four_order_const_x( C, x, y) + this.four_order_const_x( D, x, y) )
-
-				end do
-			end do
-
-			do x = this.ns_xy(1), this.nf_xy(1)
-				do y = this.ns_xy(2), this.nf_xy(2)
-
-				h(-1) = this.delta_on_cube;  h(0) = this.delta_on_cube
-				h(1) = this.delta_on_cube;  h(2) = this.delta_on_cube
-
-this.four_order_const_y( A, x, y) = ( h(1) + h(2) )*( h(-1)*h(0) + h(0)**2 )/( h(1)*h(2)*( h(0) + h(1) )*( h(-1) + h(0) + h(1) ) )
-
-this.four_order_const_y( B, x, y) = - ( h(-1) + h(0) )*( h(1)*h(2) + h(1)**2 )/( h(-1)*h(0)*( h(0) + h(1) )*( h(0) + h(1) + h(2) ) )
-
-this.four_order_const_y( C, x, y) = - ( h(-1) + h(0) )*h(0)*h(1)/( h(2)*( h(1) + h(2) )*( h(0) + h(1) + h(2) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-this.four_order_const_y( D, x, y) = ( h(1) + h(2) )*h(0)*h(1)/( h(-1)*( h(-1) + h(0) )*( h(-1) + h(0) + h(1) )*( h(-1) + h(0) + h(1) + h(2) ) )
-
-this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this.four_order_const_y( B, x, y) + this.four_order_const_y( C, x, y) + this.four_order_const_y( D, x, y) )
-
-				end do
-			end do
-
+this.four_order_const(A) = 2.0/(3.0*h);  this.four_order_const(B) = - 2.0/(3.0*h)
+this.four_order_const(C) = - 1.0/(12.0*h);  this.four_order_const(D) = 1.0/(12.0*h)
+this.four_order_const(E) = 0.0
 
 	end subroutine
+
 
 
 	subroutine tiles_prop(this, g)
@@ -244,7 +204,6 @@ this.four_order_const_y( E, x, y) = - ( this.four_order_const_y( A, x, y) + this
 		end do
 
 	end subroutine
-
 
 
 
