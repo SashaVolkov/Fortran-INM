@@ -1,7 +1,6 @@
 module derivatives
 
 	use metrics, Only: metric
-	use grid_var, Only: g_var
 
 implicit none
 
@@ -11,100 +10,82 @@ implicit none
 	Type der
 
 		CONTAINS
-		Procedure, Public :: div_2 => div_2
-		Procedure, Public :: div_4 => div_4
+		Procedure, Public :: div => div
 		Procedure, Public :: partial_c2 => partial_c2
+		Procedure, Public :: partial_c2_fg => partial_c2_fg
 		Procedure, Public :: partial_c4 => partial_c4
+		Procedure, Public :: partial_c4_fg => partial_c4_fg
 	End Type
 
 
 CONTAINS
 
 
-	real(8) function partial_c2(this, fun, dist)
+	real(8) function partial_c2(this, fun, h)
 		Class(der) :: this
-		real(8), intent(in) :: fun(-1:1), dist(0:1)
-		partial_c2 = (fun(1) - fun(-1))/(dist(0) + dist(1))
+		real(8), intent(in) :: fun(-1:1), h
+		partial_c2 = (fun(1) - fun(-1))/(2.0*h)
 
 	end function
 
 
 
-	real(8) function div_2(this, grid, metr, u1_cov, u2_cov, x, y)
+	real(8) function partial_c2_fg(this, f_fun, g_fun, h)
 		Class(der) :: this
-		Class(g_var) :: grid
-		Class(metric) :: metr
-		real(8), intent(in) :: u1_cov(-1:1), u2_cov(-1:1)
-		integer(4), intent(in) :: x, y
-		integer(4) i, j
-		real(8) u1_con(-1:1), u2_con(-1:1), J_1(-1:1), J_2(-1:1), G(2,2), dx, dy
-
-		do i = -1, 1
-			J_1(i) = metr.G_sqr(x+i, y)
-			J_2(i) = metr.G_sqr(x, y+i)
-			G(1,1) = metr.G_inverse(1, 1, x+i, y)
-			G(1,2) = metr.G_inverse(1, 2, x, y+i)
-			G(2,1) = metr.G_inverse(2, 1, x+i, y)
-			G(2,2) = metr.G_inverse(2, 2, x, y+i)
-			u1_con(i) = G(1,1)*u1_cov(i) + G(1,2)*u2_cov(i)
-			u2_con(i) = G(2,2)*u2_cov(i) + G(2,1)*u1_cov(i)
-			dx = 2*grid.delta_on_cube
-			dy = 2*grid.delta_on_cube
-		end do
-
-
-		div_2 = ( (u1_con(1)*J_1(1) - u1_con(-1)*J_1(-1))/dx + (u2_con(1)*J_2(1) - u2_con(-1)*J_2(-1))/dy )/J_1(0)
+		real(8), intent(in) :: f_fun(-1:1), g_fun(-1:1), h
+		partial_c2_fg = g_fun(0)*this.partial_c2(f_fun, h) + f_fun(0)*this.partial_c2(g_fun, h)
 
 	end function
 
 
 
-
-	real(8) function div_4(this, g, metr, u1_cov, u2_cov, x, y)
+	real(8) function partial_c4(this, fun, h)
 		Class(der) :: this
-		Class(g_var) :: g
-		Class(metric) :: metr
-		real(8), intent(in) :: u1_cov(-2:2), u2_cov(-2:2)
-		integer(4), intent(in) :: x, y
-		integer(4) i
-		real(8) u1_con(-2:2), u2_con(-2:2), G_11, G_12, G_21, G_22, J_1(-2:2), J_2(-2:2)
-		real(8) A, B, C, D, E
-
-		A = g.four_order_const(1);  B = g.four_order_const(2);  C = g.four_order_const(3)
-		D = g.four_order_const(4);  E = g.four_order_const(5)
-
-		do i = -2, 2
-			G_11 = metr.G_inverse(1, 1, x+i, y)
-			G_12 = metr.G_inverse(1, 2, x, y+i)
-			G_21 = metr.G_inverse(2, 1, x+i, y)
-			G_22 = metr.G_inverse(2, 2, x, y+i)
-			u1_con(i) = G_11*u1_cov(i) + G_12*u2_cov(i)
-			u2_con(i) = G_22*u2_cov(i) + G_21*u1_cov(i)
-			J_1(i) = metr.G_sqr(x+i, y)
-			J_2(i) = metr.G_sqr(x, y+i)
-		end do
-
-
-		div_4 = ( A*u1_con(1)*J_1(1) + B*u1_con(-1)*J_1(-1) + C*u1_con(2)*J_1(2) + D*u1_con(-2)*J_1(-2) + E*u1_con(0)*J_1(0) + &
-			 A*u2_con(1)*J_2(1) + B*u2_con(-1)*J_2(-1) + C*u2_con(2)*J_2(2) + D*u2_con(-2)*J_2(-2) + E*u2_con(0)*J_2(0) )/J_1(0)
-
-	end function
-
-
-
-	real(8) function partial_c4(this, g, fun)
-		Class(der) :: this
-		Class(g_var) :: g
-		real(8), intent(in) :: fun(-2:2)
+		real(8), intent(in) :: fun(-2:2), h
 		real(8) A , B, C, D, E
 
-		A = g.four_order_const(1);  B = g.four_order_const(2);  C = g.four_order_const(3)
-		D = g.four_order_const(4);  E = g.four_order_const(5)
-
+		A = 2.0/(3.0*h);  B = - 2.0/(3.0*h);  C = - 1.0/(12.0*h);  D = 1.0/(12.0*h);  E = 0.0
 		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
 
 	end function
 
+
+
+	real(8) function partial_c4_fg(this, f_fun, g_fun, h)
+		Class(der) :: this
+		real(8), intent(in) :: f_fun(-2:2), g_fun(-2:2), h
+		partial_c4_fg = g_fun(0)*this.partial_c4(f_fun, h) + f_fun(0)*this.partial_c4(g_fun, h)
+
+	end function
+
+
+
+	real(8) function div(this, metr, u1_cov, u2_cov, h, x, y, order)
+		Class(der) :: this
+		Class(metric) :: metr
+		integer(4), intent(in) :: x, y, order
+		real(8), intent(in) :: u1_cov(-order:order), u2_cov(-order:order), h
+		integer(4) i
+		real(8) u1_con(-order:order), u2_con(-order:order), J_1(-order:order), J_2(-order:order), G(2,2)
+
+		do i = -order, order
+			J_1(i) = metr.G_sqr(x+i, y)
+			J_2(i) = metr.G_sqr(x, y+i)
+			G(1,1) = metr.G_inverse(1, 1, x+i, y)
+			G(1,2) = metr.G_inverse(1, 2, x+i, y)
+			G(2,1) = metr.G_inverse(2, 1, x, y+i)
+			G(2,2) = metr.G_inverse(2, 2, x, y+i)
+			u1_con(i) = G(1,1)*u1_cov(i) + G(1,2)*u2_cov(i)
+			u2_con(i) = G(2,2)*u2_cov(i) + G(2,1)*u1_cov(i)
+		end do
+
+		if (order == 1) then
+			div = ( this.partial_c2_fg(u1_con, J_1, h) + this.partial_c2_fg(u2_con, J_2, h))/J_1(0)
+		else if (order == 2) then
+			div = ( this.partial_c4_fg(u1_con, J_1, h) + this.partial_c4_fg(u2_con, J_2, h) )/J_1(0)
+		end if
+
+	end function
 
 
 end module

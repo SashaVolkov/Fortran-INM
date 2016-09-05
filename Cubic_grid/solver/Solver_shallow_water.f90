@@ -70,7 +70,7 @@ implicit none
 
 
 	do time = 1, Tmax
-		call sch.Linear(var, var_prev, grid, metr)
+		call sch.RungeKutta(var, var_prev, grid, metr)
 		call var_prev.equal(var, metr)
 		call msg.msg(var_prev, paral)
 		call var_prev.interpolate(inter, metr)
