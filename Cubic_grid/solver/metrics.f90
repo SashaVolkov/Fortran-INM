@@ -34,6 +34,9 @@ implicit none
 		Procedure, Private :: transf_matrix_conf => transf_matrix_conf
 		Procedure, Private :: metric_tensor_conf => metric_tensor_conf
 
+		Procedure, Private :: partial_c4 => partial_c4
+
+
 	End Type
 
 
@@ -249,7 +252,7 @@ CONTAINS
 
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta
+		real(8) x_1, x_2, g_coef, delta, temp(-2:2)
 		integer(4) x, y, dim, i, k
 
 		dim = this.dim
@@ -267,10 +270,14 @@ CONTAINS
 		do y = 1, 2*dim
 			do x = 1, 2*dim
 
-				this.J_to_sph(1,1,x,y,2) = (this.latlon_c(1, x+1, y, 2) - this.latlon_c(1, x-1, y, 2))/delta
-				this.J_to_sph(1,2,x,y,2) = (this.latlon_c(1, x, y+1, 2) - this.latlon_c(1, x, y-1, 2))/delta
-				this.J_to_sph(2,1,x,y,2) = (this.latlon_c(2, x+1, y, 2) - this.latlon_c(2, x-1, y, 2))/delta
-				this.J_to_sph(2,2,x,y,2) = (this.latlon_c(2, x, y+1, 2) - this.latlon_c(2, x, y-1, 2))/delta
+				temp = this.latlon_c(1, x-2:x+2, y, 2)
+				this.J_to_sph(1,1,x,y,2) = this.partial_c4(temp, delta)
+				temp = this.latlon_c(1, x, y-2:y+2, 2)
+				this.J_to_sph(1,2,x,y,2) = this.partial_c4(temp, delta)
+				temp = this.latlon_c(2, x-2:x+2, y, 2)
+				this.J_to_sph(2,1,x,y,2) = this.partial_c4(temp, delta)
+				temp = this.latlon_c(2, x, y-2:y+2, 2)
+				this.J_to_sph(2,2,x,y,2) = this.partial_c4(temp, delta)
 
 			end do
 		end do
@@ -285,6 +292,18 @@ CONTAINS
 		end do
 
 	end subroutine
+
+
+
+	real(8) function partial_c4(this, fun, h)
+		Class(metric) :: this
+		real(8), intent(in) :: fun(-2:2), h
+		real(8) A , B, C, D, E
+
+		A = 2.0/(3.0*h);  B = - 2.0/(3.0*h);  C = - 1.0/(12.0*h);  D = 1.0/(12.0*h);  E = 0.0
+		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
+
+	end function
 
 
 

@@ -44,7 +44,6 @@ implicit none
 		Procedure, Public :: deinit => deinit
 		Procedure, Private :: const_def => const_def
 		Procedure, Private :: tiles_prop => tiles_prop
-		Procedure, Private :: derivat_4order => derivat_4order
 	End Type
 
 
@@ -145,25 +144,6 @@ CONTAINS
 		metr.cube_coord_c = this.cube_coord_c
 		metr.latlon_c = this.latlon_c
 		call metr.define(this.grid_type)
-
-		if(this.step > 1) call this.derivat_4order()
-
-	end subroutine
-
-
-
-
-	subroutine derivat_4order(this)
-		Class(g_var) :: this
-		real(8) dist, sphere_area, h
-		integer(4) face, x, y, dim, step
-		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
-
-		h = this.delta_on_cube
-
-this.four_order_const(A) = 2.0/(3.0*h);  this.four_order_const(B) = - 2.0/(3.0*h)
-this.four_order_const(C) = - 1.0/(12.0*h);  this.four_order_const(D) = 1.0/(12.0*h)
-this.four_order_const(E) = 0.0
 
 	end subroutine
 
