@@ -67,11 +67,11 @@ CONTAINS
 
 
 
-		if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
+		! if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
 			call this.metric_tensor_conf()
-		else if(grid_type == 1)then
-			call this.metric_tensor_equiang()
-		end if
+		! else if(grid_type == 1)then
+		! 	call this.metric_tensor_equiang()
+		! end if
 
 
 	end subroutine
@@ -214,13 +214,13 @@ CONTAINS
 			J(:,:) = this.J_to_sph(:, :, x, y, 2)
 
 			this.G_tensor(1, 1, x, y) = J(1, 1)**2 + J(2, 1)**2
-			this.G_tensor(1, 2, x, y) = 0.0
-			this.G_tensor(2, 1, x, y) = 0.0
+			this.G_tensor(1, 2, x, y) = J(1, 1)*J(1,2) + J(2, 1)*J(2,2)
+			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
 			this.G_tensor(2, 2, x, y) = J(1, 2)**2 + J(2, 2)**2
 
 			this.G_inverse(1, 1, x, y) = 1.0/this.G_tensor(1, 1, x, y)
-			this.G_inverse(1, 2, x, y) = 0.0
-			this.G_inverse(2, 1, x, y) = 0.0
+			this.G_inverse(1, 2, x, y) = - this.G_tensor(1, 2, x, y)
+			this.G_inverse(2, 1, x, y) = - this.G_tensor(2, 1, x, y)
 			this.G_inverse(2, 2, x, y) = 1.0/this.G_tensor(2, 2, x, y)
 			end do
 		end do
@@ -241,7 +241,7 @@ CONTAINS
 
 		do y = 1 - this.step, 2*dim + this.step
 			do x = 1 - this.step, 2*dim + this.step
-				this.G_sqr(x, y) = dsqrt(this.G_tensor(1, 1, x, y) * this.G_tensor(2, 2, x, y))
+				this.G_sqr(x, y) = dsqrt(this.G_tensor(1, 1, x, y) * this.G_tensor(2, 2, x, y) - this.G_tensor(2, 1, x, y) * this.G_tensor(1, 2, x, y))
 			end do
 		end do
 

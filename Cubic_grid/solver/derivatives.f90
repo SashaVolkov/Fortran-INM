@@ -12,9 +12,9 @@ implicit none
 		CONTAINS
 		Procedure, Public :: div => div
 		Procedure, Public :: partial_c2 => partial_c2
-		Procedure, Public :: partial_c2_fg => partial_c2_fg
+		! Procedure, Public :: partial_c2_fg => partial_c2_fg
 		Procedure, Public :: partial_c4 => partial_c4
-		Procedure, Public :: partial_c4_fg => partial_c4_fg
+		Procedure, Public :: partial_c_fg => partial_c_fg
 	End Type
 
 
@@ -25,15 +25,6 @@ CONTAINS
 		Class(der) :: this
 		real(8), intent(in) :: fun(-1:1), h
 		partial_c2 = (fun(1) - fun(-1))/(2.0*h)
-
-	end function
-
-
-
-	real(8) function partial_c2_fg(this, f_fun, g_fun, h)
-		Class(der) :: this
-		real(8), intent(in) :: f_fun(-1:1), g_fun(-1:1), h
-		partial_c2_fg = g_fun(0)*this.partial_c2(f_fun, h) + f_fun(0)*this.partial_c2(g_fun, h)
 
 	end function
 
@@ -51,10 +42,16 @@ CONTAINS
 
 
 
-	real(8) function partial_c4_fg(this, f_fun, g_fun, h)
+	real(8) function partial_c_fg(this, f_fun, g_fun, h, order)
 		Class(der) :: this
-		real(8), intent(in) :: f_fun(-2:2), g_fun(-2:2), h
-		partial_c4_fg = g_fun(0)*this.partial_c4(f_fun, h) + f_fun(0)*this.partial_c4(g_fun, h)
+		integer(4), intent(in) :: order
+		real(8), intent(in) :: f_fun(-order:order), g_fun(-order:order), h
+
+		if (order == 1) then
+			partial_c_fg = g_fun(0)*this.partial_c2(f_fun, h) + f_fun(0)*this.partial_c2(g_fun, h)
+		else if (order == 2) then
+			partial_c_fg = g_fun(0)*this.partial_c4(f_fun, h) + f_fun(0)*this.partial_c4(g_fun, h)
+		end if
 
 	end function
 
@@ -79,11 +76,7 @@ CONTAINS
 			u2_con(i) = G(2,2)*u2_cov(i) + G(2,1)*u1_cov(i)
 		end do
 
-		if (order == 1) then
-			div = ( this.partial_c2_fg(u1_con, J_1, h) + this.partial_c2_fg(u2_con, J_2, h))/J_1(0)
-		else if (order == 2) then
-			div = ( this.partial_c4_fg(u1_con, J_1, h) + this.partial_c4_fg(u2_con, J_2, h) )/J_1(0)
-		end if
+		div = ( this.partial_c_fg(u1_con, J_1, h, order) + this.partial_c_fg(u2_con, J_2, h, order))/J_1(0)
 
 	end function
 
