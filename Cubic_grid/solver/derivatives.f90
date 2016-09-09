@@ -10,11 +10,10 @@ implicit none
 	Type der
 
 		CONTAINS
-		Procedure, Public :: div => div
 		Procedure, Public :: partial_c2 => partial_c2
-		! Procedure, Public :: partial_c2_fg => partial_c2_fg
 		Procedure, Public :: partial_c4 => partial_c4
 		Procedure, Public :: partial_c_fg => partial_c_fg
+		Procedure, Public :: div => div
 	End Type
 
 

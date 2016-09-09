@@ -12,6 +12,7 @@ implicit none
 		Real(8), Allocatable :: G_sqr(:, :)
 		Real(8), Allocatable :: G_tensor(:, :, :, :)
 		Real(8), Allocatable :: G_inverse(:, :, :, :)
+		Real(8), Allocatable :: Lame_coef(:, :, :)
 		Real(8), Allocatable :: rho(:, :)
 		Real(8), Allocatable :: J_to_sph(:, :, :, :, :)
 		Real(8), Allocatable :: J_to_cube(:, :, :, :, :)
@@ -67,11 +68,11 @@ CONTAINS
 
 
 
-		! if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
+		if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
 			call this.metric_tensor_conf()
-		! else if(grid_type == 1)then
-		! 	call this.metric_tensor_equiang()
-		! end if
+		else if(grid_type == 1)then
+			call this.metric_tensor_equiang()
+		end if
 
 
 	end subroutine
@@ -88,6 +89,7 @@ CONTAINS
 		Allocate(this.G_sqr(f:l , f:l))
 		Allocate(this.G_tensor(2, 2, f:l , f:l))
 		Allocate(this.G_inverse(2, 2, f:l , f:l))
+		Allocate(this.Lame_coef(2, f:l , f:l))
 		Allocate(this.rho(f:l , f:l))
 		Allocate(this.J_to_sph(2, 2, f:l , f:l, 6))
 		Allocate(this.J_to_cube(2, 2, f:l , f:l, 6))
@@ -104,6 +106,7 @@ CONTAINS
 		if (Allocated(this.G_sqr)) Deallocate(this.G_sqr)
 		if (Allocated(this.G_tensor)) Deallocate(this.G_tensor)
 		if (Allocated(this.G_inverse)) Deallocate(this.G_inverse)
+		if (Allocated(this.Lame_coef)) Deallocate(this.Lame_coef)
 		if (Allocated(this.rho)) Deallocate(this.rho)
 		if (Allocated(this.J_to_sph)) Deallocate(this.J_to_sph)
 		if (Allocated(this.J_to_cube)) Deallocate(this.J_to_cube)
@@ -119,6 +122,7 @@ CONTAINS
 		real(8) x_1, x_2, g_coef, g_inv_coef
 		integer(4) x, y, face
 
+		call this.transf_matrix_equiang()
 
 		do y = this.first_y, this.last_y
 			do x = this.first_x, this.last_x
@@ -141,10 +145,11 @@ CONTAINS
 			this.G_inverse(2, 1, x, y) = g_inv_coef * (x_1*x_2)
 			this.G_inverse(2, 2, x, y) = g_inv_coef * (1 + x_1**2)
 
+			this.Lame_coef(1, x, y) = dsqrt(this.J_to_sph(1, 1, x, y, 2)**2 + this.J_to_sph(1, 2, x, y, 2)**2)
+			this.Lame_coef(2, x, y) = dsqrt(this.J_to_sph(2, 1, x, y, 2)**2 + this.J_to_sph(2, 2, x, y, 2)**2)
+
 			end do
 		end do
-
-		call this.transf_matrix_equiang()
 
 	end subroutine
 
@@ -242,6 +247,8 @@ CONTAINS
 		do y = 1 - this.step, 2*dim + this.step
 			do x = 1 - this.step, 2*dim + this.step
 				this.G_sqr(x, y) = dsqrt(this.G_tensor(1, 1, x, y) * this.G_tensor(2, 2, x, y) - this.G_tensor(2, 1, x, y) * this.G_tensor(1, 2, x, y))
+				this.Lame_coef(1, x, y) = dsqrt(this.J_to_sph(1, 1, x, y, 2)**2 + this.J_to_sph(1, 2, x, y, 2)**2)
+				this.Lame_coef(2, x, y) = dsqrt(this.J_to_sph(2, 1, x, y, 2)**2 + this.J_to_sph(2, 2, x, y, 2)**2)
 			end do
 		end do
 
