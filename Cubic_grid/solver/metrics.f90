@@ -12,7 +12,6 @@ implicit none
 		Real(8), Allocatable :: G_sqr(:, :)
 		Real(8), Allocatable :: G_tensor(:, :, :, :)
 		Real(8), Allocatable :: G_inverse(:, :, :, :)
-		Real(8), Allocatable :: Lame_coef(:, :, :)
 		Real(8), Allocatable :: rho(:, :)
 		Real(8), Allocatable :: J_to_sph(:, :, :, :, :)
 		Real(8), Allocatable :: J_to_cube(:, :, :, :, :)
@@ -89,7 +88,6 @@ CONTAINS
 		Allocate(this.G_sqr(f:l , f:l))
 		Allocate(this.G_tensor(2, 2, f:l , f:l))
 		Allocate(this.G_inverse(2, 2, f:l , f:l))
-		Allocate(this.Lame_coef(2, f:l , f:l))
 		Allocate(this.rho(f:l , f:l))
 		Allocate(this.J_to_sph(2, 2, f:l , f:l, 6))
 		Allocate(this.J_to_cube(2, 2, f:l , f:l, 6))
@@ -106,7 +104,6 @@ CONTAINS
 		if (Allocated(this.G_sqr)) Deallocate(this.G_sqr)
 		if (Allocated(this.G_tensor)) Deallocate(this.G_tensor)
 		if (Allocated(this.G_inverse)) Deallocate(this.G_inverse)
-		if (Allocated(this.Lame_coef)) Deallocate(this.Lame_coef)
 		if (Allocated(this.rho)) Deallocate(this.rho)
 		if (Allocated(this.J_to_sph)) Deallocate(this.J_to_sph)
 		if (Allocated(this.J_to_cube)) Deallocate(this.J_to_cube)
@@ -130,23 +127,20 @@ CONTAINS
 			x_1 = dtan(this.cube_coord_c(1, x, y))
 			x_2 = dtan(this.cube_coord_c(2, x, y))
 
-			this.rho(x, y) = dsqrt(1.0 + x_1**2 + x_2**2)
-			this.G_sqr(x, y) = (1.0 + x_1**2)*(1.0 + x_2**2)/(this.rho(x, y)**3)
-			g_coef = (1.0 + x_1**2)*(1.0 + x_2**2)/(this.rho(x, y)**4)
-			g_inv_coef = (this.rho(x, y)**2)/((1.0 + x_1**2)*(1.0 + x_2**2))
+			this.rho(x, y) = dsqrt(1d0 + x_1**2 + x_2**2)
+			this.G_sqr(x, y) = (1d0 + x_1**2)*(1d0 + x_2**2)/(this.rho(x, y)**3)
+			g_coef = (1d0 + x_1**2)*(1d0 + x_2**2)/(this.rho(x, y)**4)
+			g_inv_coef = (this.rho(x, y)**2)/((1d0 + x_1**2)*(1d0 + x_2**2))
 
-			this.G_tensor(1, 1, x, y) = g_coef * (1 + x_1**2)
+			this.G_tensor(1, 1, x, y) = g_coef * (1d0 + x_1**2)
 			this.G_tensor(1, 2, x, y) = g_coef * (- x_1*x_2)
-			this.G_tensor(2, 1, x, y) = g_coef * (- x_1*x_2)
-			this.G_tensor(2, 2, x, y) = g_coef * (1 + x_2**2)
+			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
+			this.G_tensor(2, 2, x, y) = g_coef * (1d0 + x_2**2)
 
-			this.G_inverse(1, 1, x, y) = g_inv_coef * (1 + x_2**2)
+			this.G_inverse(1, 1, x, y) = g_inv_coef * (1d0 + x_2**2)
 			this.G_inverse(1, 2, x, y) = g_inv_coef * (x_1*x_2)
-			this.G_inverse(2, 1, x, y) = g_inv_coef * (x_1*x_2)
-			this.G_inverse(2, 2, x, y) = g_inv_coef * (1 + x_1**2)
-
-			this.Lame_coef(1, x, y) = dsqrt(this.J_to_sph(1, 1, x, y, 2)**2 + this.J_to_sph(1, 2, x, y, 2)**2)
-			this.Lame_coef(2, x, y) = dsqrt(this.J_to_sph(2, 1, x, y, 2)**2 + this.J_to_sph(2, 2, x, y, 2)**2)
+			this.G_inverse(2, 1, x, y) = this.G_inverse(1, 2, x, y)
+			this.G_inverse(2, 2, x, y) = g_inv_coef * (1d0 + x_1**2)
 
 			end do
 		end do
@@ -157,7 +151,7 @@ CONTAINS
 
 	subroutine transf_matrix_equiang(this)   ! Ullrich phd thesis Appendix G.4
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, s(6)
+		real(8) x_1, x_2, g_coef, s(6), cos_theta
 		integer(4) x, y, face, delta
 		s(1) = - 1d0;  s(6) = 1d0
 
@@ -168,8 +162,9 @@ CONTAINS
 					delta = this.rho(x,y)
 					x_1 = dtan(this.cube_coord_c(1, x, y))
 					x_2 = dtan(this.cube_coord_c(2, x, y))
+					cos_theta = dcos(this.latlon_c(1, x, y, face))
 
-					this.J_to_cube(1,1,x,y,face) = 1d0
+					this.J_to_cube(1,1,x,y,face) = cos_theta
 					this.J_to_cube(1,2,x,y,face) = 0d0
 					this.J_to_cube(2,1,x,y,face) = x_1*x_2/(1 + x_2**2)
 					this.J_to_cube(2,2,x,y,face) = (delta**2)/((1 + x_2**2)*dsqrt(1 + x_1**2))
@@ -188,8 +183,9 @@ CONTAINS
 					delta = this.rho(x,y)
 					x_1 = dtan(this.cube_coord_c(1, x, y))
 					x_2 = dtan(this.cube_coord_c(2, x, y))
+					cos_theta = dcos(this.latlon_c(1, x, y, face))
 
-					this.J_to_cube(1,1,x,y,face) = -s(face)*x_2/(1 + x_1**2)
+					this.J_to_cube(1,1,x,y,face) = -cos_theta*s(face)*x_2/(1 + x_1**2)
 					this.J_to_cube(1,2,x,y,face) = -s(face)*(delta**2)*x_1/((1 + x_1**2)*(x_2**2 + x_1**2))
 					this.J_to_cube(2,1,x,y,face) = s(face)*x_1/(1 + x_2**2)
 					this.J_to_cube(2,2,x,y,face) = -s(face)*(delta**2)*x_2/((1 + x_2**2)*(x_2**2 + x_1**2))
@@ -209,7 +205,7 @@ CONTAINS
 	subroutine metric_tensor_conf(this)
 		Class(metric) :: this
 		integer(4) x, y, i, k, dim
-		real(8) :: J(2,2)
+		real(8) :: J(2,2), cos_theta
 
 		dim = this.dim
 		call this.transf_matrix_conf()
@@ -247,8 +243,6 @@ CONTAINS
 		do y = 1 - this.step, 2*dim + this.step
 			do x = 1 - this.step, 2*dim + this.step
 				this.G_sqr(x, y) = dsqrt(this.G_tensor(1, 1, x, y) * this.G_tensor(2, 2, x, y) - this.G_tensor(2, 1, x, y) * this.G_tensor(1, 2, x, y))
-				this.Lame_coef(1, x, y) = dsqrt(this.J_to_sph(1, 1, x, y, 2)**2 + this.J_to_sph(1, 2, x, y, 2)**2)
-				this.Lame_coef(2, x, y) = dsqrt(this.J_to_sph(2, 1, x, y, 2)**2 + this.J_to_sph(2, 2, x, y, 2)**2)
 			end do
 		end do
 
@@ -259,7 +253,7 @@ CONTAINS
 
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta, temp(-2:2)
+		real(8) x_1, x_2, g_coef, delta, temp(-2:2), cos_theta
 		integer(4) x, y, dim, i, k
 
 		dim = this.dim
@@ -276,14 +270,15 @@ CONTAINS
 
 		do y = 1, 2*dim
 			do x = 1, 2*dim
+				cos_theta = dcos(this.latlon_c(1, x, y, 2))
 
-				temp = this.latlon_c(1, x-2:x+2, y, 2)
-				this.J_to_sph(1,1,x,y,2) = this.partial_c4(temp, delta)
-				temp = this.latlon_c(1, x, y-2:y+2, 2)
-				this.J_to_sph(1,2,x,y,2) = this.partial_c4(temp, delta)
 				temp = this.latlon_c(2, x-2:x+2, y, 2)
-				this.J_to_sph(2,1,x,y,2) = this.partial_c4(temp, delta)
+				this.J_to_sph(1,1,x,y,2) = cos_theta*this.partial_c4(temp, delta)
 				temp = this.latlon_c(2, x, y-2:y+2, 2)
+				this.J_to_sph(1,2,x,y,2) = cos_theta*this.partial_c4(temp, delta)
+				temp = this.latlon_c(1, x-2:x+2, y, 2)
+				this.J_to_sph(2,1,x,y,2) = this.partial_c4(temp, delta)
+				temp = this.latlon_c(1, x, y-2:y+2, 2)
 				this.J_to_sph(2,2,x,y,2) = this.partial_c4(temp, delta)
 
 			end do

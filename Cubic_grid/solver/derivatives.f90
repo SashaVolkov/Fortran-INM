@@ -56,23 +56,25 @@ CONTAINS
 
 
 
-	real(8) function div(this, metr, u1_cov, u2_cov, h, x, y, order)
+	real(8) function div(this, metr, u1_con, u2_con, h, x, y, order)
 		Class(der) :: this
 		Class(metric) :: metr
 		integer(4), intent(in) :: x, y, order
-		real(8), intent(in) :: u1_cov(-order:order), u2_cov(-order:order), h
-		integer(4) i
-		real(8) u1_con(-order:order), u2_con(-order:order), J_1(-order:order), J_2(-order:order), G(2,2)
+		real(8), intent(in) :: u1_con(-order:order), u2_con(-order:order), h
+		integer(4) i, j
+		real(8) J_1(-order:order), J_2(-order:order), G(2,2)
 
 		do i = -order, order
+! 			do j = -order, order
 			J_1(i) = metr.G_sqr(x+i, y)
 			J_2(i) = metr.G_sqr(x, y+i)
-			G(1,1) = metr.G_inverse(1, 1, x+i, y)
-			G(1,2) = metr.G_inverse(1, 2, x+i, y)
-			G(2,1) = metr.G_inverse(2, 1, x, y+i)
-			G(2,2) = metr.G_inverse(2, 2, x, y+i)
-			u1_con(i) = G(1,1)*u1_cov(i) + G(1,2)*u2_cov(i)
-			u2_con(i) = G(2,2)*u2_cov(i) + G(2,1)*u1_cov(i)
+! 			G(1,1) = metr.G_inverse(1, 1, x+i, y+j)
+! 			G(1,2) = metr.G_inverse(1, 2, x+i, y+j)
+! 			G(2,1) = metr.G_inverse(2, 1, x+i, y+j)
+! 			G(2,2) = metr.G_inverse(2, 2, x+i, y+j)
+! 			u1_con(i) = G(1,1)*u1_cov(i) + G(1,2)*u2_cov(i)
+! 			u2_con(i) = G(2,2)*u2_cov(i) + G(2,1)*u1_cov(i)
+! 			end do
 		end do
 
 		div = ( this.partial_c_fg(u1_con, J_1, h, order) + this.partial_c_fg(u2_con, J_2, h, order))/J_1(0)

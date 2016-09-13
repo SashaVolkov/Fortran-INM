@@ -14,6 +14,8 @@ implicit none
 		Real(8), Allocatable :: h_height(:, :, :)
 		Real(8), Allocatable :: x_vel(:, :, :)
 		Real(8), Allocatable :: y_vel(:, :, :)
+		Real(8), Allocatable :: u_con(:, :, :)
+		Real(8), Allocatable :: v_con(:, :, :)
 		Real(8), Allocatable :: x_vel_msg(:, :, :)
 		Real(8), Allocatable :: y_vel_msg(:, :, :)
 		real(8) height
@@ -29,6 +31,7 @@ implicit none
 		Procedure, Public :: interpolate => interpolate
 		Procedure, Public :: Velocity_from_spherical => Velocity_from_spherical
 		Procedure, Public :: Velocity_to_spherical => Velocity_to_spherical
+		Procedure, Public :: cov_to_con => cov_to_con
 	End Type
 
 
@@ -73,6 +76,8 @@ CONTAINS
 		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.x_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.y_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.u_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.v_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.x_vel_msg(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.y_vel_msg(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 
@@ -86,6 +91,8 @@ CONTAINS
 		if (Allocated(this.h_height)) Deallocate(this.h_height)
 		if (Allocated(this.x_vel)) Deallocate(this.x_vel)
 		if (Allocated(this.y_vel)) Deallocate(this.y_vel)
+		if (Allocated(this.u_con)) Deallocate(this.u_con)
+		if (Allocated(this.v_con)) Deallocate(this.v_con)
 		if (Allocated(this.x_vel_msg)) Deallocate(this.x_vel_msg)
 		if (Allocated(this.y_vel_msg)) Deallocate(this.y_vel_msg)
 
@@ -134,7 +141,7 @@ CONTAINS
 				end do
 			end do
 
-			if ( face == 1 ) then
+			if ( face == 2 ) then
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					this.h_height(x, y, face) =&
@@ -162,6 +169,26 @@ CONTAINS
 		end if
 	end subroutine
 
+
+
+	subroutine cov_to_con(this, metr)
+		Class(f_var) :: this
+		Class(metric) :: metr
+		Real(8) :: vel_x_contr, vel_y_contr
+		Integer(4) :: x, y, face
+
+		do face = 1, 6
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
+
+this.u_con(x, y, face) = metr.G_inverse(1, 1, x, y) * this.x_vel(x, y, face) + metr.G_inverse(1, 2, x, y) * this.y_vel(x, y, face)
+this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.y_vel(x, y, face) + metr.G_inverse(2, 1, x, y) * this.x_vel(x, y, face)
+
+				end do
+			end do
+		end do
+
+	end subroutine
 
 
 
