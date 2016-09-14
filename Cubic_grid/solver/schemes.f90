@@ -82,11 +82,11 @@ subroutine Linear(this, var, var_pr, grid, metr)
 				h = grid.delta_on_cube
 				temp1(:) = var_pr.h_height(x-order:x+order, y, face)
 				partial = d.partial_c4(temp1, h)
-				var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) - dt*g*partial
+				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
 
 				temp1(:) = var_pr.h_height(x, y-order:y+order, face)
 				partial = d.partial_c4(temp1, h)
-				var.y_vel(x, y, face) = var_pr.y_vel(x, y, face) - dt*g*partial
+				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial
 
 				temp1(:) = var_pr.u_con(x-order:x+order, y, face)
 				temp2(:) = var_pr.v_con(x, y-order:y+order, face)
@@ -120,8 +120,8 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr)
 
 	do face = 1, 6
 
-	this.ku(:, :, 0) = var_pr.x_vel(:, :, face)
-	this.kv(:, :, 0) = var_pr.y_vel(:, :, face)
+	this.ku(:, :, 0) = var_pr.u_cov(:, :, face)
+	this.kv(:, :, 0) = var_pr.v_cov(:, :, face)
 	this.ku_con(:, :, 0) = var_pr.u_con(:, :, face)
 	this.kv_con(:, :, 0) = var_pr.v_con(:, :, face)
 	this.kh(:, :, 0) = var_pr.h_height(:, :, face)
@@ -134,8 +134,8 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr)
 
 		do y = ns_y, nf_y
 			do x= ns_x, nf_x
-var.x_vel(x, y, face) = var_pr.x_vel(x, y, face) + (this.ku(x, y, 1) + 2.0*this.ku(x, y, 2) + 2.0*this.ku(x, y, 3) + this.ku(x, y, 4))/6.0
-var.y_vel(x, y, face) = var_pr.y_vel(x, y, face) + (this.kv(x, y, 1) + 2.0*this.kv(x, y, 2) + 2.0*this.kv(x, y, 3) + this.kv(x, y, 4))/6.0
+var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) + (this.ku(x, y, 1) + 2.0*this.ku(x, y, 2) + 2.0*this.ku(x, y, 3) + this.ku(x, y, 4))/6.0
+var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) + (this.kv(x, y, 1) + 2.0*this.kv(x, y, 2) + 2.0*this.kv(x, y, 3) + this.kv(x, y, 4))/6.0
 var.h_height(x, y, face) = var_pr.h_height(x, y, face) + (this.kh(x, y, 1) + 2.0*this.kh(x, y, 2) + 2.0*this.kh(x, y, 3) + this.kh(x, y, 4))/6.0
 			end do
 		end do

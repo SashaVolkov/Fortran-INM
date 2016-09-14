@@ -119,8 +119,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.x_vel(x, y, face)*grid.dt/(grid.delta_on_cube*metr.G_sqr(x,y))) +&
-					 abs(func.y_vel(x, y, face)*grid.dt/(grid.delta_on_cube*metr.G_sqr(x,y)))
+					this.CFL(x, y, face) = abs(func.u_cov(x, y, face)*grid.dt/(grid.delta_on_cube*metr.G_sqr(x,y))) +&
+					 abs(func.v_cov(x, y, face)*grid.dt/(grid.delta_on_cube*metr.G_sqr(x,y)))
 
 				end do
 			end do

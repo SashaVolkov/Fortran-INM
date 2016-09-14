@@ -12,8 +12,8 @@ implicit none
 	Type f_var
 
 		Real(8), Allocatable :: h_height(:, :, :)
-		Real(8), Allocatable :: x_vel(:, :, :)
-		Real(8), Allocatable :: y_vel(:, :, :)
+		Real(8), Allocatable :: u_cov(:, :, :)
+		Real(8), Allocatable :: v_cov(:, :, :)
 		Real(8), Allocatable :: u_con(:, :, :)
 		Real(8), Allocatable :: v_con(:, :, :)
 		Real(8), Allocatable :: x_vel_msg(:, :, :)
@@ -74,8 +74,8 @@ CONTAINS
 		Class(f_var) :: this
 
 		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.x_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.y_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.u_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.v_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.u_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.v_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.x_vel_msg(this.first_x:this.last_x, this.first_y:this.last_y, 6))
@@ -89,8 +89,8 @@ CONTAINS
 		Class(f_var) :: this
 
 		if (Allocated(this.h_height)) Deallocate(this.h_height)
-		if (Allocated(this.x_vel)) Deallocate(this.x_vel)
-		if (Allocated(this.y_vel)) Deallocate(this.y_vel)
+		if (Allocated(this.u_cov)) Deallocate(this.u_cov)
+		if (Allocated(this.v_cov)) Deallocate(this.v_cov)
 		if (Allocated(this.u_con)) Deallocate(this.u_con)
 		if (Allocated(this.v_con)) Deallocate(this.v_con)
 		if (Allocated(this.x_vel_msg)) Deallocate(this.x_vel_msg)
@@ -106,11 +106,11 @@ CONTAINS
 		Class(metric) :: metr
 
 				var_pr.h_height(:, :, :)=var.h_height(:, :, :)
-				var_pr.x_vel(:, :, :)=var.x_vel(:, :, :)
-				var_pr.y_vel(:, :, :)=var.y_vel(:, :, :)
+				var_pr.u_cov(:, :, :)=var.u_cov(:, :, :)
+				var_pr.v_cov(:, :, :)=var.v_cov(:, :, :)
 
-				var_pr.x_vel_msg(:, :, :)=var_pr.x_vel(:, :, :)
-				var_pr.y_vel_msg(:, :, :)=var_pr.y_vel(:, :, :)
+				var_pr.x_vel_msg(:, :, :)=var_pr.u_cov(:, :, :)
+				var_pr.y_vel_msg(:, :, :)=var_pr.v_cov(:, :, :)
 
 				if(metr.grid_type == 1) then
 					call var_pr.Velocity_to_spherical(metr)
@@ -136,8 +136,8 @@ CONTAINS
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					this.h_height(x, y, face) = 0
-					this.x_vel(x, y, face) = 0
-					this.y_vel(x, y, face) = 0
+					this.u_cov(x, y, face) = 0
+					this.v_cov(x, y, face) = 0
 				end do
 			end do
 
@@ -164,8 +164,8 @@ CONTAINS
 		if(metr.grid_type == 1) then
 			call this.Velocity_from_spherical(metr)
 			call i.Lagrange(this.h_height, this.interp_factor)
-			call i.Lagrange(this.x_vel, this.interp_factor)
-			call i.Lagrange(this.y_vel, this.interp_factor)
+			call i.Lagrange(this.u_cov, this.interp_factor)
+			call i.Lagrange(this.v_cov, this.interp_factor)
 		end if
 	end subroutine
 
@@ -174,21 +174,40 @@ CONTAINS
 	subroutine cov_to_con(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Real(8) :: vel_x_contr, vel_y_contr
 		Integer(4) :: x, y, face
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 
-this.u_con(x, y, face) = metr.G_inverse(1, 1, x, y) * this.x_vel(x, y, face) + metr.G_inverse(1, 2, x, y) * this.y_vel(x, y, face)
-this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.y_vel(x, y, face) + metr.G_inverse(2, 1, x, y) * this.x_vel(x, y, face)
+this.u_con(x, y, face) = metr.G_inverse(1, 1, x, y) * this.u_cov(x, y, face) + metr.G_inverse(1, 2, x, y) * this.v_cov(x, y, face)
+this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + metr.G_inverse(2, 1, x, y) * this.u_cov(x, y, face)
 
 				end do
 			end do
 		end do
 
 	end subroutine
+
+
+
+		subroutine con_to_cov(this, metr)
+			Class(f_var) :: this
+			Class(metric) :: metr
+			Integer(4) :: x, y, face
+
+			do face = 1, 6
+				do y = this.first_y, this.last_y
+					do x = this.first_x, this.last_x
+
+this.u_cov(x, y, face) = metr.G_tensor(1, 1, x, y) * this.u_con(x, y, face) + metr.G_tensor(1, 2, x, y) * this.v_con(x, y, face)
+this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + metr.G_tensor(2, 1, x, y) * this.u_con(x, y, face)
+
+					end do
+				end do
+			end do
+
+		end subroutine
 
 
 
@@ -211,8 +230,8 @@ this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.y_vel(x, y, face) + m
 					do x = x_start(i), x_fin(i)
 						do y = y_start(i), y_fin(i)
 
-							vel_x_contr = metr.G_inverse(1, 1, x, y) * this.x_vel(x, y, face) + metr.G_inverse(1, 2, x, y) * this.y_vel(x, y, face)
-							vel_y_contr = metr.G_inverse(2, 2, x, y) * this.y_vel(x, y, face) + metr.G_inverse(2, 1, x, y) * this.x_vel(x, y, face)
+							vel_x_contr = metr.G_inverse(1, 1, x, y) * this.u_cov(x, y, face) + metr.G_inverse(1, 2, x, y) * this.v_cov(x, y, face)
+							vel_y_contr = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + metr.G_inverse(2, 1, x, y) * this.u_cov(x, y, face)
 
 							this.x_vel_msg(x, y, face) = metr.J_to_sph(1, 1, x, y, face) * vel_x_contr + metr.J_to_sph(1, 2, x, y, face) * vel_y_contr
 							this.y_vel_msg(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * vel_y_contr + metr.J_to_sph(2, 1, x, y, face) * vel_x_contr
@@ -247,11 +266,11 @@ this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.y_vel(x, y, face) + m
 					do x = x_start(i), x_fin(i)
 						do y = y_start(i), y_fin(i)
 
-							vel_x_contr = metr.J_to_cube(1, 1, x, y, face) * this.x_vel(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.y_vel(x, y, face)
-							vel_y_contr = metr.J_to_cube(2, 2, x, y, face) * this.y_vel(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.x_vel(x, y, face)
+							vel_x_contr = metr.J_to_cube(1, 1, x, y, face) * this.u_cov(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.v_cov(x, y, face)
+							vel_y_contr = metr.J_to_cube(2, 2, x, y, face) * this.v_cov(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.u_cov(x, y, face)
 
-							this.x_vel(x, y, face) = metr.G_tensor(1, 1, x, y) * vel_x_contr + metr.G_tensor(1, 2, x, y) * vel_y_contr
-							this.y_vel(x, y, face) = metr.G_tensor(2, 2, x, y) * vel_y_contr + metr.G_tensor(2, 1, x, y) * vel_x_contr
+							this.u_cov(x, y, face) = metr.G_tensor(1, 1, x, y) * vel_x_contr + metr.G_tensor(1, 2, x, y) * vel_y_contr
+							this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * vel_y_contr + metr.G_tensor(2, 1, x, y) * vel_x_contr
 
 						end do
 					end do
