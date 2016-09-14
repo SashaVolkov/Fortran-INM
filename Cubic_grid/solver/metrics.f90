@@ -65,7 +65,7 @@ CONTAINS
 		Class(metric) :: this
 		integer(4), intent(in) :: grid_type
 
-
+		this.grid_type = grid_type
 
 		if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
 			call this.metric_tensor_conf()
@@ -159,41 +159,59 @@ CONTAINS
 		do face = 2,5
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					delta = this.rho(x,y)
 					x_1 = dtan(this.cube_coord_c(1, x, y))
 					x_2 = dtan(this.cube_coord_c(2, x, y))
+					delta = dsqrt(1d0 + x_1**2 + x_2**2)
 					cos_theta = dcos(this.latlon_c(1, x, y, face))
 
-					this.J_to_cube(1,1,x,y,face) = cos_theta
+					this.J_to_cube(1,1,x,y,face) = 1d0
 					this.J_to_cube(1,2,x,y,face) = 0d0
 					this.J_to_cube(2,1,x,y,face) = x_1*x_2/(1 + x_2**2)
-					this.J_to_cube(2,2,x,y,face) = (delta**2)/((1 + x_2**2)*dsqrt(1 + x_1**2))
+					this.J_to_cube(2,2,x,y,face) = (delta**2)/((1d0 + x_2**2)*dsqrt(1d0 + x_1**2))
 
 					this.J_to_sph(1,1,x,y,face) = 1d0
 					this.J_to_sph(1,2,x,y,face) = 0d0
-					this.J_to_sph(2,1,x,y,face) = - x_1*x_2*dsqrt(1 + x_1**2)/(delta**2)
-					this.J_to_sph(2,2,x,y,face) = 1d0/this.J_to_cube(2,2,x,y,face)
+					this.J_to_sph(2,1,x,y,face) = - x_1*x_2*dsqrt(1d0 + x_1**2)/(delta**2)
+					this.J_to_sph(2,2,x,y,face) = ((1d0 + x_2**2)*dsqrt(1d0 + x_1**2))/(delta**2)
 				end do
 			end do
 		end do
 
+
 		do face = 1, 6, 5
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					delta = this.rho(x,y)
 					x_1 = dtan(this.cube_coord_c(1, x, y))
 					x_2 = dtan(this.cube_coord_c(2, x, y))
+					delta = dsqrt(1d0 + x_1**2 + x_2**2)
 					cos_theta = dcos(this.latlon_c(1, x, y, face))
 
-					this.J_to_cube(1,1,x,y,face) = -cos_theta*s(face)*x_2/(1 + x_1**2)
-					this.J_to_cube(1,2,x,y,face) = -s(face)*(delta**2)*x_1/((1 + x_1**2)*(x_2**2 + x_1**2))
-					this.J_to_cube(2,1,x,y,face) = s(face)*x_1/(1 + x_2**2)
-					this.J_to_cube(2,2,x,y,face) = -s(face)*(delta**2)*x_2/((1 + x_2**2)*(x_2**2 + x_1**2))
+					if( (x_2**2 + x_1**2) > 0 ) then
 
-					this.J_to_sph(1,1,x,y,face) = -s(face)*x_2*(1 + x_1**2)/(x_2**2 + x_1**2)
-					this.J_to_sph(1,2,x,y,face) = s(face)*x_1*(1 + x_2**2)/(x_2**2 + x_1**2)
-					this.J_to_sph(2,1,x,y,face) = - s(face)*x_1*(1 + x_1**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
-					this.J_to_sph(2,2,x,y,face) = - s(face)*x_2*(1 + x_2**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
+					this.J_to_cube(1,1,x,y,face) = -s(face)*x_2/(1d0 + x_1**2)
+					this.J_to_cube(1,2,x,y,face) = -s(face)*(delta**2)*x_1/((1d0 + x_1**2)*dsqrt(x_2**2 + x_1**2))
+					this.J_to_cube(2,1,x,y,face) = s(face)*x_1/(1d0 + x_2**2)
+					this.J_to_cube(2,2,x,y,face) = -s(face)*(delta**2)*x_2/((1d0 + x_2**2)*dsqrt(x_2**2 + x_1**2))
+
+					this.J_to_sph(1,1,x,y,face) = -s(face)*x_2*(1d0 + x_1**2)/(x_2**2 + x_1**2)
+					this.J_to_sph(1,2,x,y,face) = s(face)*x_1*(1d0 + x_2**2)/(x_2**2 + x_1**2)
+					this.J_to_sph(2,1,x,y,face) = - s(face)*x_1*(1d0 + x_1**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
+					this.J_to_sph(2,2,x,y,face) = - s(face)*x_2*(1d0 + x_2**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
+
+					else
+
+					this.J_to_cube(1,1,x,y,face) = 0d0
+					this.J_to_cube(1,2,x,y,face) = -s(face)/dsqrt(2d0)
+					this.J_to_cube(2,1,x,y,face) = 0d0
+					this.J_to_cube(2,2,x,y,face) = -s(face)/dsqrt(2d0)
+
+					this.J_to_sph(1,1,x,y,face) = -s(face)*x_2/(x_2**2 + x_1**2)
+					this.J_to_sph(1,2,x,y,face) = s(face)*x_1/(x_2**2 + x_1**2)
+					this.J_to_sph(2,1,x,y,face) = - s(face)/dsqrt(2d0)
+					this.J_to_sph(2,2,x,y,face) = - s(face)/dsqrt(2d0)
+
+					end if
+
 				end do
 			end do
 		end do

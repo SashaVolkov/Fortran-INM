@@ -73,7 +73,6 @@ subroutine Linear(this, var, var_pr, grid, metr)
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
 	dt = grid.dt;  order = 2
 
-	call var_pr.cov_to_con(metr)
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
@@ -96,6 +95,7 @@ subroutine Linear(this, var, var_pr, grid, metr)
 		end do
 	end do
 
+	! call var_pr.cov_to_con(metr)
 
 
 end subroutine
