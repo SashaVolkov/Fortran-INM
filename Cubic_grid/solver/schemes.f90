@@ -95,8 +95,6 @@ subroutine Linear(this, var, var_pr, grid, metr)
 		end do
 	end do
 
-	! call var_pr.cov_to_con(metr)
-
 
 end subroutine
 

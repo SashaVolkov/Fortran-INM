@@ -114,6 +114,7 @@ CONTAINS
 				var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
 
 				if(metr.grid_type == 1) then
+					call var_pr.cov_to_con(metr)
 					call var_pr.Velocity_to_spherical(metr)
 				end if
 
@@ -165,10 +166,15 @@ CONTAINS
 		if(metr.grid_type == 1) then
 			call this.Velocity_from_spherical(metr)
 			call i.Lagrange(this.h_height, this.interp_factor)
-			call i.Lagrange(this.u_cov, this.interp_factor)
-			call i.Lagrange(this.v_cov, this.interp_factor)
+			call i.Lagrange(this.u_con, this.interp_factor)
+			call i.Lagrange(this.v_con, this.interp_factor)
+			call this.con_to_cov(metr)
+		else if (metr.grid_type == 0) then
+			this.u_cov(:, :, :)=this.lon_vel(:, :, :)
+			this.v_cov(:, :, :)=this.lat_vel(:, :, :)
 			call this.cov_to_con(metr)
 		end if
+
 	end subroutine
 
 
@@ -219,9 +225,6 @@ this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + me
 		Real(8) :: vel_x_contr, vel_y_contr
 		Integer(4) :: x, y, face, i, x_start(4), y_start(4), x_fin(4), y_fin(4)
 
-		call this.cov_to_con(metr)
-
-
 		do face = 1, 6
 			do y = this.ns_y, this.nf_y
 				do x = this.ns_x, this.nf_x
@@ -252,8 +255,6 @@ this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, f
 						end do
 			end do
 		end do
-
-		call this.con_to_cov(metr)
 
 	end subroutine
 
