@@ -4,6 +4,7 @@ module schemes
 	use derivatives, Only: der
 	use metrics, Only: metric
 	use func_var, Only: f_var
+	use interpolation, Only: interp
 	use mpi
 
 	implicit none
@@ -100,12 +101,13 @@ end subroutine
 
 
 
-Subroutine RungeKutta(this, var, var_pr, grid, metr)
+Subroutine RungeKutta(this, var, var_pr, grid, metr, inter)
 
 	Class(schema) :: this
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
 	Class(metric) :: metr
+	Class(interp) :: inter
 
 	integer(4) face, x, y, dim, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier, iteration
 
@@ -126,7 +128,15 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr)
 			call this.FRunge(grid, metr, var_pr, iteration)
 			var_pr.u_cov(:, :, :) = this.ku_cov(:, :, :, iteration)
 			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
+			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
 			call var_pr.equal(var_pr, metr)
+			! msg
+			call var_pr.interpolate(inter, metr)
+			this.ku_cov(:, :, :, iteration) = var_pr.u_cov(:, :, :)
+			this.kv_cov(:, :, :, iteration) = var_pr.v_cov(:, :, :)
+			this.ku_con(:, :, :, iteration) = var_pr.u_con(:, :, :)
+			this.kv_con(:, :, :, iteration) = var_pr.v_con(:, :, :)
+			this.kh(:, :, :, iteration) = var_pr.h_height(:, :, :)
 		end do
 
 
