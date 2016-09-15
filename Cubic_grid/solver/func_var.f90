@@ -112,7 +112,6 @@ CONTAINS
 
 				var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
 				var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
-				! call var_pr.cov_to_con(metr)
 
 				if(metr.grid_type == 1) then
 					call var_pr.Velocity_to_spherical(metr)
