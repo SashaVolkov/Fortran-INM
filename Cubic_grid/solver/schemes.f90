@@ -124,6 +124,9 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr)
 
 		do iteration = 1, 4
 			call this.FRunge(grid, metr, var_pr, iteration)
+			var_pr.u_cov(:, :, :) = this.ku_cov(:, :, :, iteration)
+			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
+			call var_pr.equal(var_pr, metr)
 		end do
 
 
