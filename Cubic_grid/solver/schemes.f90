@@ -16,11 +16,11 @@ module schemes
 
 		integer(4) first_x, first_y, last_x, last_y
 
-		Real(8), Allocatable :: ku(:, :, :)
-		Real(8), Allocatable :: kv(:, :, :)
-		Real(8), Allocatable :: ku_con(:, :, :)
-		Real(8), Allocatable :: kv_con(:, :, :)
-		Real(8), Allocatable :: kh(:, :, :)
+		Real(8), Allocatable :: ku_cov(:, :, :, :)
+		Real(8), Allocatable :: kv_cov(:, :, :, :)
+		Real(8), Allocatable :: ku_con(:, :, :, :)
+		Real(8), Allocatable :: kv_con(:, :, :, :)
+		Real(8), Allocatable :: kh(:, :, :, :)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -28,7 +28,6 @@ module schemes
 		Procedure, Public ::  RungeKutta=> RungeKutta
 		Procedure, Private ::  FRunge=> FRunge
 		Procedure, Public :: deinit => deinit
-		Procedure, Public :: cov_to_con => cov_to_con
 	End Type
 
 	CONTAINS
@@ -48,11 +47,11 @@ Subroutine init(this, f, g)
 	this.first_x = f_x;  this.first_y = f_y
 	this.last_x = l_x;  this.last_y = l_y
 
-	Allocate(this.ku(f_x: l_x, f_y : l_y, 0:4))
-	Allocate(this.kv(f_x: l_x, f_y : l_y, 0:4))
-	Allocate(this.ku_con(f_x: l_x, f_y : l_y, 0:4))
-	Allocate(this.kv_con(f_x: l_x, f_y : l_y, 0:4))
-	Allocate(this.kh(f_x: l_x, f_y : l_y, 0:4))
+	Allocate(this.ku_cov(f_x: l_x, f_y : l_y, 6, 0:4))
+	Allocate(this.kv_cov(f_x: l_x, f_y : l_y, 6, 0:4))
+	Allocate(this.ku_con(f_x: l_x, f_y : l_y, 6, 0:4))
+	Allocate(this.kv_con(f_x: l_x, f_y : l_y, 6, 0:4))
+	Allocate(this.kh(f_x: l_x, f_y : l_y, 6, 0:4))
 
 
 End Subroutine
@@ -116,25 +115,24 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr)
 
 	call var_pr.cov_to_con(metr)
 
-	do face = 1, 6
 
-	this.ku(:, :, 0) = var_pr.u_cov(:, :, face)
-	this.kv(:, :, 0) = var_pr.v_cov(:, :, face)
-	this.ku_con(:, :, 0) = var_pr.u_con(:, :, face)
-	this.kv_con(:, :, 0) = var_pr.v_con(:, :, face)
-	this.kh(:, :, 0) = var_pr.h_height(:, :, face)
+	this.ku_cov(:, :, :, 0) = var_pr.u_cov(:, :, :)
+	this.kv_cov(:, :, :, 0) = var_pr.v_cov(:, :, :)
+	this.ku_con(:, :, :, 0) = var_pr.u_con(:, :, :)
+	this.kv_con(:, :, :, 0) = var_pr.v_con(:, :, :)
+	this.kh(:, :, :, 0) = var_pr.h_height(:, :, :)
 
 		do iteration = 1, 4
-			call this.FRunge(grid, metr, var_pr, face, iteration)
-			call this.cov_to_con(metr, i)
+			call this.FRunge(grid, metr, var_pr, iteration)
 		end do
 
 
+	do face = 1, 6
 		do y = ns_y, nf_y
 			do x= ns_x, nf_x
-var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) + (this.ku(x, y, 1) + 2.0*this.ku(x, y, 2) + 2.0*this.ku(x, y, 3) + this.ku(x, y, 4))/6.0
-var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) + (this.kv(x, y, 1) + 2.0*this.kv(x, y, 2) + 2.0*this.kv(x, y, 3) + this.kv(x, y, 4))/6.0
-var.h_height(x, y, face) = var_pr.h_height(x, y, face) + (this.kh(x, y, 1) + 2.0*this.kh(x, y, 2) + 2.0*this.kh(x, y, 3) + this.kh(x, y, 4))/6.0
+var.u_cov(x, y, face) = this.ku_cov(x, y, face, 0) + (this.ku_cov(x, y, face, 1) + 2.0*this.ku_cov(x, y, face, 2) + 2.0*this.ku_cov(x, y, face, 3) + this.ku_cov(x, y, face, 4))/6.0
+var.v_cov(x, y, face) = this.kv_cov(x, y, face, 0) + (this.kv_cov(x, y, face, 1) + 2.0*this.kv_cov(x, y, face, 2) + 2.0*this.kv_cov(x, y, face, 3) + this.kv_cov(x, y, face, 4))/6.0
+var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2.0*this.kh(x, y, face, 2) + 2.0*this.kh(x, y, face, 3) + this.kh(x, y, face, 4))/6.0
 			end do
 		end do
 	end do
@@ -142,40 +140,40 @@ var.h_height(x, y, face) = var_pr.h_height(x, y, face) + (this.kh(x, y, 1) + 2.0
 End Subroutine
 
 
-Subroutine FRunge(this, grid, metr, var, face, i)
+Subroutine FRunge(this, grid, metr, var, i)
 	Class(schema) :: this
 	Class(f_var) :: var
 	Class(g_var) :: grid
 	Class(metric) :: metr
 	Type(der) :: d
 
-	integer(4), intent(in) :: face, i
+	integer(4), intent(in) :: i
 	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), coef(0:3), div, h
-	integer(4) x,y
+	integer(4) x,y, face
 
 	coef(0) = 0d0;  coef(1) = 0d5;  coef(2) = 0d5;  coef(3) = 1d0;
 
 	dt = grid.dt;  g = grid.g; height = var.height
 	h = grid.delta_on_cube
 
-	do y = var.ns_y, var.nf_y
-		do x = var.ns_x, var.nf_x
+	do face = 1, 6
+		do y = var.ns_y, var.nf_y
+			do x = var.ns_x, var.nf_x
 
-			temp1(:) = this.kh(x-2:x+2, y, 0) + coef(i-1)*this.kh(x-2:x+2, y, i-1)
-			partial = d.partial_c4(temp1, h)
-			this.ku(x, y, i) = - dt*g*partial
+				temp1(:) = this.kh(x-2:x+2, y, face, 0) + coef(i-1)*this.kh(x-2:x+2, y, face, i-1)
+				partial = d.partial_c4(temp1, h)
+				this.ku_cov(x, y, face, i) = - dt*g*partial
 
-			temp2(:) = this.kh(x, y-2:y+2, 0) + coef(i-1)*this.kh(x, y-2:y+2, i-1)
-			partial = d.partial_c4(temp2, h)
-			this.kv(x, y, i) =  - dt*g*partial
+				temp2(:) = this.kh(x, y-2:y+2, face, 0) + coef(i-1)*this.kh(x, y-2:y+2, face, i-1)
+				partial = d.partial_c4(temp2, h)
+				this.kv_cov(x, y, face, i) =  - dt*g*partial
 
-			temp1(:) = this.ku_con(x-2:x+2, y, 0) + coef(i-1)*this.ku_con(x-2:x+2, y, i-1)
-			temp2(:) = this.kv_con(x, y-2:y+2, 0) + coef(i-1)*this.kv_con(x, y-2:y+2, i-1)
-			div = d.div(metr, temp1(:), temp2(:), h, x, y, 2)
-			this.kh(x, y, i) = - dt*height*div
+				temp1(:) = this.ku_con(x-2:x+2, y, face, 0) + coef(i-1)*this.ku_con(x-2:x+2, y, face, i-1)
+				temp2(:) = this.kv_con(x, y-2:y+2, face, 0) + coef(i-1)*this.kv_con(x, y-2:y+2, face, i-1)
+				div = d.div(metr, temp1(:), temp2(:), h, x, y, 2)
+				this.kh(x, y, face, i) = - dt*height*div
 
-
-
+			end do
 		end do
 	end do
 
@@ -187,34 +185,13 @@ end Subroutine
 Subroutine deinit(this)
 	Class(schema) :: this
 
-	if (Allocated(this.ku)) Deallocate(this.ku)
-	if (Allocated(this.kv)) Deallocate(this.kv)
+	if (Allocated(this.ku_cov)) Deallocate(this.ku_cov)
+	if (Allocated(this.kv_cov)) Deallocate(this.kv_cov)
 	if (Allocated(this.ku_con)) Deallocate(this.ku_con)
 	if (Allocated(this.kv_con)) Deallocate(this.kv_con)
 	if (Allocated(this.kh)) Deallocate(this.kh)
 
 End Subroutine
-
-
-
-	subroutine cov_to_con(this, metr, i)
-		Class(schema) :: this
-		Class(metric) :: metr
-		integer(4), intent(in) :: i
-		Real(8) :: vel_x_contr, vel_y_contr
-		Integer(4) :: x, y, face
-
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-
-this.ku_con(x, y, i) = metr.G_inverse(1, 1, x, y) * this.ku(x, y, i) + metr.G_inverse(1, 2, x, y) * this.kv(x, y, i)
-this.kv_con(x, y, i) = metr.G_inverse(2, 2, x, y) * this.kv(x, y, i) + metr.G_inverse(2, 1, x, y) * this.ku(x, y, i)
-
-				end do
-			end do
-
-	end subroutine
-
 
 
 
