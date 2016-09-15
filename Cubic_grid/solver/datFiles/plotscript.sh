@@ -4,35 +4,51 @@ gnuplot <<EOF
 set term png
 set output "CFL.png"
 set xlabel "Days"
-plot "CFL_tan.dat" w l ti "CFL_tan", "CFL_simple.dat" w l ti "CFL_simple"
+plot "CFL_conf_tan.dat" w l ti "CFL_tan", "CFL_conf_simple.dat" w l ti "CFL_simple", "CFL_equiang.dat" w l ti "CFL_equiang"
 EOF
 
 gnuplot <<EOF
 set term png
-set output "L.png"
+set output "L_conf_simple.png"
 set xlabel "Days"
-plot "L1_simple.dat" w l ti "L1", "L2_simple.dat" w l ti "L2", "L_inf_simple.dat" w l ti "L_inf"
+plot "L1_conf_simple.dat" w l ti "L1", "L2_conf_simple.dat" w l ti "L2", "L_inf_conf_simple.dat" w l ti "L_inf"
 EOF
+
+
+gnuplot <<EOF
+set term png
+set output "L_conf_tan.png"
+set xlabel "Days"
+plot "L1_conf_tan.dat" w l ti "L1", "L2_conf_tan.dat" w l ti "L2", "L_inf_conf_tan.dat" w l ti "L_inf"
+EOF
+
+gnuplot <<EOF
+set term png
+set output "L_equiang.png"
+set xlabel "Days"
+plot "L1_equiang.dat" w l ti "L1", "L2_equiang.dat" w l ti "L2", "L_inf_equiang.dat" w l ti "L_inf"
+EOF
+
 
 gnuplot <<EOF
 set term png
 set output "L1.png"
 set xlabel "Days"
-plot "L1_simple.dat" w l ti "L1_simple"
+plot "L1_conf_simple.dat" w l ti "L1_simple"
 EOF
 
 gnuplot <<EOF
 set term png
 set output "L2.png"
 set xlabel "Days"
-plot "L2_simple.dat" w l ti "L2_simple"
+plot "L2_conf_simple.dat" w l ti "L2_simple"
 EOF
 
 gnuplot <<EOF
 set term png
 set output "L_inf.png"
 set xlabel "Days"
-plot "L_inf_simple.dat" w l ti "L_inf_simple"
+plot "L_inf_conf_simple.dat" w l ti "L_inf_simple"
 EOF
 
 # gnuplot <<EOF

@@ -34,14 +34,14 @@ CONTAINS
 
 
 
-	subroutine init(this, grid, paral, Tmax, rescale, id)
+	subroutine init(this, grid, paral, Tmax, id)
 
 		Class(diagnostic) :: this
 		Class(g_var) :: grid
 		Class(parallel) :: paral
 
-		integer(4), intent(in) :: Tmax, rescale, id
-		character(8) istring
+		integer(4), intent(in) :: Tmax, id
+		character(16) istring
 
 
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
@@ -50,13 +50,19 @@ CONTAINS
 
 		call this.alloc(paral)
 
-		if (rescale == 1) then
-			istring = '_tan'
-		else if (rescale == 0) then
-			istring = '_simple'
-		else if (rescale == 2) then
-			istring = '_exp'
+		if (grid.grid_type == 1) then
+			istring = '_equiang'
+		else if (grid.grid_type == 0) then
+			if (grid.rescale == 1) then
+				istring = '_conf_tan'
+			else if (grid.rescale == 0) then
+				istring = '_conf_simple'
+			else if (grid.rescale == 2) then
+				istring = '_conf_exp'
+			end if
 		end if
+
+
 
 		if(id == 0) then
 
