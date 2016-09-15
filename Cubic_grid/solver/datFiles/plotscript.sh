@@ -34,21 +34,21 @@ gnuplot <<EOF
 set term png
 set output "L1.png"
 set xlabel "Days"
-plot "L1_conf_simple.dat" w l ti "L1_simple"
+plot "L1_conf_simple.dat" w l ti "L1_simple", "L1_conf_tan.dat" w l ti "L1_tan", "L1_equiang.dat" w l ti "L1_equiang"
 EOF
 
 gnuplot <<EOF
 set term png
 set output "L2.png"
 set xlabel "Days"
-plot "L2_conf_simple.dat" w l ti "L2_simple"
+plot "L2_conf_simple.dat" w l ti "L2_simple", "L2_conf_tan.dat" w l ti "L2_tan", "L2_equiang.dat" w l ti "L2_equiang"
 EOF
 
 gnuplot <<EOF
 set term png
 set output "L_inf.png"
 set xlabel "Days"
-plot "L_inf_conf_simple.dat" w l ti "L_inf_simple"
+plot "L_inf_conf_simple.dat" w l ti "L_inf_simple", "L_inf_conf_tan.dat" w l ti "L_inf_tan", "L_inf_equiang.dat" w l ti "L_inf_equiang"
 EOF
 
 # gnuplot <<EOF

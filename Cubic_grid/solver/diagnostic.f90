@@ -183,9 +183,9 @@ CONTAINS
 		end if
 
 		if (id == 0) then
-			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs((L1_all - this.L10)/this.L10)
-			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs((L2_all - this.L20)/this.L20)
-			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs((L_inf_all - this.L_inf0)/this.L_inf0)
+			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs(L1_all/this.L10)
+			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs(L2_all/this.L20)
+			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs(L_inf_all/this.L_inf0)
 		end if
 
 
