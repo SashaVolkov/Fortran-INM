@@ -31,6 +31,8 @@ implicit none
 		Procedure, Public :: interpolate => interpolate
 		Procedure, Public :: Velocity_from_spherical => Velocity_from_spherical
 		Procedure, Public :: Velocity_to_spherical => Velocity_to_spherical
+		Procedure, Public :: Velocity_from_spherical_border => Velocity_from_spherical_border
+		Procedure, Public :: Velocity_to_spherical_border => Velocity_to_spherical_border
 		Procedure, Public :: cov_to_con => cov_to_con
 		Procedure, Public :: con_to_cov => con_to_cov
 	End Type
@@ -241,6 +243,47 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 
 
 	subroutine Velocity_from_spherical(this, metr)
+		Class(f_var) :: this
+		Class(metric) :: metr
+		Integer(4) :: x, y, face, i, neib_face, x_start(4), y_start(4), x_fin(4), y_fin(4)
+
+			do face = 1, 6
+				do y = this.first_y, this.last_y
+					do x = this.first_x, this.last_x
+
+this.u_con(x, y, face) = metr.J_to_cube(1, 1, x, y, face) * this.lon_vel(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.lat_vel(x, y, face)
+this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.lon_vel(x, y, face)
+
+						end do
+			end do
+		end do
+
+	end subroutine
+
+
+
+	subroutine Velocity_to_spherical_border(this, metr)
+		Class(f_var) :: this
+		Class(metric) :: metr
+		Real(8) :: vel_x_contr, vel_y_contr
+		Integer(4) :: x, y, face, i, x_start(4), y_start(4), x_fin(4), y_fin(4)
+
+		do face = 1, 6
+			do y = this.ns_y, this.nf_y
+				do x = this.ns_x, this.nf_x
+
+this.lon_vel(x, y, face) = metr.J_to_sph(1, 1, x, y, face) * this.u_con(x, y, face) + metr.J_to_sph(1, 2, x, y, face) * this.v_con(x, y, face)
+this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, face) + metr.J_to_sph(2, 1, x, y, face) * this.u_con(x, y, face)
+
+						end do
+			end do
+		end do
+
+	end subroutine
+
+
+
+	subroutine Velocity_from_spherical_border(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Integer(4) :: x, y, face, i, neib_face, x_start(4), y_start(4), x_fin(4), y_fin(4)

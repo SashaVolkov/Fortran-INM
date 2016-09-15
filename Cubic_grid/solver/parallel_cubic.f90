@@ -11,9 +11,8 @@ implicit none
 
 	Type parallel
 		integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim, first_x, first_y, last_x, last_y
-		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), y_vec_type, rot(6, 4)
-		integer(4) snd_xy(6, 4, 2), snd_xy_180(6, 4, 2), snd_xy_90(6, 4, 2), snd_xy_m90(6, 4, 2)
-		integer(4) rcv_xy(6, 4, 2), rcv_xy_90(6, 4, 2), rcv_xy_m90(6, 4, 2)
+		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), rot(6, 4)
+		integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 		integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
 		CONTAINS
 			Procedure, Public :: init => parallel_init
