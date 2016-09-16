@@ -36,7 +36,7 @@ implicit none
 		Real(8) :: four_order_const(5)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
 		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube
 		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type
-		integer(4) first_x, first_y, last_x, last_y
+		integer(4) first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -69,6 +69,9 @@ CONTAINS
 		this.ns_xy(:) = paral.ns_xy(:);  this.nf_xy(:) = paral.nf_xy(:);
 		this.first_x = paral.first_x;  this.first_y = paral.first_y
 		this.last_x = paral.last_x;  this.last_y = paral.last_y
+
+		this.snd_xy(:,:,:) = paral.snd_xy(:,:,:)
+		this.rcv_xy(:,:,:) = paral.rcv_xy(:,:,:)
 
 
 		call this.alloc()

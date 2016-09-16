@@ -14,7 +14,7 @@ module interpolation
 
 		Real(8), Allocatable :: weight(:, :, :)
 		Integer(4), Allocatable :: x0_mass(:, :)
-		integer(4) ns_x, ns_y, nf_x, nf_y, n, dim, step, first_x, first_y, last_x, last_y
+		integer(4) ns_x, ns_y, nf_x, nf_y, n, dim, step, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -36,8 +36,11 @@ module interpolation
 		this.ns_x = g.ns_xy(1);  this.nf_x = g.nf_xy(1);  this.ns_y = g.ns_xy(2);  this.nf_y = g.nf_xy(2)
 		this.n = n;  this.dim = g.dim;  dim = this.dim; this.step = g.step
 
-		this.first_x = this.ns_x - g.step;  this.first_y = this.ns_y - g.step
-		this.last_x = this.nf_x + g.step;  this.last_y = this.nf_y + g.step
+		this.first_x = g.first_x;  this.first_y = g.first_y
+		this.last_x = g.last_x;  this.last_y = g.last_y
+
+		this.snd_xy(:,:,:) = g.snd_xy(:,:,:)
+		this.rcv_xy(:,:,:) = g.rcv_xy(:,:,:)
 
 		Allocate(this.x0_mass(1: 2*dim, 1: g.step))
 		Allocate(this.weight(1: 2*dim, 1: 2*dim, 1: g.step))
@@ -67,24 +70,29 @@ module interpolation
 
 		Real(8), Intent(inout) :: Mass(this.first_x:this.last_x, this.first_y:this.last_y, 6)
 		Integer(4), Intent(in) :: interp_factor(1:4)
-		Integer(4) xj, xk, k, j, n, x0, set_x, x, s, y, yk
 		Real(8) :: temp(1:6), Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6)
+		Integer(4) xj, xk, k, j, n, x0, set_x, x, s, y, yk, i, face, x_fin(4), y_fin(4)
+
+		x_fin(:) = this.last_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step
+		y_fin(:) = this.last_y;  y_fin(3) = this.rcv_xy(2, 3, 2) + this.step
 
 		n=this.n
 		Mass_temp(:, :, :) = Mass(:, :, :)
 
+		do face = 1, 6
+
 		if(interp_factor(1) == 1) then !up
-			do x = this.ns_x, this.nf_x
+			do x = this.rcv_xy(face, 1, 1), this.nf_x
 				do y = this.nf_y + 1, this.nf_y + this.step
 					x0 = this.x0_mass(x, y - this.nf_y)
 					s = x0 - n/2
 					temp=0.0
 
 					do xk=s, s + n
-						temp(:) = temp(:) + (Mass(xk, y, :)*this.weight(xk, x, y - this.nf_y))
+						temp(face) = temp(face) + (Mass(xk, y, face)*this.weight(xk, x, y - this.nf_y))
 					end do
 
-					Mass_temp(x, y, :) = temp(:)
+					Mass_temp(x, y, face) = temp(face)
 				end do
 			end do
 		end if
@@ -98,10 +106,10 @@ module interpolation
 					temp=0.0
 
 					do yk=s, s + n
-						temp(:) = temp(:) + (Mass(x, yk, :)*this.weight(yk, y, x - this.nf_x))
+						temp(face) = temp(face) + (Mass(x, yk, face)*this.weight(yk, y, x - this.nf_x))
 					end do
 
-					Mass_temp(x, y, :) = temp(:)
+					Mass_temp(x, y, face) = temp(face)
 				end do
 			end do
 		end if
@@ -115,10 +123,10 @@ module interpolation
 					temp=0.0
 
 					do xk=s, s + n
-						temp(:) = temp(:) + (Mass(xk, y, :)*this.weight(xk, x, this.ns_y - y))
+						temp(face) = temp(face) + (Mass(xk, y, face)*this.weight(xk, x, this.ns_y - y))
 					end do
 
-					Mass_temp(x, y, :) = temp(:)
+					Mass_temp(x, y, face) = temp(face)
 				end do
 			end do
 		end if
@@ -132,13 +140,15 @@ module interpolation
 					temp=0.0
 
 					do yk=s, s + n
-						temp(:) = temp(:) + (Mass(x, yk, :)*this.weight(yk, y, this.ns_x - x))
+						temp(face) = temp(face) + (Mass(x, yk, face)*this.weight(yk, y, this.ns_x - x))
 					end do
 
-					Mass_temp(x, y, :) = temp(:)
+					Mass_temp(x, y, face) = temp(face)
 				end do
 			end do
 		end if
+
+		end do
 
 		Mass(:, :, :) = Mass_temp(:, :, :)
 
