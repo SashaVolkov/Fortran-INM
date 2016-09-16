@@ -20,7 +20,7 @@ implicit none
 		Real(8), Allocatable :: lat_vel(:, :, :)
 		real(8) height
 		integer(4) step, dim, Xsize, Ysize, interp_factor(1:4), Neighbours_face(6, 4)
-		integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y
+		integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -59,6 +59,9 @@ CONTAINS
 		this.step = paral.step;  this.height = height;  this.dim = paral.dim
 
 		this.Neighbours_face = paral.Neighbours_face
+
+		this.snd_xy(:,:,:) = paral.snd_xy(:,:,:)
+		this.rcv_xy(:,:,:) = paral.rcv_xy(:,:,:)
 
 		this.interp_factor(:) = 0
 
@@ -116,8 +119,8 @@ CONTAINS
 				var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
 
 				if(metr.grid_type == 1) then
-					call var_pr.cov_to_con(metr)
-					call var_pr.Velocity_to_spherical(metr)
+					! call var_pr.cov_to_con(metr)
+					call var_pr.Velocity_to_spherical_border(metr)
 				end if
 
 
@@ -166,16 +169,16 @@ CONTAINS
 		Class(interp) :: i
 		Class(metric) :: metr
 		if(metr.grid_type == 1) then
-			call this.Velocity_from_spherical(metr)
+			call this.Velocity_from_spherical_border(metr)
 			call i.Lagrange(this.h_height, this.interp_factor)
-			call i.Lagrange(this.u_con, this.interp_factor)
-			call i.Lagrange(this.v_con, this.interp_factor)
-			call this.con_to_cov(metr)
+			call i.Lagrange(this.u_cov, this.interp_factor)
+			call i.Lagrange(this.v_cov, this.interp_factor)
 		else if (metr.grid_type == 0) then
 			this.u_cov(:, :, :)=this.lon_vel(:, :, :)
 			this.v_cov(:, :, :)=this.lat_vel(:, :, :)
-			call this.cov_to_con(metr)
 		end if
+
+		call this.cov_to_con(metr)
 
 	end subroutine
 
@@ -225,7 +228,7 @@ this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + me
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Real(8) :: vel_x_contr, vel_y_contr
-		Integer(4) :: x, y, face, i, x_start(4), y_start(4), x_fin(4), y_fin(4)
+		Integer(4) :: x, y, face
 
 		do face = 1, 6
 			do y = this.ns_y, this.nf_y
@@ -245,7 +248,7 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 	subroutine Velocity_from_spherical(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Integer(4) :: x, y, face, i, neib_face, x_start(4), y_start(4), x_fin(4), y_fin(4)
+		Integer(4) :: x, y, face
 
 			do face = 1, 6
 				do y = this.first_y, this.last_y
@@ -266,18 +269,23 @@ this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, f
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Real(8) :: vel_x_contr, vel_y_contr
-		Integer(4) :: x, y, face, i, x_start(4), y_start(4), x_fin(4), y_fin(4)
+		Integer(4) :: x, y, face, i
 
 		do face = 1, 6
-			do y = this.ns_y, this.nf_y
-				do x = this.ns_x, this.nf_x
+		do i = 1, 4
+			do y = this.snd_xy(face, i, 2), this.nf_y
+				do x = this.snd_xy(face, i, 1), this.nf_x
+
+this.u_con(x, y, face) = metr.G_inverse(1, 1, x, y) * this.u_cov(x, y, face) + metr.G_inverse(1, 2, x, y) * this.v_cov(x, y, face)
+this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + metr.G_inverse(2, 1, x, y) * this.u_cov(x, y, face)
 
 this.lon_vel(x, y, face) = metr.J_to_sph(1, 1, x, y, face) * this.u_con(x, y, face) + metr.J_to_sph(1, 2, x, y, face) * this.v_con(x, y, face)
 this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, face) + metr.J_to_sph(2, 1, x, y, face) * this.u_con(x, y, face)
 
 						end do
 			end do
-		end do
+			end do
+			end do
 
 	end subroutine
 
@@ -286,17 +294,22 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 	subroutine Velocity_from_spherical_border(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Integer(4) :: x, y, face, i, neib_face, x_start(4), y_start(4), x_fin(4), y_fin(4)
+		Integer(4) :: x, y, face, i
 
 			do face = 1, 6
-				do y = this.first_y, this.last_y
-					do x = this.first_x, this.last_x
+			do i = 1, 4
+				do y = this.rcv_xy(face, i, 2), this.last_y
+					do x = this.rcv_xy(face, i, 1), this.last_x
 
 this.u_con(x, y, face) = metr.J_to_cube(1, 1, x, y, face) * this.lon_vel(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.lat_vel(x, y, face)
 this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.lon_vel(x, y, face)
 
+this.u_cov(x, y, face) = metr.G_tensor(1, 1, x, y) * this.u_con(x, y, face) + metr.G_tensor(1, 2, x, y) * this.v_con(x, y, face)
+this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + metr.G_tensor(2, 1, x, y) * this.u_con(x, y, face)
+
 						end do
 			end do
+		end do
 		end do
 
 	end subroutine
