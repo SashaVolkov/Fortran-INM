@@ -82,7 +82,7 @@ module interpolation
 		do face = 1, 6
 
 		if(interp_factor(1) == 1) then !up
-			do x = this.rcv_xy(face, 1, 1), this.nf_x
+			do x = this.ns_x, this.nf_x
 				do y = this.nf_y + 1, this.nf_y + this.step
 					x0 = this.x0_mass(x, y - this.nf_y)
 					s = x0 - n/2
@@ -97,6 +97,8 @@ module interpolation
 			end do
 		end if
 
+			Mass(:, :, :) = Mass_temp(:, :, :)
+			Mass_temp(:, :, :) = Mass(:, :, :)
 
 		if(interp_factor(2) == 1) then !right
 			do y = this.ns_y, this.nf_y
@@ -114,6 +116,8 @@ module interpolation
 			end do
 		end if
 
+		Mass(:, :, :) = Mass_temp(:, :, :)
+		Mass_temp(:, :, :) = Mass(:, :, :)
 
 		if(interp_factor(3) == 1) then !down
 			do x = this.ns_x, this.nf_x
@@ -131,6 +135,8 @@ module interpolation
 			end do
 		end if
 
+		Mass(:, :, :) = Mass_temp(:, :, :)
+		Mass_temp(:, :, :) = Mass(:, :, :)
 
 		if(interp_factor(4) == 1) then !left
 			do y = this.ns_y, this.nf_y
