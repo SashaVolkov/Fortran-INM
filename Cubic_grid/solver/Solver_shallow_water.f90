@@ -110,7 +110,7 @@ implicit none
 	call grid.deinit()
 	call var.deinit()
 	call var_prev.deinit()
-	call printer_nc.deinit()
+	call printer_nc.deinit(ncid, ncid_gr)
 	call diagn.deinit()
 	call sch.deinit()
 	call metr.deinit()

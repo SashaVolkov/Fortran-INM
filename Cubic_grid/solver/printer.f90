@@ -120,17 +120,18 @@ module printer_ncdf
 
 			status = nf90_put_var(ncid_gr, grid_id, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
 			 start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
-
-			if(status /= nf90_NoErr) print *, nf90_strerror(status), "Here"
+			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 	end subroutine
 
 
 
-	subroutine deinit(this)
+	subroutine deinit(this, ncid, ncid_gr)
 		Class(printer) :: this
-		integer(4) status, ncid
+		integer(4), intent(in) :: ncid, ncid_gr
+		integer(4) status
 
 		status = nf90_close (ncid)
+		status = nf90_close (ncid_gr)
 	end subroutine
 
 

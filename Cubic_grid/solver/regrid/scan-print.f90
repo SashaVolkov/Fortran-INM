@@ -7,14 +7,18 @@ module scan_print
 	Private
 	Public :: printer
 
+	integer(4) :: dim
+
 	Type printer
 		CONTAINS
 		Procedure, Public :: init => init
-		Procedure, Public :: to_print => to_print
+		Procedure, Public :: scan_surf => scan_surf
+		Procedure, Public :: scan_grid => scan_grid
 		Procedure, Public :: deinit => deinit
 	End Type
 
 	CONTAINS
+
 
 
 	subroutine init(this, dim, all_time, rescale, grid_type)
@@ -24,22 +28,26 @@ module scan_print
 
 		integer(4) status, face
 		character(40) istring
-		character(80) path1
+		character(80) path1, path2
 
-		write(istring, *) dim
-
+		write(istring, *) 2*dim
 
 		if(grid_type == 0) then
 			if(rescale == 0) then
-				path1 = trim('../datFiles/'//"surface_conf_simple_"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//"surface_conf_simple_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/'//"grid_conf_simple_C"//trim(adjustl(istring))//".nc")
 			else if(rescale == 1) then
-				path1 = trim('../datFiles/'//"surface_conf_tan_"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//"surface_conf_tan_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/'//"grid_conf_tan_C"//trim(adjustl(istring))//".nc")
 			else if(rescale == 2) then
-				path1 = trim('../datFiles/'//"surface_conf_exp_"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//"surface_conf_exp_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/'//"grid_conf_exp_C"//trim(adjustl(istring))//".nc")
 			end if
 		else if(grid_type == 1) then
-				path1 = trim('../datFiles/'//"surface_equiang_"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//"surface_equiang_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/'//"grid_equiang_C"//trim(adjustl(istring))//".nc")
 		end if
+
 
 		status = nf90_open (path = path1,cmode = NF90_NOWRITE, ncid = ncid)
 
@@ -61,26 +69,20 @@ module scan_print
 
 
 
-	subroutine to_print(this, var, Wid, ncid, id)
+	subroutine scan_surf(this, var, Wid, ncid, id)
 
 		Class(printer) :: this
-		Class(f_var) :: var
 		integer(4), intent(in) :: time, speedup, Wid, ncid, id
-
 		integer(4) x, y, face, ier
 		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
 		real(8) W_mass(var.ns_x:var.nf_x, var.ns_y:var.nf_y)
-
-		ns_y = var.ns_y;  nf_y = var.nf_y
-		ns_x = var.ns_x;  nf_x = var.nf_x
-		Ysize = var.Ysize; Xsize = var.Xsize
 
 		t = 1+time/speedup
 
 
 		do face = 1, 6
 
-			status = nf90_put_var(ncid, Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
+			status = nf90_get_var(ncid, Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
@@ -89,11 +91,31 @@ module scan_print
 
 
 
-	subroutine deinit(this)
+	subroutine scan_grid(this, grid, grid_id, ncid_gr)
+
 		Class(printer) :: this
-		integer(4) status, ncid
+		Class(g_var) :: grid
+		integer(4), intent(in) :: grid_id, ncid_gr
+		integer(4) x, y, face, ier, dim, status
+
+		dim = this.dim
+
+		status = nf90_get_var(ncid_gr, grid_id, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
+		 start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+	end subroutine
+
+
+
+	subroutine deinit(this, ncid, ncid_gr)
+		Class(printer) :: this
+		integer(4), intent(in) :: ncid, ncid_gr
+		integer(4) status
 
 		status = nf90_close (ncid)
+		status = nf90_close (ncid_gr)
 	end subroutine
+
+
 
 end module
