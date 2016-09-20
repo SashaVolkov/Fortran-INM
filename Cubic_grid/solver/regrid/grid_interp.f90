@@ -1,6 +1,5 @@
 module grid_interp
 
-	use grid_var, Only: g_var
 
 implicit none
 
@@ -11,7 +10,8 @@ implicit none
 
 		Real(8), Allocatable :: latlon_c_off(:, :, :, :)
 		Real(8), Allocatable :: latlon_c_to(:, :, :)
-		! Real(8), Allocatable :: latlon(:, :, :, :)
+		Real(8), Allocatable :: weight(:, :, :)
+		integer(4), Allocatable :: indexes_xyface(:, :, :)
 
 		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube
 		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type
@@ -33,6 +33,11 @@ CONTAINS
 		Class(interp) :: this
 		Class(g_var) :: grid
 
+		this.dim = grid.dim;  this.step = grid.step
+		this.ns_xy(:) = grid.ns_xy(:);  this.nf_xy(:) = grid.nf_xy(:)
+
+		call this.alloc()
+
 	end subroutine
 
 
@@ -45,6 +50,8 @@ CONTAINS
 
 		Allocate(this.latlon_c_off(1:2, f:l, f:l, 1:6))
 		Allocate(this.latlon_c_to(1:2, 0:179, 0:359))
+		Allocate(this.weight(1:4, 0:179, 0:359))
+		Allocate(this.indexes_xyface(1:3, 0:179, 0:359))
 
 	end subroutine
 

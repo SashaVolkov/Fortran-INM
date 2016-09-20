@@ -41,8 +41,8 @@ implicit none
 	step = 2*pi*r_sphere/(8d0*dim)
 
 	Tmax =7500;  speedup = 100;  dt = 25.0
-	rescale = 0 ! 0-simple, 1-tan, 2-pow(4/3)q
-	grid_type = 1 ! 0 - conformal, 1 - equiangular
+	rescale = 1 ! 0-simple, 1-tan, 2-pow(4/3)q
+	grid_type = 0 ! 0 - conformal, 1 - equiangular
 
 	call MPI_Init(ier)
 	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
