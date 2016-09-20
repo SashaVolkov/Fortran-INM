@@ -22,13 +22,13 @@ module printer_ncdf
 
 
 
-	subroutine init(this, dim, Tmax, speedup, time, Wid, xid, yid, faceid, ncid, ncid_gr, rescale, grid_type)
+	subroutine init(this, dim, Tmax, speedup, time, Wid, grid_id, ncid, ncid_gr, rescale, grid_type)
 
 		Class(printer) :: this
 		integer(4), intent(in) :: dim, Tmax, speedup, rescale, grid_type
-		integer(4), intent(out) :: time, Wid, xid, yid, faceid, ncid, ncid_gr
+		integer(4), intent(out) :: time, Wid, grid_id, ncid, ncid_gr
 
-		integer(4) status, face
+		integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid
 		character(40) istring
 		character(80) path1, path2
 
@@ -67,8 +67,20 @@ module printer_ncdf
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
+
 		status = nf90_create (path = path2, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
 		 comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid_gr)
+
+		status = nf90_def_dim (ncid_gr, "ll", 2, llid)
+		status = nf90_def_dim (ncid_gr, "x", 2*dim, gr_xid)
+		status = nf90_def_dim (ncid_gr, "y", 2*dim, gr_yid)
+		status = nf90_def_dim (ncid_gr, "face", 6, gr_faceid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_def_var (ncid, "latlon", NF90_DOUBLE, (/ llid, gr_xid, gr_yid, gr_faceid/), grid_id)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 	end subroutine
 
