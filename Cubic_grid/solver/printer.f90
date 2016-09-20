@@ -38,13 +38,13 @@ module printer_ncdf
 		if(grid_type == 0) then
 			if(rescale == 0) then
 				path1 = trim('datFiles/'//"surface_conf_simple_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('datFiles/'//"grid_conf_simple_"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/'//"grid_conf_simple_C"//trim(adjustl(istring))//".nc")
 			else if(rescale == 1) then
 				path1 = trim('datFiles/'//"surface_conf_tan_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('datFiles/'//"grid_conf_tan_"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/'//"grid_conf_tan_C"//trim(adjustl(istring))//".nc")
 			else if(rescale == 2) then
 				path1 = trim('datFiles/'//"surface_conf_exp_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('datFiles/'//"grid_conf_exp_"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/'//"grid_conf_exp_C"//trim(adjustl(istring))//".nc")
 			end if
 		else if(grid_type == 1) then
 				path1 = trim('datFiles/'//"surface_equiang_C"//trim(adjustl(istring))//".nc")
