@@ -24,24 +24,24 @@ module scan_print
 
 		integer(4) status, face
 		character(40) istring
-		character(80) path
+		character(80) path1
 
 		write(istring, *) dim
 
 
 		if(grid_type == 0) then
 			if(rescale == 0) then
-				path = trim('../datFiles/'//"surface_conf_simple_"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//"surface_conf_simple_"//trim(adjustl(istring))//".nc")
 			else if(rescale == 1) then
-				path = trim('../datFiles/'//"surface_conf_tan_"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//"surface_conf_tan_"//trim(adjustl(istring))//".nc")
 			else if(rescale == 2) then
-				path = trim('../datFiles/'//"surface_conf_exp_"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//"surface_conf_exp_"//trim(adjustl(istring))//".nc")
 			end if
 		else if(grid_type == 1) then
-				path = trim('../datFiles/'//"surface_equiang_"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//"surface_equiang_"//trim(adjustl(istring))//".nc")
 		end if
 
-		status = nf90_open (path = path,cmode = NF90_NOWRITE, ncid = ncid)
+		status = nf90_open (path = path1,cmode = NF90_NOWRITE, ncid = ncid)
 
 
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)

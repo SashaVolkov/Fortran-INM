@@ -8,13 +8,13 @@ program regrid
 	Type(printer) :: scan
 
 
-		open(9,file='../init')
-			read(9, *) dim, Tmax, speedup, rescale, grid_type
-		close(9)
+	open(9,file='../init')
+		read(9, *) dim, Tmax, speedup, rescale, grid_type
+	close(9)
 
-		all_time = Tmax/speedup + 1
+	all_time = Tmax/speedup + 1
 
-		call scan.init(dim, all_time, rescale, grid_type)
+	call scan.init(dim, all_time, rescale, grid_type)
 
 
 

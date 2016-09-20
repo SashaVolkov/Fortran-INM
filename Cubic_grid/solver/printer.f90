@@ -1,6 +1,7 @@
 module printer_ncdf
 
 	use func_var, Only: f_var
+	use grid_var, Only: g_var
 	use netcdf
 
 	implicit none
@@ -13,6 +14,7 @@ module printer_ncdf
 		CONTAINS
 		Procedure, Public :: init => init
 		Procedure, Public :: to_print => to_print
+		Procedure, Public :: print_grid => print_grid
 		Procedure, Public :: deinit => deinit
 	End Type
 
@@ -20,32 +22,36 @@ module printer_ncdf
 
 
 
-	subroutine init(this, dim, Tmax, speedup, time, Wid, xid, yid, faceid, ncid, rescale, grid_type)
+	subroutine init(this, dim, Tmax, speedup, time, Wid, xid, yid, faceid, ncid, ncid_gr, rescale, grid_type)
 
 		Class(printer) :: this
 		integer(4), intent(in) :: dim, Tmax, speedup, rescale, grid_type
-		integer(4), intent(out) :: time, Wid, xid, yid, faceid, ncid
+		integer(4), intent(out) :: time, Wid, xid, yid, faceid, ncid, ncid_gr
 
 		integer(4) status, face
 		character(40) istring
-		character(80) path
+		character(80) path1, path2
 
-		write(istring, *) dim
+		write(istring, *) 2*dim
 
 
 		if(grid_type == 0) then
 			if(rescale == 0) then
-				path = trim('datFiles/'//"surface_conf_simple_"//trim(adjustl(istring))//".nc")
+				path1 = trim('datFiles/'//"surface_conf_simple_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/'//"grid_conf_simple_"//trim(adjustl(istring))//".nc")
 			else if(rescale == 1) then
-				path = trim('datFiles/'//"surface_conf_tan_"//trim(adjustl(istring))//".nc")
+				path1 = trim('datFiles/'//"surface_conf_tan_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/'//"grid_conf_tan_"//trim(adjustl(istring))//".nc")
 			else if(rescale == 2) then
-				path = trim('datFiles/'//"surface_conf_exp_"//trim(adjustl(istring))//".nc")
+				path1 = trim('datFiles/'//"surface_conf_exp_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/'//"grid_conf_exp_"//trim(adjustl(istring))//".nc")
 			end if
 		else if(grid_type == 1) then
-				path = trim('datFiles/'//"surface_equiang_"//trim(adjustl(istring))//".nc")
+				path1 = trim('datFiles/'//"surface_equiang_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/'//"grid_equiang_C"//trim(adjustl(istring))//".nc")
 		end if
 
-		status = nf90_create (path = path, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
+		status = nf90_create (path = path1, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
 		 comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
 
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
@@ -60,6 +66,9 @@ module printer_ncdf
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_create (path = path1, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
+		 comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid_gr)
 
 	end subroutine
 
@@ -89,6 +98,20 @@ module printer_ncdf
 
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 		end do
+	end subroutine
+
+
+	subroutine print_grid(this, grid, Wid, ncid_gr)
+
+		Class(printer) :: this
+		Class(g_var) :: grid
+		integer(4), intent(in) :: Wid, ncid_gr
+		integer(4) x, y, face, ier, dim, status
+
+			status = nf90_put_var(ncid_gr, Wid, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
+			 start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
+
+			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 	end subroutine
 
 

@@ -18,7 +18,7 @@ implicit none
 
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, faceid, ncid, rescale, face, grid_type
+	integer(4) dim, gr_step, Tmax, time, speedup, Wid, xid, yid, faceid, ncid, ncid_gr, rescale, face, grid_type
 
 	integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
 
@@ -68,7 +68,7 @@ implicit none
 
 	call var_prev.start_conditions()
 
-	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, faceid, ncid, rescale, grid_type)
+	call printer_nc.init(dim, Tmax, speedup, time, Wid, xid, yid, faceid, ncid, ncid_gr, rescale, grid_type)
 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
 	call diagn.init( grid, paral, Tmax, id)
 
