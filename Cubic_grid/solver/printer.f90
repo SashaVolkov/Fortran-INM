@@ -34,7 +34,6 @@ module printer_ncdf
 
 		write(istring, *) 2*dim
 
-
 		if(grid_type == 0) then
 			if(rescale == 0) then
 				path1 = trim('datFiles/'//"surface_conf_simple_C"//trim(adjustl(istring))//".nc")
@@ -77,9 +76,9 @@ module printer_ncdf
 		status = nf90_def_dim (ncid_gr, "face", 6, gr_faceid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "latlon", NF90_DOUBLE, (/ llid, gr_xid, gr_yid, gr_faceid/), grid_id)
+		status = nf90_def_var (ncid_gr, "latlon", NF90_DOUBLE, (/ llid, gr_xid, gr_yid, gr_faceid/), grid_id)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-		status = nf90_enddef (ncid)
+		status = nf90_enddef (ncid_gr)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 	end subroutine
@@ -102,28 +101,27 @@ module printer_ncdf
 
 		t = 1+time/speedup
 
-
 		do face = 1, 6
-
 			status = nf90_put_var(ncid, Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
-
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 		end do
 	end subroutine
 
 
-	subroutine print_grid(this, grid, Wid, ncid_gr)
+	subroutine print_grid(this, grid, grid_id, ncid_gr)
 
 		Class(printer) :: this
 		Class(g_var) :: grid
-		integer(4), intent(in) :: Wid, ncid_gr
+		integer(4), intent(in) :: grid_id, ncid_gr
 		integer(4) x, y, face, ier, dim, status
 
-			status = nf90_put_var(ncid_gr, Wid, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
+		dim = grid.dim
+
+			status = nf90_put_var(ncid_gr, grid_id, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
 			 start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
 
-			if(status /= nf90_NoErr) print *, nf90_strerror(status)
+			if(status /= nf90_NoErr) print *, nf90_strerror(status), "Here"
 	end subroutine
 
 

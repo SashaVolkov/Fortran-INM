@@ -70,6 +70,7 @@ implicit none
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, grid_id, ncid, ncid_gr, rescale, grid_type)
 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
+	if(id == 0) call printer_nc.print_grid(grid, grid_id, ncid_gr)
 	call diagn.init( grid, paral, Tmax, id)
 
 
