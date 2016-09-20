@@ -52,7 +52,6 @@ module printer_ncdf
 
 		status = nf90_create (path = path1, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
 		 comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
-
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 		status = nf90_def_dim (ncid, "x", 2*dim, xid)
@@ -69,6 +68,7 @@ module printer_ncdf
 
 		status = nf90_create (path = path2, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
 		 comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid_gr)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 		status = nf90_def_dim (ncid_gr, "ll", 2, llid)
 		status = nf90_def_dim (ncid_gr, "x", 2*dim, gr_xid)

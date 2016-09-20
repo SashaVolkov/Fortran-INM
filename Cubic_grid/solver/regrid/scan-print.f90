@@ -30,6 +30,8 @@ module scan_print
 		character(40) istring
 		character(80) path1, path2
 
+		this.dim = dim
+
 		write(istring, *) 2*dim
 
 		if(grid_type == 0) then
@@ -50,8 +52,6 @@ module scan_print
 
 
 		status = nf90_open (path = path1,cmode = NF90_NOWRITE, ncid = ncid)
-
-
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 		status = nf90_def_dim (ncid, "x", 2*dim, xid)
@@ -65,28 +65,40 @@ module scan_print
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
+
+		status = nf90_open (path = path2,cmode = NF90_NOWRITE, ncid = ncid_gr)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_def_dim (ncid_gr, "ll", 2, llid)
+		status = nf90_def_dim (ncid_gr, "x", 2*dim, gr_xid)
+		status = nf90_def_dim (ncid_gr, "y", 2*dim, gr_yid)
+		status = nf90_def_dim (ncid_gr, "face", 6, gr_faceid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_def_var (ncid_gr, "latlon", NF90_DOUBLE, (/ llid, gr_xid, gr_yid, gr_faceid/), grid_id)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid_gr)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+
 	end subroutine
 
 
 
-	subroutine scan_surf(this, var, Wid, ncid, id)
+	subroutine scan_surf(this, Wid, ncid)
 
 		Class(printer) :: this
-		integer(4), intent(in) :: time, speedup, Wid, ncid, id
+		integer(4), intent(in) :: time, speedup, Wid, ncid
+		real(8), intent(in) :: h_height(1:2*dim, 1:2*dim, 1:6)
 		integer(4) x, y, face, ier
 		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
-		real(8) W_mass(var.ns_x:var.nf_x, var.ns_y:var.nf_y)
 
 		t = 1+time/speedup
 
+		status = nf90_get_var(ncid, Wid, h_height(1:2*dim, 1:2*dim, 1:6),&
+		 start = (/1, 1, 1/), count = (/2*dim, 2*dim, 6/))
 
-		do face = 1, 6
-
-			status = nf90_get_var(ncid, Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
-			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
-
-			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
-		end do
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 	end subroutine
 
 
