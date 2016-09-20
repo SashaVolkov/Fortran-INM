@@ -67,7 +67,7 @@ module printer_ncdf
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_create (path = path1, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
+		status = nf90_create (path = path2, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
 		 comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid_gr)
 
 	end subroutine
