@@ -8,8 +8,8 @@ program regrid
 	Type(printer) :: scan
 
 
-		open(9,file='~/Fortran/Cubic_grid/solver/init')
-			read(9, FMT="(5(I14)") dim, Tmax, speedup, rescale, grid_type
+		open(9,file='../init')
+			read(9, *) dim, Tmax, speedup, rescale, grid_type
 		close(9)
 
 		all_time = Tmax/speedup + 1

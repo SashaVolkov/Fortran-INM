@@ -31,14 +31,14 @@ module scan_print
 
 		if(grid_type == 0) then
 			if(rescale == 0) then
-				path = trim('datFiles/'//"surface_conf_simple_"//trim(adjustl(istring))//".nc")
+				path = trim('../datFiles/'//"surface_conf_simple_"//trim(adjustl(istring))//".nc")
 			else if(rescale == 1) then
-				path = trim('datFiles/'//"surface_conf_tan_"//trim(adjustl(istring))//".nc")
+				path = trim('../datFiles/'//"surface_conf_tan_"//trim(adjustl(istring))//".nc")
 			else if(rescale == 2) then
-				path = trim('datFiles/'//"surface_conf_exp_"//trim(adjustl(istring))//".nc")
+				path = trim('../datFiles/'//"surface_conf_exp_"//trim(adjustl(istring))//".nc")
 			end if
 		else if(grid_type == 1) then
-				path = trim('datFiles/'//"surface_equiang_"//trim(adjustl(istring))//".nc")
+				path = trim('../datFiles/'//"surface_equiang_"//trim(adjustl(istring))//".nc")
 		end if
 
 		status = nf90_open (path = path,cmode = NF90_NOWRITE, ncid = ncid)
