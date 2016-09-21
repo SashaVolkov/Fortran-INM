@@ -67,16 +67,11 @@ module scan_print
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 
-		status = nf90_create(path = path1, cmode = NF90_CLOBBER, ncid = ncid_to)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
+		status = nf90_create(path = path3, cmode = NF90_CLOBBER, ncid = ncid_to)
 		status = nf90_def_dim (ncid_to, "lon", this.lon_max, lonid)
 		status = nf90_def_dim (ncid_to, "lat", this.lat_max, latid)
 		status = nf90_def_dim (ncid_to, "time", all_time, time)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
 		status = nf90_def_var (ncid_to, "water", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid_to)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
@@ -98,7 +93,6 @@ module scan_print
 
 		status = nf90_get_var(ncid, Wid, surface_off(1:2*dim, 1:2*dim, 1:6),&
 		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
-
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 	end subroutine
 
@@ -139,9 +133,9 @@ module scan_print
 		integer(4) :: ncid, ncid_to, ncid_gr, status
 		ncid_gr = this.ncid_gr;  ncid = this.ncid; ncid_to = this.ncid_to
 
-		status = nf90_close (ncid)
-		status = nf90_close (ncid_gr)
-		status = nf90_close (ncid_to)
+		status = nf90_close(ncid)
+		status = nf90_close(ncid_gr)
+		status = nf90_close(ncid_to)
 	end subroutine
 
 

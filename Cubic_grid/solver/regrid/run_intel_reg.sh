@@ -2,7 +2,7 @@
 
 rm -rf *.o *.mod *.out *.file analyze *~ 2>/dev/null
 
-Files="scan-print.f90 grid_interp.f90"
+Files="sphere_geometry.f90 scan-print.f90 grid_interp.f90"
 Files=$Files" Regridder.f90"
 
 
@@ -24,7 +24,7 @@ else
 
 	if [[ $1 != "compile" ]]; then
 		export OMP_NUM_THREADS=1
-		mpiexec -n 1 ./a.out
+		time mpiexec -n 1 ./a.out
 
 	fi
 

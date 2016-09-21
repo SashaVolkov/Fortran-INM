@@ -30,5 +30,8 @@ else
 		./plotscript.sh
 	fi
 
+echo "Regridding"
+cd regrid
+./run_intel_reg.sh
 
 fi
