@@ -7,9 +7,10 @@ module scan_print
 	Private
 	Public :: printer
 
-	integer(4) :: dim
 
 	Type printer
+
+	integer(4) :: dim, ncid, ncid_gr, grid_id, Wid
 		CONTAINS
 		Procedure, Public :: init => init
 		Procedure, Public :: scan_surf => scan_surf
@@ -26,7 +27,7 @@ module scan_print
 		Class(printer) :: this
 		integer(4), intent(in) :: dim, all_time, rescale, grid_type
 
-		integer(4) status, face
+		integer(4) status, face, ncid, ncid_gr, nvars, grid_id(1:1), Wid(1:1)
 		character(40) istring
 		character(80) path1, path2
 
@@ -51,68 +52,46 @@ module scan_print
 		end if
 
 
-		status = nf90_open (path = path1,cmode = NF90_NOWRITE, ncid = ncid)
+		status = nf90_open(path = path1, mode = NF90_NOWRITE, ncid = ncid)
+		status = nf90_inq_varids(ncid, nvars, Wid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_dim (ncid, "x", 2*dim, xid)
-		status = nf90_def_dim (ncid, "y", 2*dim, yid)
-		status = nf90_def_dim (ncid, "face", 6, faceid)
-		status = nf90_def_dim (ncid, "time", all_time, time)
+		status = nf90_open (path = path2, mode = NF90_NOWRITE, ncid = ncid_gr)
+		status = nf90_inq_varids(ncid_gr, nvars, grid_id)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "water", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-		status = nf90_enddef (ncid)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
-
-		status = nf90_open (path = path2,cmode = NF90_NOWRITE, ncid = ncid_gr)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
-		status = nf90_def_dim (ncid_gr, "ll", 2, llid)
-		status = nf90_def_dim (ncid_gr, "x", 2*dim, gr_xid)
-		status = nf90_def_dim (ncid_gr, "y", 2*dim, gr_yid)
-		status = nf90_def_dim (ncid_gr, "face", 6, gr_faceid)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
-		status = nf90_def_var (ncid_gr, "latlon", NF90_DOUBLE, (/ llid, gr_xid, gr_yid, gr_faceid/), grid_id)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-		status = nf90_enddef (ncid_gr)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
+		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1)
 
 	end subroutine
 
 
 
-	subroutine scan_surf(this, Wid, ncid)
+	subroutine scan_surf(this, time, surface_off)
 
 		Class(printer) :: this
-		integer(4), intent(in) :: time, speedup, Wid, ncid
-		real(8), intent(in) :: h_height(1:2*dim, 1:2*dim, 1:6)
-		integer(4) x, y, face, ier
-		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
+		integer(4), intent(in) :: time
+		real(8), intent(out) :: surface_off(1:2*this.dim, 1:2*this.dim, 1:6)
+		integer(4) x, y, face, ier, status, ncid, Wid, dim
 
-		t = 1+time/speedup
+		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid
 
-		status = nf90_get_var(ncid, Wid, h_height(1:2*dim, 1:2*dim, 1:6),&
-		 start = (/1, 1, 1/), count = (/2*dim, 2*dim, 6/))
+		status = nf90_get_var(ncid, Wid, surface_off(1:2*dim, 1:2*dim, 1:6),&
+		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
 
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 	end subroutine
 
 
 
-	subroutine scan_grid(this, grid, grid_id, ncid_gr)
+	subroutine scan_grid(this, grid)
 
 		Class(printer) :: this
-		Class(g_var) :: grid
-		integer(4), intent(in) :: grid_id, ncid_gr
-		integer(4) x, y, face, ier, dim, status
+		real(8), intent(out) :: grid(1:2, 1:2*this.dim, 1:2*this.dim, 1:6)
+		integer(4) x, y, face, ier, dim, status, grid_id, ncid_gr
 
-		dim = this.dim
+		dim = this.dim;  ncid_gr = this.ncid_gr;  grid_id = this.grid_id
 
-		status = nf90_get_var(ncid_gr, grid_id, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
+		status = nf90_get_var(ncid_gr, grid_id, grid(1:2, 1:2*dim, 1:2*dim, 1:6),&
 		 start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 	end subroutine
