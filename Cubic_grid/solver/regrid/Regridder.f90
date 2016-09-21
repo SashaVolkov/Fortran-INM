@@ -21,6 +21,8 @@ program regrid
 	call scan.scan_grid(inter.latlon_c_off)
 	do time = 1, all_time
 		call scan.scan_surf(time, inter.surface_off)
+		call inter.interpolate()
+		call scan.print_surf(inter.surface_to, time)
 	end do
 
 end program

@@ -22,6 +22,7 @@ implicit none
 		Procedure, Public :: init => init
 		Procedure, Private :: alloc => alloc
 		Procedure, Public :: deinit => deinit
+		Procedure, Public :: interpolate => interpolate
 	End Type
 
 
@@ -67,6 +68,12 @@ CONTAINS
 		if (Allocated(this.surface_to)) Deallocate(this.surface_to)
 		if (Allocated(this.weight)) Deallocate(this.weight)
 		if (Allocated(this.indexes_xyface)) Deallocate(this.indexes_xyface)
+	end subroutine
+
+
+
+	subroutine interpolate(this)
+		Class(interp) :: this
 	end subroutine
 
 
