@@ -56,7 +56,7 @@ CONTAINS
 		lon = this.lon_max; lat = this.lat_max
 
 		Allocate(this.latlon_c_off(1:2, f:l, f:l, 1:6))
-		Allocate(this.surface_off(f:l, f:l, 1:6))
+		Allocate(this.surface_off(1:2*dim, 1:2*dim, 1:6))
 		Allocate(this.surface_to(-lat:lat, -lon:lon))
 		Allocate(this.weight(1:4, -lat:lat, -lon:lon))
 		Allocate(this.indexes_xyface(1:3, 1:4, -lat:lat, -lon:lon))
@@ -84,10 +84,11 @@ CONTAINS
 		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2)
 		real(8), parameter :: pi = 314159265358979323846d-20
 
+		! call this.hem_of_face(this.latlon_c_off(1, :, :, :))
+		! call this.hem_of_face(this.latlon_c_off(2, :, :, :))
 		call this.nearest_point_search(g)
-		call this.hem_of_face(this.latlon_c_off(1, :, :, :))
-		call this.hem_of_face(this.latlon_c_off(2, :, :, :))
 		call this.cell_search(g)
+
 
 
 		do lon = -this.lon_max, this.lon_max
@@ -116,6 +117,7 @@ CONTAINS
 				latlon1(:) = this.latlon_c_off(:, x(4), y(4), face)
 				latlon2(:) = this.latlon_c_off(:, x(1), y(1), face)
 				call g.triangle(latlon1, latlon2, latlon, S(4))
+
 				Big_S = (S(1) + S(3))*(S(2) + S(4))
 
 				this.weight(1, lat, lon) = S(2)*S(3)/Big_S
@@ -147,40 +149,33 @@ CONTAINS
 				face(1:3) = (/1,2,6/)
 			else if(abs(lon) > 135) then
 				face(1:3) = (/1,4,6/)
-			else if(lon < -45)then
+			else if(lon < -45 .and. lon > -135)then
 				face(1:3) = (/1,5,6/)
-			else
+			else if(lon > 45 .and. lon < 135)then
 				face(1:3) = (/1,3,6/)
 			end if
 
 					do x = 1, 2*dim
 						do y = 1, 2*dim
-							if(abs(lat) < 40)then
-angle = g.angle(this.latlon_c_off(1:2, x, y, face(2)), latlon)
-if(angle < min) then
-	min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,face(2)/)
-end if
-
-							else if(lat < -50)then
-angle = g.angle(this.latlon_c_off(1:2, x, y, face(1)), latlon)
-if(angle < min) then
-	min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,face(1)/)
-end if
-
+							if(lat < -50)then
+								angle = g.angle(this.latlon_c_off(1:2, x, y, 1), latlon)
+								if(angle < min) then
+									min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,1/)
+								end if
 							else if(lat > 50)then
-angle = g.angle(this.latlon_c_off(1:2, x, y, face(3)), latlon)
-if(angle < min) then
-	min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,face(3)/)
-end if
-
+								angle = g.angle(this.latlon_c_off(1:2, x, y, 6), latlon)
+								if(angle < min) then
+									min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,6/)
+								end if
 							else
-do i = 1, 3
-	angle = g.angle(this.latlon_c_off(1:2, x, y, face(i)), latlon)
-	if(angle < min) then
-		min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,face(i)/)
-	end if
-end do
-
+								do i = 1, 3
+									if( (this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0d5 .and. (this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0d5 ) then
+										angle = g.angle(this.latlon_c_off(1:2, x, y, face(i)), latlon)
+										if(angle < min) then
+											min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,face(i)/)
+										end if
+									end if
+								end do
 							end if
 					end do
 				end do
@@ -194,7 +189,7 @@ end do
 		integer(4) dim, f, l, lon, lat, x, y, face, i
 
 		! surf_to = sum(w*surf_off)
-		call this.hem_of_face(this.surface_off)
+		! call this.hem_of_face(this.surface_off)
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
@@ -202,7 +197,7 @@ end do
 				do i = 1, 4
 					x = this.indexes_xyface(1, i, lat, lon)
 					y = this.indexes_xyface(2, i, lat, lon)
-					face = this.indexes_xyface(3, i, lat, lon)
+					face = this.closest_xyface(3, lat, lon)
 					this.surface_to(lat, lon) = this.surface_to(lat, lon) + this.surface_off(x,y,face)*this.weight(i, lat, lon)
 				end do
 			end do

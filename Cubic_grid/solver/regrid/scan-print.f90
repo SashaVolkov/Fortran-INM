@@ -33,7 +33,7 @@ module scan_print
 		character(40) istring
 		character(80) path1, path2, path3
 
-		this.dim = dim;  this.lon_max = 360;  this.lat_max = 180
+		this.dim = dim;  this.lon_max = 180;  this.lat_max = 90
 
 		write(istring, *) 2*dim
 
@@ -68,8 +68,8 @@ module scan_print
 
 
 		status = nf90_create(path = path3, cmode = NF90_CLOBBER, ncid = ncid_to)
-		status = nf90_def_dim (ncid_to, "lon", this.lon_max, lonid)
-		status = nf90_def_dim (ncid_to, "lat", this.lat_max, latid)
+		status = nf90_def_dim (ncid_to, "lon", 2*this.lon_max+1, lonid)
+		status = nf90_def_dim (ncid_to, "lat", 2*this.lat_max+1, latid)
 		status = nf90_def_dim (ncid_to, "time", all_time, time)
 		status = nf90_def_var (ncid_to, "water", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
 		status = nf90_enddef (ncid_to)
@@ -101,7 +101,7 @@ module scan_print
 	subroutine scan_grid(this, grid)
 
 		Class(printer) :: this
-		real(8), intent(out) :: grid(1:2, 1:2*this.dim, 1:2*this.dim, 1:6)
+		real(8), intent(out) :: grid(1:2, 0:2*this.dim+1, 0:2*this.dim+1, 1:6)
 		integer(4) x, y, face, ier, dim, status, grid_id, ncid_gr
 
 		dim = this.dim;  ncid_gr = this.ncid_gr;  grid_id = this.grid_id
@@ -115,14 +115,14 @@ module scan_print
 
 	subroutine print_surf(this, surface_to, time)
 		Class(printer) :: this
-		real(8), intent(in) :: surface_to(1:this.lon_max, 1:this.lat_max)
+		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
 		integer(4), intent(in) :: time
 		integer(4) x, y, face, ier, status, Wid_to, ncid_to
 
 		ncid_to = this.ncid_to;  Wid_to = this.Wid_to
 
-		status = nf90_put_var(ncid_to, Wid_to, surface_to(1:this.lon_max, 1:this.lat_max),&
-		 start = (/1, 1, time/), count = (/this.lon_max, this.lat_max, 1/))
+		status = nf90_put_var(ncid_to, Wid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max),&
+		 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 	end subroutine
 

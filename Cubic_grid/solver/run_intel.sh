@@ -13,7 +13,8 @@ netcdf="/home/sasha/netcdf"
  # -check all -traceback -ftrapuv
 mpiifort -O3 $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
-	echo "compilation status" $?
+	CompStatus=$?
+	echo "compilation status" $CompStatus
 
 if [[ `grep -c error err.file` > 0 ]]; then
 	echo "Look for" `grep -c error err.file` "errors in err.file"
