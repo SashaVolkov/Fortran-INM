@@ -57,7 +57,7 @@ CONTAINS
 
 		Allocate(this.latlon_c_off(1:2, f:l, f:l, 1:6))
 		Allocate(this.surface_off(1:2*dim, 1:2*dim, 1:6))
-		Allocate(this.surface_to(-lat:lat, -lon:lon))
+		Allocate(this.surface_to(-lon:lon, -lat:lat))
 		Allocate(this.weight(1:4, -lat:lat, -lon:lon))
 		Allocate(this.indexes_xyface(1:3, 1:4, -lat:lat, -lon:lon))
 		Allocate(this.closest_xyface(1:3, -lat:lat, -lon:lon))
@@ -193,12 +193,12 @@ CONTAINS
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
-				this.surface_to(lat, lon) = 0d0
+				this.surface_to(lon, lat) = 0d0
 				do i = 1, 4
 					x = this.indexes_xyface(1, i, lat, lon)
 					y = this.indexes_xyface(2, i, lat, lon)
 					face = this.closest_xyface(3, lat, lon)
-					this.surface_to(lat, lon) = this.surface_to(lat, lon) + this.surface_off(x,y,face)*this.weight(i, lat, lon)
+					this.surface_to(lon, lat) =  this.surface_to(lon, lat) + this.surface_off(x,y,face)*this.weight(i, lat, lon)
 				end do
 			end do
 		end do
