@@ -28,4 +28,7 @@ program regrid
 		call scan.print_surf(inter.surface_to, time)
 	end do
 
+	call inter.deinit()
+	call scan.deinit()
+
 end program
