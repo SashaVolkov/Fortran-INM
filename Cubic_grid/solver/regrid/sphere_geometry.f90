@@ -25,11 +25,11 @@ CONTAINS
 
 
 
-		subroutine spherical_triangle(this, latlon1, latlon2, latlon3, area, triangle_angles)
+		subroutine spherical_triangle(this, latlon1, latlon2, latlon3, area)
 
 		Class(geometry) :: this
 		real(8), intent(in) :: latlon1(1:2), latlon2(1:2), latlon3(1:2)  ! points_latlon
-		real(8), intent(out) :: area, triangle_angles(1:3)
+		real(8), intent(out) :: area
 		real(8) a, b, c  ! angles between radiuses
 		real(8) alpha, beta, gamma, eps
 		real(8), parameter :: pi = 314159265358979323846d-20
@@ -43,7 +43,7 @@ CONTAINS
 		beta = dacos( ( dcos(b) - dcos(a)*dcos(c) )/( dsin(a)*dsin(c) ) )
 		gamma = dacos( ( dcos(c) - dcos(b)*dcos(a) )/( dsin(b)*dsin(a) ) )
 
-		triangle_angles = (/alpha, beta, gamma/)
+		! triangle_angles = (/alpha, beta, gamma/)
 
 		eps = alpha + beta + gamma - pi
 		area = eps

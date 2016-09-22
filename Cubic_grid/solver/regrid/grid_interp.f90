@@ -27,6 +27,7 @@ implicit none
 		Procedure, Public :: weight_find => weight_find
 		Procedure, Public :: hem_of_face => hem_of_face
 		Procedure, Public :: nearest_point_search => nearest_point_search
+		Procedure, Public :: cell_search => cell_search
 		Procedure, Public :: interpolate => interpolate
 	End Type
 
@@ -79,10 +80,51 @@ CONTAINS
 	subroutine weight_find(this, g)
 		Class(interp) :: this
 		Class(geometry) :: g
+		integer(4) lon, lat, x(4), y(4), face
+		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2)
+		real(8), parameter :: pi = 314159265358979323846d-20
 
 		call this.nearest_point_search(g)
 		call this.hem_of_face(this.latlon_c_off(1, :, :, :))
 		call this.hem_of_face(this.latlon_c_off(2, :, :, :))
+		call this.cell_search(g)
+
+
+		do lon = -this.lon_max, this.lon_max
+			do lat = -this.lat_max, this.lat_max
+
+				latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0
+
+				face = this.indexes_xyface(3, 1, lat, lon)
+
+				x(:) = this.indexes_xyface(1, :, lat, lon)
+				y(:) = this.indexes_xyface(2, :, lat, lon)
+				
+
+				latlon1(:) = this.latlon_c_off(:, x(1), y(1), face)
+				latlon2(:) = this.latlon_c_off(:, x(2), y(2), face)
+				call g.triangle(latlon1, latlon2, latlon, S(1))
+
+				latlon1(:) = this.latlon_c_off(:, x(2), y(2), face)
+				latlon2(:) = this.latlon_c_off(:, x(3), y(3), face)
+				call g.triangle(latlon1, latlon2, latlon, S(2))
+
+				latlon1(:) = this.latlon_c_off(:, x(3), y(3), face)
+				latlon2(:) = this.latlon_c_off(:, x(4), y(4), face)
+				call g.triangle(latlon1, latlon2, latlon, S(3))
+				
+				latlon1(:) = this.latlon_c_off(:, x(4), y(4), face)
+				latlon2(:) = this.latlon_c_off(:, x(1), y(1), face)
+				call g.triangle(latlon1, latlon2, latlon, S(4))
+				Big_S = (S(1) + S(3))*(S(2) + S(4))
+
+				this.weight(1, lat, lon) = S(2)*S(3)/Big_S
+				this.weight(2, lat, lon) = S(4)*S(3)/Big_S
+				this.weight(3, lat, lon) = S(1)*S(4)/Big_S
+				this.weight(4, lat, lon) = S(2)*S(1)/Big_S
+
+			end do
+		end do
 
 	end subroutine
 
@@ -194,6 +236,79 @@ end do
 		cubic(:,0,4) = cubic(2*dim:1,1,1);  cubic(2*dim:1,0,1) = cubic(:,1,4)
 		cubic(:,0,5) = cubic(1,:,1);  cubic(0,:,1) = cubic(:,1,5)
 
+	end subroutine
+
+
+
+	subroutine cell_search(this, g)
+		Class(interp) :: this
+		Class(geometry) :: g
+		integer(4) dim, f, l, lat, lon, x, y, face, i, x_cell(4), y_cell(4), point
+		Real(8) angle, latlon(1:2), min
+		real(8), parameter :: pi = 314159265358979323846d-20
+		dim = this.dim
+
+		do lon = -this.lon_max, this.lon_max
+			do lat = -this.lat_max, this.lat_max
+
+				latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0; min = 10000.0
+
+				x = this.closest_xyface(1, lat, lon)
+				y = this.closest_xyface(2, lat, lon)
+				face = this.closest_xyface(3, lat, lon)
+
+				x_cell(1) = x - 1; y_cell(1) = y + 1
+				x_cell(2) = x + 1; y_cell(2) = y + 1
+				x_cell(3) = x + 1; y_cell(3) = y - 1
+				x_cell(4) = x - 1; y_cell(4) = y - 1
+
+				if(x_cell(1) == 0 .and. y_cell(1) == 2*dim+1) then
+					x_cell(1) = 1
+				else if(x_cell(2) == 2*dim+1 .and. y_cell(2) == 2*dim+1) then
+					y_cell(2) = 2*dim
+				else if(x_cell(3) == 2*dim+1 .and. y_cell(3) == 0) then
+					x_cell(3) = 2*dim
+				else if(x_cell(4) == 0 .and. y_cell(4) == 0) then
+					y_cell(2) = 1
+				end if
+
+
+					do i = 1, 4
+						angle = g.angle(this.latlon_c_off(:, x_cell(i), y_cell(i), face), latlon)
+						if(angle < min) then
+							min = angle;  point = i
+						end if
+					end do
+
+
+
+				if( point == 1) then
+					this.indexes_xyface(1:3, 1, lat, lon) = (/x-1,y+1,face/)
+					this.indexes_xyface(1:3, 2, lat, lon) = (/x,y+1,face/)
+					this.indexes_xyface(1:3, 3, lat, lon) = (/x,y,face/)
+					this.indexes_xyface(1:3, 4, lat, lon) = (/x-1,y,face/)
+				else if( point == 2) then
+					this.indexes_xyface(1:3, 1, lat, lon) = (/x,y+1,face/)
+					this.indexes_xyface(1:3, 2, lat, lon) = (/x+1,y+1,face/)
+					this.indexes_xyface(1:3, 3, lat, lon) = (/x+1,y,face/)
+					this.indexes_xyface(1:3, 4, lat, lon) = (/x,y,face/)
+				else if( point == 3) then
+					this.indexes_xyface(1:3, 1, lat, lon) = (/x,y,face/)
+					this.indexes_xyface(1:3, 2, lat, lon) = (/x+1,y,face/)
+					this.indexes_xyface(1:3, 3, lat, lon) = (/x+1,y-1,face/)
+					this.indexes_xyface(1:3, 4, lat, lon) = (/x,y-1,face/)
+				else if( point == 4) then
+					this.indexes_xyface(1:3, 1, lat, lon) = (/x-1,y,face/)
+					this.indexes_xyface(1:3, 2, lat, lon) = (/x,y,face/)
+					this.indexes_xyface(1:3, 3, lat, lon) = (/x,y-1,face/)
+					this.indexes_xyface(1:3, 4, lat, lon) = (/x-1,y-1,face/)
+				end if
+
+
+			end do
+		end do
+
+		! this.latlon_c_off(1:2, x_cell, x_cell, face)
 	end subroutine
 
 
