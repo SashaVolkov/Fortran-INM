@@ -86,7 +86,7 @@ module scan_print
 
 		Class(printer) :: this
 		integer(4), intent(in) :: time
-		real(8), intent(out) :: surface_off(1:2*this.dim, 1:2*this.dim, 1:6)
+		real(8), intent(out) :: surface_off(0:2*this.dim+1, 0:2*this.dim+1, 1:6)
 		integer(4) x, y, face, ier, status, ncid, Wid, dim
 
 		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid

@@ -56,7 +56,7 @@ CONTAINS
 		lon = this.lon_max; lat = this.lat_max
 
 		Allocate(this.latlon_c_off(1:2, f:l, f:l, 1:6))
-		Allocate(this.surface_off(1:2*dim, 1:2*dim, 1:6))
+		Allocate(this.surface_off(f:l, f:l, 1:6))
 		Allocate(this.surface_to(-lon:lon, -lat:lat))
 		Allocate(this.weight(1:4, -lat:lat, -lon:lon))
 		Allocate(this.indexes_xyface(1:3, 1:4, -lat:lat, -lon:lon))
@@ -84,8 +84,8 @@ CONTAINS
 		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2)
 		real(8), parameter :: pi = 314159265358979323846d-20
 
-		! call this.hem_of_face(this.latlon_c_off(1, :, :, :))
-		! call this.hem_of_face(this.latlon_c_off(2, :, :, :))
+		call this.hem_of_face(this.latlon_c_off(1, :, :, :))
+		call this.hem_of_face(this.latlon_c_off(2, :, :, :))
 		call this.nearest_point_search(g)
 		call this.cell_search(g)
 
@@ -189,7 +189,7 @@ CONTAINS
 		integer(4) dim, f, l, lon, lat, x, y, face, i
 
 		! surf_to = sum(w*surf_off)
-		! call this.hem_of_face(this.surface_off)
+		call this.hem_of_face(this.surface_off)
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
