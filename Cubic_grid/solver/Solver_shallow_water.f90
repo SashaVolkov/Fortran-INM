@@ -61,21 +61,21 @@ implicit none
 	call grid.init(geom, paral, metr, omega_cor, g, dt, rescale, grid_type)
 	call var.init(paral, height)
 	call var_prev.init(paral, height)
+	call var_prev.start_conditions()
+	call diagn.init( grid, paral, Tmax, id)
 	call sch.init(var_prev, grid)
 	call msg.init(grid_type)
 	call inter.init(grid, 1)
 
-	call var_prev.start_conditions()
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, grid_id, ncid, ncid_gr, rescale, grid_type)
 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
 	if(id == 0) call printer_nc.print_grid(grid, grid_id, ncid_gr)
-	call diagn.init( grid, paral, Tmax, id)
 
 
 	do time = 1, Tmax
 		call sch.Linear(var, var_prev, grid, metr)
-		! call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
+! 		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
 		call var_prev.equal(var, metr)
 		call msg.msg(var_prev, paral)
 		call var_prev.interpolate(inter, metr)

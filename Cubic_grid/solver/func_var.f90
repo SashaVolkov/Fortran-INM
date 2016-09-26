@@ -12,6 +12,7 @@ implicit none
 	Type f_var
 
 		Real(8), Allocatable :: h_height(:, :, :)
+		Real(8), Allocatable :: h_starter(:, :, :)
 		Real(8), Allocatable :: u_cov(:, :, :)
 		Real(8), Allocatable :: v_cov(:, :, :)
 		Real(8), Allocatable :: u_con(:, :, :)
@@ -80,6 +81,7 @@ CONTAINS
 		Class(f_var) :: this
 
 		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.h_starter(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.u_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.v_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.u_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
@@ -95,6 +97,7 @@ CONTAINS
 		Class(f_var) :: this
 
 		if (Allocated(this.h_height)) Deallocate(this.h_height)
+		if (Allocated(this.h_starter)) Deallocate(this.h_starter)
 		if (Allocated(this.u_cov)) Deallocate(this.u_cov)
 		if (Allocated(this.v_cov)) Deallocate(this.v_cov)
 		if (Allocated(this.u_con)) Deallocate(this.u_con)
@@ -158,6 +161,8 @@ CONTAINS
 
 		end do
 
+		this.h_starter(:,:,:) = this.h_height(:,:,:)
+
 	end subroutine
 
 
@@ -168,9 +173,9 @@ CONTAINS
 		Class(interp) :: i
 		Class(metric) :: metr
 		if(metr.grid_type == 1) then
-			! call i.Lagrange(this.h_height, this.interp_factor)
-			! call i.Lagrange(this.lat_vel, this.interp_factor)
-			! call i.Lagrange(this.lon_vel, this.interp_factor)
+			call i.Lagrange(this.h_height, this.interp_factor)
+			call i.Lagrange(this.lat_vel, this.interp_factor)
+			call i.Lagrange(this.lon_vel, this.interp_factor)
 			call this.Velocity_from_spherical_border(metr)
 		else if (metr.grid_type == 0) then
 			this.u_cov(:, :, :)=this.lon_vel(:, :, :)

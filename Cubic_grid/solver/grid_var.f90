@@ -29,6 +29,7 @@ implicit none
 		Real(8), Allocatable :: latlon(:, :, :, :)
 
 		Real(8), Allocatable :: square(:, :)
+		Real(8), Allocatable :: real_dist(:, :)
 		Real(8), Allocatable :: triangle_area(:, :, :)
 		Real(8), Allocatable :: triangle_angles(:, :, :)
 		Real(8), Allocatable :: square_angles(:, :, :)
@@ -99,6 +100,7 @@ CONTAINS
 		Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
 
 		Allocate(this.square(1:2*dim, 1:2*dim))
+		Allocate(this.real_dist(this.ns_xy(1):this.nf_xy(1), this.ns_xy(2):this.nf_xy(2)))
 		Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
 		Allocate(this.triangle_angles(1:6, 1:2*dim, 1:2*dim))
 		Allocate(this.square_angles(1:4, 1:2*dim, 1:2*dim))
@@ -183,6 +185,12 @@ CONTAINS
 	this.square_angles(3, x, y) = this.triangle_angles(5, y, x)
 	this.square_angles(4, x, y) = this.triangle_angles(1, y, x) + this.triangle_angles(4, y, x)
 
+			end do
+		end do
+
+		do x = this.ns_xy(1), this.nf_xy(1)
+			do y = this.ns_xy(2), this.nf_xy(2)
+				this.real_dist(x,y) = g.dist(this.latlon_c(:, y, x, 2), this.latlon_c(:, y, x-1, 2))
 			end do
 		end do
 

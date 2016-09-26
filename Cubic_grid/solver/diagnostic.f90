@@ -125,8 +125,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.u_cov(x, y, face)*grid.dt/(grid.delta_on_cube*metr.G_sqr(x,y))) +&
-					 abs(func.v_cov(x, y, face)*grid.dt/(grid.delta_on_cube*metr.G_sqr(x,y)))
+					this.CFL(x, y, face) = abs(func.u_cov(x, y, face)*grid.dt/(grid.real_dist(x,y))) +&
+					 abs(func.v_cov(x, y, face)*grid.dt/(grid.real_dist(x,y)))
 
 				end do
 			end do
@@ -151,16 +151,21 @@ CONTAINS
 		integer(4) face, x, y, id, ier
 		real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square
 
-		L1 = 0;  L2 = 0;  L_inf = 0
+		L1 = 0d0;  L2 = 0d0;  L_inf = 0d0
 		if(time == 1) then
-			this.L10 = 0;  this.L20 = 0;  this.L_inf0 = 0
+			this.L10 = 0d0;  this.L20 = 0d0;  this.L_inf0 = 0d0
 		end if
 
 		do face = 1, 6
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					F1 = func.h_height(x, y, face)
+					if(time == 1) then
+						F1 = func.h_starter(x, y, face)
+					else
+						F1 = (func.h_height(x, y, face) - func.h_starter(x, y, face))
+					end if
+
 					square = grid.triangle_area(1, x, y) + grid.triangle_area(2, x, y)
 					L1 = abs(F1)*square + L1
 					L2 = F1*F1*square + L2
@@ -182,10 +187,10 @@ CONTAINS
 			this.L10 = L1_all;  this.L20 = L2_all; this.L_inf0 = L_inf_all
 		end if
 
-		if (id == 0) then
+		if (id == 0 .and. time > 1) then
 			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs(L1_all/this.L10)
 			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs(L2_all/this.L20)
-			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs(L_inf_all/this.L_inf0)
+			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs((L_inf_all - this.L_inf0)/this.L_inf0)
 		end if
 
 
