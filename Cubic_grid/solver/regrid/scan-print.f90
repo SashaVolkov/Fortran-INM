@@ -71,7 +71,7 @@ module scan_print
 		status = nf90_def_dim (ncid_to, "lon", 2*this.lon_max+1, lonid)
 		status = nf90_def_dim (ncid_to, "lat", 2*this.lat_max+1, latid)
 		status = nf90_def_dim (ncid_to, "time", all_time, time)
-		status = nf90_def_var (ncid_to, "water", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
+		status = nf90_def_var (ncid_to, "water", NF90_FLOAT, (/ lonid, latid, time/), Wid_to)
 		status = nf90_enddef (ncid_to)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
@@ -86,7 +86,7 @@ module scan_print
 
 		Class(printer) :: this
 		integer(4), intent(in) :: time
-		real(8), intent(out) :: surface_off(0:2*this.dim+1, 0:2*this.dim+1, 1:6)
+		real(4), intent(out) :: surface_off(0:2*this.dim+1, 0:2*this.dim+1, 1:6)
 		integer(4) x, y, face, ier, status, ncid, Wid, dim
 
 		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid
@@ -115,7 +115,7 @@ module scan_print
 
 	subroutine print_surf(this, surface_to, time)
 		Class(printer) :: this
-		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
+		real(4), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
 		integer(4), intent(in) :: time
 		integer(4) x, y, face, ier, status, Wid_to, ncid_to
 

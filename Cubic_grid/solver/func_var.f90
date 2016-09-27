@@ -1,6 +1,7 @@
 module func_var
 
 	use parallel_cubic, Only: parallel
+	use sphere_geometry, Only: geometry
 	use interpolation, Only: interp
 	use metrics, Only: metric
 
@@ -121,45 +122,58 @@ CONTAINS
 				var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
 				var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
 
-				if(metr.grid_type == 1) then
-					call var_pr.Velocity_to_spherical_border(metr)
-				end if
+! 				if(metr.grid_type == 1) then
+! 					call var_pr.Velocity_to_spherical_border(metr)
+! 				end if
 
 
 	end subroutine
 
 
 
-	subroutine start_conditions(this)
+	subroutine start_conditions(this, metr, geom)
 
 		Class(f_var) :: this
+		Class(metric) :: metr
+		Class(geometry) :: geom
 		integer(4) dim
-		real(8) h0
+		real(8) h0, r, R_BIG
 
 		integer(4) x, y, face
 
-		h0 = this.height;  dim = this.dim
+		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
 
 		do face = 1, 6
 
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					this.h_height(x, y, face) = 0
-					this.u_cov(x, y, face) = 0
-					this.v_cov(x, y, face) = 0
+					this.h_height(x, y, face) = 1d0
+					this.u_cov(x, y, face) = 0d0
+					this.v_cov(x, y, face) = 0d0
 				end do
 			end do
 
-			if ( face == 2 ) then
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					this.h_height(x, y, face) =&
-					 h0*exp(-((((10.0/dim)*((x-dim - 0.5)*0.5))**2)+(((10.0/dim)*((y-dim - 0.5)*0.5))**2)))
+					r = geom.dist((/0d0,0d0/),metr.latlon_c(:,x,y,face))
+					if ( r < R_BIG ) then
+						this.h_height(x, y, face) = (h0*0.5)*(1d0 + dcos(geom.pi * r/R_BIG))
+					else
+						this.h_height(x, y, face) = 0
+					end if
 				end do
 			end do
-			end if
+
+! 			do y = this.first_y, this.last_y
+! 				do x = this.first_x, this.last_x
+! 					this.lon_vel(x,y,face) = 100d0
+! 				end do
+! 			end do
 
 		end do
+
+! 		call this.Velocity_from_spherical(metr)
+! 		call this.con_to_cov(metr)
 
 		this.h_starter(:,:,:) = this.h_height(:,:,:)
 
@@ -172,15 +186,15 @@ CONTAINS
 		Class(f_var) :: this
 		Class(interp) :: i
 		Class(metric) :: metr
-		if(metr.grid_type == 1) then
-			call i.Lagrange(this.h_height, this.interp_factor)
-			call i.Lagrange(this.lat_vel, this.interp_factor)
-			call i.Lagrange(this.lon_vel, this.interp_factor)
-			call this.Velocity_from_spherical_border(metr)
-		else if (metr.grid_type == 0) then
+! 		if(metr.grid_type == 1) then
+! 			call i.Lagrange(this.h_height, this.interp_factor)
+! 			call i.Lagrange(this.lat_vel, this.interp_factor)
+! 			call i.Lagrange(this.lon_vel, this.interp_factor)
+! 			call this.Velocity_from_spherical_border(metr)
+! 		else if (metr.grid_type == 0) then
 			this.u_cov(:, :, :)=this.lon_vel(:, :, :)
 			this.v_cov(:, :, :)=this.lat_vel(:, :, :)
-		end if
+! 		end if
 
 		call this.cov_to_con(metr)
 

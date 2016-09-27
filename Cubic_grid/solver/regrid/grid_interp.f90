@@ -13,8 +13,8 @@ implicit none
 		Real(8), Allocatable :: latlon_c_off(:, :, :, :)
 		Real(8), Allocatable :: latlon_c_to(:, :, :)
 		Real(8), Allocatable :: weight(:, :, :)
-		Real(8), Allocatable :: surface_off(:, :, :)
-		Real(8), Allocatable :: surface_to(:, :)
+		Real(4), Allocatable :: surface_off(:, :, :)
+		Real(4), Allocatable :: surface_to(:, :)
 		integer(4), Allocatable :: indexes_xyface(:, :, :, :)
 		integer(4), Allocatable :: closest_xyface(:, :, :)
 
@@ -193,7 +193,7 @@ CONTAINS
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
-				this.surface_to(lon, lat) = 0d0
+				this.surface_to(lon, lat) = 0.0
 				do i = 1, 4
 					x = this.indexes_xyface(1, i, lat, lon)
 					y = this.indexes_xyface(2, i, lat, lon)

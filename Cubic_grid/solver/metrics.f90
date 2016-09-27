@@ -67,11 +67,11 @@ CONTAINS
 
 		this.grid_type = grid_type
 
-		if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
+! 		if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
 			call this.metric_tensor_conf()
-		else if(grid_type == 1)then
-			call this.metric_tensor_equiang()
-		end if
+! 		else if(grid_type == 1)then
+! 			call this.metric_tensor_equiang()
+! 		end if
 
 
 	end subroutine

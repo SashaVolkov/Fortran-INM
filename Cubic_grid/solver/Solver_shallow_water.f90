@@ -37,7 +37,7 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	gr_step = 2;  height = 100.0;  dt = 25.0
+	gr_step = 2;  height = 100.0;  dt = 100.0
 
 	! rescale  0-simple, 1-tan, 2-pow(4/3)q
 	! grid_type  0 - conformal, 1 - equiangular
@@ -61,7 +61,7 @@ implicit none
 	call grid.init(geom, paral, metr, omega_cor, g, dt, rescale, grid_type)
 	call var.init(paral, height)
 	call var_prev.init(paral, height)
-	call var_prev.start_conditions()
+	call var_prev.start_conditions(metr, geom)
 	call diagn.init( grid, paral, Tmax, id)
 	call sch.init(var_prev, grid)
 	call msg.init(grid_type)
