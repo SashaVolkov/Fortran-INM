@@ -51,14 +51,14 @@ CONTAINS
 		call this.alloc(paral)
 
 		if (grid.grid_type == 1) then
-			istring = '_equiang'
+			istring = 'equiang/'
 		else if (grid.grid_type == 0) then
 			if (grid.rescale == 1) then
-				istring = '_conf_tan'
+				istring = 'tan/'
 			else if (grid.rescale == 0) then
-				istring = '_conf_simple'
+				istring = 'simple/'
 			else if (grid.rescale == 2) then
-				istring = '_conf_exp'
+				istring = 'exp/'
 			end if
 		end if
 
@@ -70,10 +70,10 @@ CONTAINS
 ! 			call this.histogram(16*grid.dim*grid.dim, 'datFiles/dist'//trim(istring)//'.dat', 'datFiles/dist_distribution'//trim(istring)//'.dat')
 ! 			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
 
-			open(9,file='datFiles/CFL'//trim(istring)//'.dat')
-			open(11,file='datFiles/L1'//trim(istring)//'.dat')
-			open(12,file='datFiles/L2'//trim(istring)//'.dat')
-			open(13,file='datFiles/L_inf'//trim(istring)//'.dat')
+			open(9,file='datFiles/'//trim(istring)//'CFL.dat')
+			open(11,file='datFiles/'//trim(istring)//'L1.dat')
+			open(12,file='datFiles/'//trim(istring)//'L2.dat')
+			open(13,file='datFiles/'//trim(istring)//'L_inf.dat')
 
 		end if
 

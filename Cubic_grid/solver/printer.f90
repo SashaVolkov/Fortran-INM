@@ -36,18 +36,18 @@ module printer_ncdf
 
 		if(grid_type == 0) then
 			if(rescale == 0) then
-				path1 = trim('datFiles/'//"surface_conf_simple_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('datFiles/'//"grid_conf_simple_C"//trim(adjustl(istring))//".nc")
+				path1 = trim('datFiles/simple/'//"surface_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/simple/'//"grid_C"//trim(adjustl(istring))//".nc")
 			else if(rescale == 1) then
-				path1 = trim('datFiles/'//"surface_conf_tan_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('datFiles/'//"grid_conf_tan_C"//trim(adjustl(istring))//".nc")
+				path1 = trim('datFiles/tan/'//"surface_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/tan/'//"grid_C"//trim(adjustl(istring))//".nc")
 			else if(rescale == 2) then
-				path1 = trim('datFiles/'//"surface_conf_exp_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('datFiles/'//"grid_conf_exp_C"//trim(adjustl(istring))//".nc")
+				path1 = trim('datFiles/exp/'//"surface_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/exp/'//"grid_C"//trim(adjustl(istring))//".nc")
 			end if
 		else if(grid_type == 1) then
-				path1 = trim('datFiles/'//"surface_equiang_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('datFiles/'//"grid_equiang_C"//trim(adjustl(istring))//".nc")
+				path1 = trim('datFiles/equiang/'//"surface_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('datFiles/equiang/'//"grid_C"//trim(adjustl(istring))//".nc")
 		end if
 
 		status = nf90_create (path = path1, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
@@ -101,7 +101,7 @@ module printer_ncdf
 		t = 1+time/speedup
 
 		do face = 1, 6
-			status = nf90_put_var(ncid, Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
+			status = nf90_put_var(ncid, Wid, real(var.h_height(ns_x:nf_x, ns_y:nf_y, face), 4),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 		end do

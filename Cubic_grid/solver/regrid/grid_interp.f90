@@ -189,11 +189,11 @@ CONTAINS
 		integer(4) dim, f, l, lon, lat, x, y, face, i
 
 		! surf_to = sum(w*surf_off)
-		call this.hem_of_face(this.surface_off)
+! 		call this.hem_of_face(real(this.surface_off, 8))
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
-				this.surface_to(lon, lat) = 0.0
+				this.surface_to(lon, lat) = 0d0
 				do i = 1, 4
 					x = this.indexes_xyface(1, i, lat, lon)
 					y = this.indexes_xyface(2, i, lat, lon)
