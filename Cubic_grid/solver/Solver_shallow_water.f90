@@ -70,7 +70,7 @@ implicit none
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, grid_id, ncid, ncid_gr, rescale, grid_type)
 	call printer_nc.to_print(var_prev, 0, speedup, Wid, ncid, id)
-	if(id == 0) call printer_nc.print_grid(grid, grid_id, ncid_gr)
+! 	if(id == 0) call printer_nc.print_grid(grid, grid_id, ncid_gr)
 
 
 	do time = 1, Tmax
@@ -81,11 +81,11 @@ implicit none
 		call var_prev.interpolate(inter, metr)
 		call diagn.L_norm(var_prev, grid, time)
 		call diagn.Courant(var_prev, grid, metr, time)
-			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
-			if(mod(time, Tmax/10) == 0 .and. id == 0) then
-				end_init = MPI_Wtime()
-				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
-			end if
+! 			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
+! 			if(mod(time, Tmax/10) == 0 .and. id == 0) then
+! 				end_init = MPI_Wtime()
+! 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
+! 			end if
 	end do
 
 

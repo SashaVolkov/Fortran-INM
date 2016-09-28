@@ -13,8 +13,8 @@ implicit none
 		Real(8), Allocatable :: latlon_c_off(:, :, :, :)
 		Real(8), Allocatable :: latlon_c_to(:, :, :)
 		Real(8), Allocatable :: weight(:, :, :)
-		Real(4), Allocatable :: surface_off(:, :, :)
-		Real(4), Allocatable :: surface_to(:, :)
+		Real(8), Allocatable :: surface_off(:, :, :)
+		Real(8), Allocatable :: surface_to(:, :)
 		integer(4), Allocatable :: indexes_xyface(:, :, :, :)
 		integer(4), Allocatable :: closest_xyface(:, :, :)
 
@@ -189,7 +189,7 @@ CONTAINS
 		integer(4) dim, f, l, lon, lat, x, y, face, i
 
 		! surf_to = sum(w*surf_off)
-! 		call this.hem_of_face(real(this.surface_off, 8))
+		call this.hem_of_face(this.surface_off)
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max

@@ -39,22 +39,22 @@ module scan_print
 
 		if(grid_type == 0) then
 			if(rescale == 0) then
-				path1 = trim('../datFiles/'//"surface_conf_simple_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/'//"grid_conf_simple_C"//trim(adjustl(istring))//".nc")
-				path3 = trim('../datFiles/'//"surface_conf_simple_ll_C"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/simple/'//"surface_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/simple/'//"grid_C"//trim(adjustl(istring))//".nc")
+				path3 = trim('../datFiles/simple/'//"surface_ll_C"//trim(adjustl(istring))//".nc")
 			else if(rescale == 1) then
-				path1 = trim('../datFiles/'//"surface_conf_tan_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/'//"grid_conf_tan_C"//trim(adjustl(istring))//".nc")
-				path3 = trim('../datFiles/'//"surface_conf_tan_ll_C"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/tan/'//"surface_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/tan/'//"grid_C"//trim(adjustl(istring))//".nc")
+				path3 = trim('../datFiles/tan/'//"surface_ll_C"//trim(adjustl(istring))//".nc")
 			else if(rescale == 2) then
 				path1 = trim('../datFiles/'//"surface_conf_exp_C"//trim(adjustl(istring))//".nc")
 				path2 = trim('../datFiles/'//"grid_conf_exp_C"//trim(adjustl(istring))//".nc")
 				path3 = trim('../datFiles/'//"surface_conf_exp_ll_C"//trim(adjustl(istring))//".nc")
 			end if
 		else if(grid_type == 1) then
-				path1 = trim('../datFiles/'//"surface_equiang_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/'//"grid_equiang_C"//trim(adjustl(istring))//".nc")
-				path3 = trim('../datFiles/'//"surface_equiang_ll_C"//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/equiang/'//"surface_C"//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/equiang/'//"grid_C"//trim(adjustl(istring))//".nc")
+				path3 = trim('../datFiles/equiang/'//"surface_ll_C"//trim(adjustl(istring))//".nc")
 		end if
 
 
@@ -71,7 +71,7 @@ module scan_print
 		status = nf90_def_dim (ncid_to, "lon", 2*this.lon_max+1, lonid)
 		status = nf90_def_dim (ncid_to, "lat", 2*this.lat_max+1, latid)
 		status = nf90_def_dim (ncid_to, "time", all_time, time)
-		status = nf90_def_var (ncid_to, "water", NF90_FLOAT, (/ lonid, latid, time/), Wid_to)
+		status = nf90_def_var (ncid_to, "water", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
 		status = nf90_enddef (ncid_to)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
@@ -86,7 +86,7 @@ module scan_print
 
 		Class(printer) :: this
 		integer(4), intent(in) :: time
-		real(4), intent(out) :: surface_off(0:2*this.dim+1, 0:2*this.dim+1, 1:6)
+		real(8), intent(out) :: surface_off(0:2*this.dim+1, 0:2*this.dim+1, 1:6)
 		integer(4) x, y, face, ier, status, ncid, Wid, dim
 
 		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid
@@ -115,7 +115,7 @@ module scan_print
 
 	subroutine print_surf(this, surface_to, time)
 		Class(printer) :: this
-		real(4), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
+		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
 		integer(4), intent(in) :: time
 		integer(4) x, y, face, ier, status, Wid_to, ncid_to
 

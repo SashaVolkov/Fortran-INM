@@ -60,7 +60,7 @@ module printer_ncdf
 		status = nf90_def_dim (ncid, "time", Tmax/speedup + 1, time)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "water", NF90_FLOAT, (/ xid, yid, faceid, time/), Wid)
+		status = nf90_def_var (ncid, "water", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
@@ -101,7 +101,7 @@ module printer_ncdf
 		t = 1+time/speedup
 
 		do face = 1, 6
-			status = nf90_put_var(ncid, Wid, real(var.h_height(ns_x:nf_x, ns_y:nf_y, face), 4),&
+			status = nf90_put_var(ncid, Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 		end do
