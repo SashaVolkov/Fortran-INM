@@ -150,13 +150,19 @@ CONTAINS
 		real(8), intent(out) :: latlon_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
 		real(8), intent(out) :: cube_coord_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step)
 		real(8), intent(out) :: latlon(1:2, 1-step:2*dim+step+1, 1-step:2*dim+step+1, 1:6)
-		integer(4) face, i, j, k, min, max
+		integer(4) face, i, j, k, min, max, channel
 		real(8) x,y,z,a, pi, r_vector(3), alpha,beta, latitude, longitude, radius, s(6)
+		character*14 filename
+		character istring
 
 		pi = 314159265358979323846d-20;  min = -2*dim - 2*step;  max = - min
 		s(1) = - 1d0;  s(6) = 1d0
 
 		do face = 1, 6
+		! channel = face
+		! write(istring(1:1), '(i1.1)') face
+		! filename = "grid/face" // istring // ".dat" 
+		! open (channel, file = filename)
 			do j= min, max
 				do i= min, max
 					alpha = pi*i/(8d0*dim);  beta= pi*j/(8d0*dim); k = sign(1, face - 3)
@@ -178,6 +184,8 @@ CONTAINS
 
 					call cart2sphere(x, y, z, radius, latitude, longitude)
 
+					! call sphere2cart(x, y, z, 1d0, latitude, longitude)
+					! write(channel,*) x,y,z
 
 						if(abs(mod(i,2)) == 1 .and. abs(mod(j,2)) == 1) then
 							cube_coord_c(1, dim + (i+1)/2, dim + (j+1)/2) = alpha
@@ -189,8 +197,10 @@ CONTAINS
 							latlon(2, dim + i/2 + 1, dim + j/2 + 1, face) = longitude
 						end if
 
-				end do
+					end do
+					! write(channel,*)
 			end do
+			! close(channel)
 		end do
 
 

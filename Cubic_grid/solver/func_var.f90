@@ -147,31 +147,31 @@ CONTAINS
 
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					this.h_height(x, y, face) = 1d0
+					this.h_height(x, y, face) = 0d0
 					this.u_cov(x, y, face) = 0d0
 					this.v_cov(x, y, face) = 0d0
 				end do
 			end do
 
-! 			do y = this.first_y, this.last_y
-! 				do x = this.first_x, this.last_x
-! 					r = geom.dist((/0d0,0d0/),metr.latlon_c(:,x,y,face))
-! 					if ( r < R_BIG ) then
-! 						this.h_height(x, y, face) = (h0*0.5)*(1d0 + dcos(geom.pi * r/R_BIG))
-! 					else
-! 						this.h_height(x, y, face) = 0
-! 					end if
-! 				end do
-! 			end do
-
-
-			if ( face == 2 ) then
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-this.h_height(x, y, face) = h0*exp(-((((10.0/dim)*((x-dim - 0.5)*0.5))**2)+(((10.0/dim)*((y-dim - 0.5)*0.5))**2)))
+					r = geom.dist((/0d0,0d0/),metr.latlon_c(:,x,y,face))
+					if ( r < R_BIG ) then
+						this.h_height(x, y, face) = (h0*0.5)*(1d0 + dcos(geom.pi * r/R_BIG))
+					else
+						this.h_height(x, y, face) = 0d0
+					end if
 				end do
 			end do
-			end if
+
+
+! 			if ( face == 2 ) then
+! 			do y = this.first_y, this.last_y
+! 				do x = this.first_x, this.last_x
+! this.h_height(x, y, face) = h0*exp(-((((10.0/dim)*((x-dim - 0.5)*0.5))**2)+(((10.0/dim)*((y-dim - 0.5)*0.5))**2)))
+! 				end do
+! 			end do
+! 			end if
 
 ! 			do y = this.first_y, this.last_y
 ! 				do x = this.first_x, this.last_x

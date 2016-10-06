@@ -233,7 +233,7 @@ CONTAINS
 			J(:,:) = this.J_to_sph(:, :, x, y, 2)
 
 			this.G_tensor(1, 1, x, y) = J(1, 1)**2 + J(2, 1)**2
-			this.G_tensor(1, 2, x, y) = J(1, 1)*J(1,2) + J(2, 1)*J(2,2)
+			this.G_tensor(1, 2, x, y) = 0d0 !J(1, 1)*J(1,2) + J(2, 1)*J(2,2)
 			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
 			this.G_tensor(2, 2, x, y) = J(1, 2)**2 + J(2, 2)**2
 
