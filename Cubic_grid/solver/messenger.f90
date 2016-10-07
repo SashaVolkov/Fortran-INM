@@ -56,10 +56,10 @@ subroutine msg(this, f, paral)
 
 	call this.Waiter(paral)
 
-! 	if (this.grid_type == 0) then
+	if (this.grid_type == 0) then
 		call this.Halo_Rotations(paral, f.lon_vel, 1, 0)
 		call this.Halo_Rotations(paral, f.lat_vel, 0, 1)
-! 	end if
+	end if
 
 
 end subroutine
@@ -86,8 +86,8 @@ subroutine Simple_msg(this, paral, f)
 			rcv_tag = (paral.id + 1)*6*4  + face*4 + i
 
 			call MPI_IRecv(f.h_height(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(1), this.rcv_req(1, i, face), this.ier)
-!  .or. this.grid_type == 1
-			if(paral.border(face, i) == 0 .or. paral.border(face, i) == 2) then ! coordinate rotation from one face to other if rotation 90 or -90 deg
+! 
+			if(paral.border(face, i) == 0 .or. paral.border(face, i) == 2  .or. this.grid_type == 1) then ! coordinate rotation from one face to other if rotation 90 or -90 deg
 				call MPI_IRecv(f.lon_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(2, i, face), this.ier) ! x -> x
 				call MPI_IRecv(f.lat_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(3, i, face), this.ier) ! y -> y
 			else

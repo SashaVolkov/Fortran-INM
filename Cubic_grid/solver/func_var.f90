@@ -122,9 +122,9 @@ CONTAINS
 				var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
 				var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
 
-! 				if(metr.grid_type == 1) then
-! 					call var_pr.Velocity_to_spherical_border(metr)
-! 				end if
+				if(metr.grid_type == 1) then
+					call var_pr.Velocity_to_spherical_border(metr)
+				end if
 
 
 	end subroutine
@@ -195,15 +195,15 @@ CONTAINS
 		Class(f_var) :: this
 		Class(interp) :: i
 		Class(metric) :: metr
-! 		if(metr.grid_type == 1) then
-! 			call i.Lagrange(this.h_height, this.interp_factor)
-! 			call i.Lagrange(this.lat_vel, this.interp_factor)
-! 			call i.Lagrange(this.lon_vel, this.interp_factor)
-! 			call this.Velocity_from_spherical_border(metr)
-! 		else if (metr.grid_type == 0) then
+		if(metr.grid_type == 1) then
+			call i.Lagrange(this.h_height, this.interp_factor)
+			call i.Lagrange(this.lat_vel, this.interp_factor)
+			call i.Lagrange(this.lon_vel, this.interp_factor)
+			call this.Velocity_from_spherical_border(metr)
+		else if (metr.grid_type == 0) then
 			this.u_cov(:, :, :)=this.lon_vel(:, :, :)
 			this.v_cov(:, :, :)=this.lat_vel(:, :, :)
-! 		end if
+		end if
 
 		call this.cov_to_con(metr)
 
@@ -303,7 +303,7 @@ this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, f
 
 		do face = 1, 6
 			do i = 1, 4
-				if(this.interp_factor(i) == 1) then
+				! if(this.interp_factor(i) == 1) then
 					do y = this.snd_xy(face, i, 2), y_fin(i)
 						do x = this.snd_xy(face, i, 1), x_fin(i)
 
@@ -315,7 +315,7 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 
 						end do
 					end do
-				end if
+				! end if
 			end do
 		end do
 
@@ -333,7 +333,7 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 
 		do face = 1, 6
 			do i = 1, 4
-				if(this.interp_factor(i) == 1) then
+				! if(this.interp_factor(i) == 1) then
 					do y = this.rcv_xy(face, i, 2), y_fin(i)
 						do x = this.rcv_xy(face, i, 1), x_fin(i)
 
@@ -345,7 +345,7 @@ this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + me
 
 						end do
 					end do
-				end if
+				! end if
 			end do
 		end do
 

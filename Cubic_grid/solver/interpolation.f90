@@ -12,7 +12,7 @@ module interpolation
 
 	Type interp
 
-		Real(8), Allocatable :: weight(:, :, :)
+		Real(8), Allocatable :: weight(:, :, :, :)
 		Integer(4), Allocatable :: x0_mass(:, :)
 		integer(4) ns_x, ns_y, nf_x, nf_y, n, dim, step, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
@@ -43,7 +43,7 @@ module interpolation
 		this.rcv_xy(:,:,:) = g.rcv_xy(:,:,:)
 
 		Allocate(this.x0_mass(1: 2*dim, 1: g.step))
-		Allocate(this.weight(1: 2*dim, 1: 2*dim, 1: g.step))
+		Allocate(this.weight(2, 1: 2*dim, 1: 2*dim, 1: g.step))
 
 		do i = 1, g.step
 			do x = 1, 2*dim
@@ -54,9 +54,9 @@ module interpolation
 
 		do i = 1, g.step
 			do x = 1, 2*dim
-				do xk = this.x0_mass(x, i) - n/2, this.x0_mass(x, i) + (n+1)/2
-					this.weight(xk, x, i) = this.weight_find(g, xk, x, i)
-				end do
+				x0 = this.x0_mass(x, i)
+				call this.weight_find(g, x0, x, i, this.weight(:, x0, x, i))
+				! print *, i, x, x0, real(this.weight(:, x0, x, i),4)
 			end do
 		end do
 
@@ -82,81 +82,66 @@ module interpolation
 		do face = 1, 6
 
 		if(interp_factor(1) == 1) then !up
+		y = 2*this.dim
 			do x = this.ns_x, this.nf_x
-				do y = this.nf_y + 1, this.nf_y + this.step
-					x0 = this.x0_mass(x, y - this.nf_y)
-					s = x0 - n/2
-					temp=0.0
+				do i = 1, this.step
 
-					do xk=s, s + n
-						temp(face) = temp(face) + (Mass(xk, y, face)*this.weight(xk, x, y - this.nf_y))
-					end do
+					x0 = this.x0_mass(x, i)
+					Mass_temp(x, y+i, face) = Mass(x0, y+i, face)*this.weight(1, x0, x, i) + Mass(x0+1, y+i, face)*this.weight(2, x0, x, i)
 
-					Mass_temp(x, y, face) = temp(face)
 				end do
 			end do
+			Mass(:, :, face) = Mass_temp(:, :, face)
+			Mass_temp(:, :, face) = Mass(:, :, face)
 		end if
 
-			Mass(:, :, :) = Mass_temp(:, :, :)
-			Mass_temp(:, :, :) = Mass(:, :, :)
 
 		if(interp_factor(2) == 1) then !right
+		x = 2*this.dim
 			do y = this.ns_y, this.nf_y
-				do x = this.nf_x + 1, this.nf_x + this.step
-					x0 = this.x0_mass(y, x - this.nf_x)
-					s = x0 - n/2
-					temp=0.0
+				do i = 1, this.step
 
-					do yk=s, s + n
-						temp(face) = temp(face) + (Mass(x, yk, face)*this.weight(yk, y, x - this.nf_x))
-					end do
+				x0 = this.x0_mass(y, i)
+				Mass_temp(x+i, y, face) = Mass(x+i, x0, face)*this.weight(1, x0, y, i) + Mass(x+i, x0+1, face)*this.weight(2, x0, y, i)
 
-					Mass_temp(x, y, face) = temp(face)
 				end do
 			end do
+			Mass(:, :, face) = Mass_temp(:, :, face)
+			Mass_temp(:, :, face) = Mass(:, :, face)
 		end if
 
-		Mass(:, :, :) = Mass_temp(:, :, :)
-		Mass_temp(:, :, :) = Mass(:, :, :)
 
 		if(interp_factor(3) == 1) then !down
+			y = 1
 			do x = this.ns_x, this.nf_x
-				do y = this.ns_y - 1, this.ns_y - this.step
-					x0 = this.x0_mass(x, this.ns_y - y)
-					s = x0 - n/2
-					temp=0.0
+				do i = 1, this.step
 
-					do xk=s, s + n
-						temp(face) = temp(face) + (Mass(xk, y, face)*this.weight(xk, x, this.ns_y - y))
-					end do
+					x0 = this.x0_mass(x, i)
+					Mass_temp(x, y-i, face) = Mass(x0, y-i, face)*this.weight(1, x0, x, i) + Mass(x0+1, y-i, face)*this.weight(2, x0, x, i)
 
-					Mass_temp(x, y, face) = temp(face)
 				end do
 			end do
+			Mass(:, :, face) = Mass_temp(:, :, face)
+			Mass_temp(:, :, face) = Mass(:, :, face)
 		end if
 
-		Mass(:, :, :) = Mass_temp(:, :, :)
-		Mass_temp(:, :, :) = Mass(:, :, :)
 
 		if(interp_factor(4) == 1) then !left
+		x = 1
 			do y = this.ns_y, this.nf_y
-				do x = this.ns_x - 1, this.ns_x - this.step
-					x0 = this.x0_mass(y, this.ns_x - x)
-					s = x0 - n/2
-					temp=0.0
+				do i = 1, this.step
 
-					do yk=s, s + n
-						temp(face) = temp(face) + (Mass(x, yk, face)*this.weight(yk, y, this.ns_x - x))
-					end do
+				x0 = this.x0_mass(y, i)
+				Mass_temp(x-i, y, face) = Mass(x-i, x0, face)*this.weight(1, x0, y, i) + Mass(x-i, x0+1, face)*this.weight(2, x0, y, i)
 
-					Mass_temp(x, y, face) = temp(face)
 				end do
 			end do
+			Mass(:, :, face) = Mass_temp(:, :, face)
+			Mass_temp(:, :, face) = Mass(:, :, face)
 		end if
 
 		end do
 
-		Mass(:, :, :) = Mass_temp(:, :, :)
 
 	End Subroutine
 
@@ -184,36 +169,18 @@ module interpolation
 
 
 
-	Real(8) function weight_find(this, g, xk, x, step)
+	Subroutine weight_find(this, g, x0, x, step, weight)
 
 		Class(interp) :: this
 		Class(g_var) :: g
 		Type(geometry) :: geom
-		Integer(4), intent(in) :: step, x, xk
-		Integer(4) :: xj, x0, gap, n, s
-		Real(8) :: temp, latlon_x(1:2), latlon_xk(1:2), latlon_xj(1:2)
+		Integer(4), intent(in) :: step, x, x0
+		Real(8), intent(out) :: weight(2)
 
-		n=this.n
+		weight(1) = geom.angle(g.latlon_c(:,2*g.dim+1-step,x0+1,5), g.latlon_c(:,1-step,x,2))/geom.angle(g.latlon_c(:,2*g.dim+1-step,x0,5), g.latlon_c(:,2*g.dim+1-step,x0+1,5))
+		weight(2) = geom.angle(g.latlon_c(:,2*g.dim+1-step,x0,5), g.latlon_c(:,1-step,x,2))/geom.angle(g.latlon_c(:,2*g.dim+1-step,x0,5), g.latlon_c(:,2*g.dim+1-step,x0+1,5))
 
-		x0 = this.x0_mass(x, step)
-		temp=1.0;  s = x0 - n/2
-
-			do xj=s, s + (n+1)/2
-				if(xj /= xk)then
-					latlon_x(1) = g.latlon_c(1, 1-step, x, 2)
-					latlon_x(2) = g.latlon_c(2, step, xk, 2)
-					latlon_xk(:) = g.latlon_c(:, step, xk, 2)
-					latlon_xj(:) = g.latlon_c(:, step, xj, 2)
-					temp = (geom.angle(latlon_x(:), latlon_xk(:)))/(geom.angle(latlon_xj(:), latlon_xk(:)))
-! 					temp = (g.cube_coord_c(2, 1-step, x) - g.cube_coord_c(2, step, xk))/(g.cube_coord_c(2, step, xk) - g.cube_coord_c(2, step, xj))
-				end if
-			end do
-
-		weight_find = temp
-		! print *, temp, x
-
-
-	end function
+	end Subroutine
 
 
 
