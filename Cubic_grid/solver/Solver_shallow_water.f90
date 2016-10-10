@@ -37,8 +37,8 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	gr_step = 2;  height = 100.0;  dt = 25.0
-
+	gr_step = 2;  height = 100.0;  dt = 30.0
+! r_sphere= 1d0
 	! rescale  0-simple, 1-tan, 2-pow(4/3)q
 	! grid_type  0 - conformal, 1 - equiangular
 
@@ -74,11 +74,9 @@ implicit none
 
 
 	do time = 1, Tmax
-		call sch.Linear(var, var_prev, grid, metr)
+		! call sch.Linear(var, var_prev, grid, metr, inter, paral, msg)
 ! 		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
-		call var_prev.equal(var, metr)
-		call msg.msg(var_prev, paral)
-		call var_prev.interpolate(inter, metr)
+		call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
 		call diagn.L_norm(var_prev, grid, time)
 		call diagn.Courant(var_prev, grid, metr, time)
 			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)

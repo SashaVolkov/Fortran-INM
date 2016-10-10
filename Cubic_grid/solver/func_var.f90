@@ -110,20 +110,24 @@ CONTAINS
 
 
 
-	subroutine equal(var_pr, var, metr)
+	subroutine equal(var_pr, var, metr, vec_only)
 
 		Class(f_var) :: var_pr, var
 		Class(metric) :: metr
 
-				var_pr.h_height(:, :, :)=var.h_height(:, :, :)
-				var_pr.u_cov(:, :, :)=var.u_cov(:, :, :)
-				var_pr.v_cov(:, :, :)=var.v_cov(:, :, :)
+		integer(4), intent(in) :: vec_only
 
-				var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
-				var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
+				if(vec_only == 0) var_pr.h_height(:, :, :)=var.h_height(:, :, :)
+				if(vec_only == 1) then
+					var_pr.u_cov(:, :, :)=var.u_cov(:, :, :)
+					var_pr.v_cov(:, :, :)=var.v_cov(:, :, :)
 
-				if(metr.grid_type == 1) then
-					call var_pr.Velocity_to_spherical_border(metr)
+					var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
+					var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
+
+					if(metr.grid_type == 1) then
+						call var_pr.Velocity_to_spherical_border(metr)
+					end if
 				end if
 
 
@@ -165,13 +169,12 @@ CONTAINS
 			end do
 
 
-! 			if ( face == 2 ) then
-! 			do y = this.first_y, this.last_y
-! 				do x = this.first_x, this.last_x
-! this.h_height(x, y, face) = h0*exp(-((((10.0/dim)*((x-dim - 0.5)*0.5))**2)+(((10.0/dim)*((y-dim - 0.5)*0.5))**2)))
-! 				end do
-! 			end do
-! 			end if
+			! do y = this.first_y, this.last_y
+			! 	do x = this.first_x, this.last_x
+			! 		r = geom.dist((/0d0,0d0/),metr.latlon_c(:,x,y,face))
+			! 		this.h_height(x, y, face) = h0*exp(-((10d0*r/geom.radius)**2))
+			! 	end do
+			! end do
 
 ! 			do y = this.first_y, this.last_y
 ! 				do x = this.first_x, this.last_x
@@ -191,21 +194,27 @@ CONTAINS
 
 
 
-	subroutine interpolate(this, i, metr)
+	subroutine interpolate(this, i, metr, vec_only)
 		Class(f_var) :: this
 		Class(interp) :: i
 		Class(metric) :: metr
+		integer(4), intent(in) :: vec_only
 		if(metr.grid_type == 1) then
-			call i.Lagrange(this.h_height, this.interp_factor)
+			if(vec_only == 0) then
+				call i.Lagrange(this.h_height, this.interp_factor)
+			else
 			call i.Lagrange(this.lat_vel, this.interp_factor)
 			call i.Lagrange(this.lon_vel, this.interp_factor)
 			call this.Velocity_from_spherical_border(metr)
+			end if
 		else if (metr.grid_type == 0) then
-			this.u_cov(:, :, :)=this.lon_vel(:, :, :)
-			this.v_cov(:, :, :)=this.lat_vel(:, :, :)
+			if(vec_only == 1) then
+				this.u_cov(:, :, :)=this.lon_vel(:, :, :)
+				this.v_cov(:, :, :)=this.lat_vel(:, :, :)
+			end if
 		end if
 
-		call this.cov_to_con(metr)
+		if(vec_only == 1) call this.cov_to_con(metr)
 
 	end subroutine
 

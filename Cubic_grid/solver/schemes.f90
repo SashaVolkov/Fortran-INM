@@ -28,6 +28,7 @@ module schemes
 		CONTAINS
 		Procedure, Public :: init => init
 		Procedure, Public :: Linear => Linear
+		Procedure, Public :: INM_sch => INM_sch
 		Procedure, Public ::  RungeKutta=> RungeKutta
 		Procedure, Private ::  FRunge=> FRunge
 		Procedure, Public :: deinit => deinit
@@ -61,12 +62,15 @@ End Subroutine
 
 
 
-subroutine Linear(this, var, var_pr, grid, metr)
+subroutine Linear(this, var, var_pr, grid, metr, inter, paral, msg)
 
 	Class(schema) :: this
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
 	Class(metric) :: metr
+	Class(parallel) :: paral
+	Class(interp) :: inter
+	Class(message) :: msg
 	Type(der) :: d
 
 	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), div, h
@@ -82,11 +86,11 @@ subroutine Linear(this, var, var_pr, grid, metr)
 
 				h = grid.delta_on_cube
 				temp1(:) = var_pr.h_height(x-order:x+order, y, face)
-				partial = d.partial_c4(temp1, h)
+				partial = d.partial_c(temp1, h, order)
 				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
 
 				temp1(:) = var_pr.h_height(x, y-order:y+order, face)
-				partial = d.partial_c4(temp1, h)
+				partial = d.partial_c(temp1, h, order)
 				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial
 
 				temp1(:) = var_pr.u_con(x-order:x+order, y, face)
@@ -97,6 +101,70 @@ subroutine Linear(this, var, var_pr, grid, metr)
 		end do
 	end do
 
+	call var_pr.equal(var, metr, 0)
+	call var_pr.equal(var, metr, 1)
+
+end subroutine
+
+
+
+subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
+
+	Class(schema) :: this
+	Class(f_var) :: var, var_pr
+	Class(g_var) :: grid
+	Class(metric) :: metr
+	Class(parallel) :: paral
+	Class(interp) :: inter
+	Class(message) :: msg
+	Type(der) :: d
+
+	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), div, h
+	integer(4) face, x, y, dim, order
+
+	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
+	dt = grid.dt;  order = 2
+
+
+	do face = 1, 6
+		do y = var.ns_y, var.nf_y
+			do x = var.ns_x, var.nf_x
+
+				h = grid.delta_on_cube
+				temp1(:) = var_pr.h_height(x-order:x+order, y, face)
+				partial = d.partial_c(temp1, h, order)
+				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
+
+				temp1(:) = var_pr.h_height(x, y-order:y+order, face)
+				partial = d.partial_c(temp1, h, order)
+				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial
+
+			end do
+		end do
+	end do
+
+	this.ku_con(:,:,:,0) = var_pr.u_con(:,:,:)
+	this.kv_con(:,:,:,0) = var_pr.v_con(:,:,:)
+
+	call var_pr.equal(var, metr, 1)
+	call msg.msg(var_pr, paral, 1)
+	call var_pr.interpolate(inter, metr, 1)
+
+
+	do face = 1, 6
+		do y = var.ns_y, var.nf_y
+			do x = var.ns_x, var.nf_x
+				temp1(:) = (var_pr.u_con(x-order:x+order, y, face) + this.ku_con(x-order:x+order, y, face, 0))/2d0
+				temp2(:) = (var_pr.v_con(x, y-order:y+order, face) + this.kv_con(x, y-order:y+order, face, 0))/2d0
+				div = d.div(metr, temp1, temp2, h, x, y, order)
+				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*div
+			end do
+		end do
+	end do
+
+	call var_pr.equal(var, metr, 0)
+	call msg.msg(var_pr, paral, 0)
+	call var_pr.interpolate(inter, metr, 0)
 
 end subroutine
 
@@ -133,9 +201,12 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr, inter, paral, msg)
 			var_pr.u_cov(:, :, :) = this.ku_cov(:, :, :, iteration)
 			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
-			call var_pr.equal(var_pr, metr)
-			call msg.msg(var_pr, paral)
-			call var_pr.interpolate(inter, metr)
+			call var_pr.equal(var_pr, metr, 0)
+			call var_pr.equal(var_pr, metr, 1)
+			call msg.msg(var_pr, paral, 0)
+			call msg.msg(var_pr, paral, 1)
+			call var_pr.interpolate(inter, metr, 0)
+			call var_pr.interpolate(inter, metr, 1)
 			this.ku_cov(:, :, :, iteration) = var_pr.u_cov(:, :, :)
 			this.kv_cov(:, :, :, iteration) = var_pr.v_cov(:, :, :)
 			this.ku_con(:, :, :, iteration) = var_pr.u_con(:, :, :)
@@ -154,6 +225,13 @@ var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2.
 		end do
 	end do
 
+	call var_pr.equal(var, metr, 0)
+	call var_pr.equal(var, metr, 1)
+	call msg.msg(var_pr, paral, 0)
+	call msg.msg(var_pr, paral, 1)
+	call var_pr.interpolate(inter, metr, 0)
+	call var_pr.interpolate(inter, metr, 1)
+
 End Subroutine
 
 
@@ -167,28 +245,29 @@ Subroutine FRunge(this, grid, metr, var, i)
 
 	integer(4), intent(in) :: i
 	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), coef(0:3), div, h
-	integer(4) x,y, face
+	integer(4) x,y, face, order
 
 	coef(0) = 0d0;  coef(1) = 0d5;  coef(2) = 0d5;  coef(3) = 1d0;
 
 	dt = grid.dt;  g = grid.g; height = var.height
 	h = grid.delta_on_cube
+	order = 2
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
 			do x = var.ns_x, var.nf_x
 
-				temp1(:) = this.kh(x-2:x+2, y, face, 0) + coef(i-1)*this.kh(x-2:x+2, y, face, i-1)
-				partial = d.partial_c4(temp1, h)
+				temp1(:) = this.kh(x-order:x+order, y, face, 0) + coef(i-1)*this.kh(x-order:x+order, y, face, i-1)
+				partial = d.partial_c(temp1, h, order)
 				this.ku_cov(x, y, face, i) = - dt*g*partial
 
-				temp2(:) = this.kh(x, y-2:y+2, face, 0) + coef(i-1)*this.kh(x, y-2:y+2, face, i-1)
-				partial = d.partial_c4(temp2, h)
+				temp2(:) = this.kh(x, y-order:y+order, face, 0) + coef(i-1)*this.kh(x, y-order:y+order, face, i-1)
+				partial = d.partial_c(temp2, h, order)
 				this.kv_cov(x, y, face, i) =  - dt*g*partial
 
-				temp1(:) = this.ku_con(x-2:x+2, y, face, 0) + coef(i-1)*this.ku_con(x-2:x+2, y, face, i-1)
-				temp2(:) = this.kv_con(x, y-2:y+2, face, 0) + coef(i-1)*this.kv_con(x, y-2:y+2, face, i-1)
-				div = d.div(metr, temp1(:), temp2(:), h, x, y, 2)
+				temp1(:) = this.ku_con(x-order:x+order, y, face, 0) + coef(i-1)*this.ku_con(x-order:x+order, y, face, i-1)
+				temp2(:) = this.kv_con(x, y-order:y+order, face, 0) + coef(i-1)*this.kv_con(x, y-order:y+order, face, i-1)
+				div = d.div(metr, temp1(:), temp2(:), h, x, y, order)
 				this.kh(x, y, face, i) = - dt*height*div
 
 			end do

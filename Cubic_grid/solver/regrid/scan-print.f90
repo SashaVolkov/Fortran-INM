@@ -71,18 +71,18 @@ module scan_print
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 
-		status = nf90_create(path = path3, cmode = NF90_CLOBBER, ncid = ncid_to)
-		status = nf90_def_dim (ncid_to, "lon", 2*this.lon_max+1, lonid)
-		status = nf90_def_dim (ncid_to, "lat", 2*this.lat_max+1, latid)
-		status = nf90_def_dim (ncid_to, "time", all_time, time)
-		status = nf90_def_var (ncid_to, "water", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
-		status = nf90_enddef (ncid_to)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-		! open(11,file=path3,access="direct",recl=(2*this.lat_max+1)*(2*this.lon_max+1))
+		! status = nf90_create(path = path3, cmode = NF90_CLOBBER, ncid = ncid_to)
+		! status = nf90_def_dim (ncid_to, "lon", 2*this.lon_max+1, lonid)
+		! status = nf90_def_dim (ncid_to, "lat", 2*this.lat_max+1, latid)
+		! status = nf90_def_dim (ncid_to, "time", all_time, time)
+		! status = nf90_def_var (ncid_to, "water", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
+		! status = nf90_enddef (ncid_to)
+		! if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		open(11,file=path3,access="direct",recl=(2*this.lat_max+1)*(2*this.lon_max+1))
 
 
 		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1);
-		this.ncid_to = ncid_to;  this.Wid_to = Wid_to
+		! this.ncid_to = ncid_to;  this.Wid_to = Wid_to
 
 	end subroutine
 
@@ -127,11 +127,11 @@ module scan_print
 
 		ncid_to = this.ncid_to;  Wid_to = this.Wid_to
 
-		status = nf90_put_var(ncid_to, Wid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max),&
-		 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		! status = nf90_put_var(ncid_to, Wid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max),&
+		!  start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
+		! if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		! write(11, rec=time) real(surface_to(:,:),4)
+		write(11, rec=time) real(surface_to(:,:),4)
 	end subroutine
 
 
@@ -143,8 +143,8 @@ module scan_print
 
 		status = nf90_close(ncid)
 		status = nf90_close(ncid_gr)
-		status = nf90_close(ncid_to)
-		! close(11)
+		! status = nf90_close(ncid_to)
+		close(11)
 	end subroutine
 
 

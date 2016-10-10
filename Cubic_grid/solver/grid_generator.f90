@@ -52,10 +52,10 @@ CONTAINS
 
 		do face_index= 1, 6
 
-		! channel = face_index
-		! write(istring(1:1), '(i1.1)') face_index
-		! filename = "grid/face" // istring // ".dat" 
-		! open (channel, file = filename)
+		channel = face_index
+		write(istring(1:1), '(i1.1)') face_index
+		filename = "grid/face" // istring // ".dat" 
+		open (channel, file = filename)
 
 			do j= x_min, x_max
 				do k= y_min, y_max
@@ -76,7 +76,7 @@ CONTAINS
 
 						r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 						! grid_points_xyz(:, j, k, face_index) = r_vector
-						! write(channel,*) r_vector(1),r_vector(2),r_vector(3)
+						write(channel,*) r_vector(1),r_vector(2),r_vector(3)
 
 						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, latitude, longitude)
 
@@ -91,9 +91,9 @@ CONTAINS
 						end if
 
 					end do
-					! write(channel,*)
+					write(channel,*)
 			end do
-			! close(channel)
+			close(channel)
 		end do
 
 

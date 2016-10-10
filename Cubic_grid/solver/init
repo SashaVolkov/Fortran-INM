@@ -1,4 +1,4 @@
-40, 100000, 1000, 0, 0
+40, 5000, 500, 0, 1
 
 
 dim, Tmax, speedup, rescale, grid_type

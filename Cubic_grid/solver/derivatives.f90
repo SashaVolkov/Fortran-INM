@@ -10,6 +10,7 @@ implicit none
 	Type der
 
 		CONTAINS
+		Procedure, Public :: partial_c => partial_c
 		Procedure, Public :: partial_c2 => partial_c2
 		Procedure, Public :: partial_c4 => partial_c4
 		Procedure, Public :: partial_c_fg => partial_c_fg
@@ -41,16 +42,27 @@ CONTAINS
 
 
 
+	real(8) function partial_c(this, fun, h, order)
+		Class(der) :: this
+		integer(4), intent(in) :: order
+		real(8), intent(in) :: fun(-order:order), h
+
+		if (order == 1) then
+			partial_c = this.partial_c2(fun, h)
+		else if (order == 2) then
+			partial_c = this.partial_c4(fun, h)
+		end if
+
+	end function
+
+
+
 	real(8) function partial_c_fg(this, f_fun, g_fun, h, order)
 		Class(der) :: this
 		integer(4), intent(in) :: order
 		real(8), intent(in) :: f_fun(-order:order), g_fun(-order:order), h
 
-		if (order == 1) then
-			partial_c_fg = g_fun(0)*this.partial_c2(f_fun, h) + f_fun(0)*this.partial_c2(g_fun, h)
-		else if (order == 2) then
-			partial_c_fg = g_fun(0)*this.partial_c4(f_fun, h) + f_fun(0)*this.partial_c4(g_fun, h)
-		end if
+			partial_c_fg = g_fun(0)*this.partial_c(f_fun, h, order) + f_fun(0)*this.partial_c(g_fun, h, order)
 
 	end function
 
