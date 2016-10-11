@@ -44,9 +44,10 @@ CONTAINS
 
 
 
-	subroutine init(this, paral, height)
+	subroutine init(this, paral, metr, height)
 
 		Class(f_var) :: this
+		Class(metric) :: metr
 		Class(parallel) :: paral
 		real(8), intent(in) :: height
 		integer(4) :: i
@@ -68,7 +69,11 @@ CONTAINS
 		this.interp_factor(:) = 0
 
 		do i = 1, 4
-			if(paral.Neighbours_face(2, i) /= 2) this.interp_factor(i) = 1
+			if(metr.grid_type == 1) then
+				if(paral.Neighbours_face(2, i) /= 2) this.interp_factor(i) = 1
+			else
+				this.interp_factor(i) = 0
+			end if
 		end do
 
 		call this.alloc()

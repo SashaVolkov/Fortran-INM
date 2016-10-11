@@ -34,6 +34,7 @@ implicit none
 		Procedure, Private :: transf_matrix_conf => transf_matrix_conf
 		Procedure, Private :: metric_tensor_conf => metric_tensor_conf
 
+		Procedure, Private :: hem_of_face => hem_of_face
 		Procedure, Private :: partial_c4 => partial_c4
 
 
@@ -228,19 +229,22 @@ CONTAINS
 		dim = this.dim
 		call this.transf_matrix_conf()
 
-		do y = 1, 2*dim
-			do x = 1, 2*dim
+		do y = 1-this.step, 2*dim+this.step
+			do x = 1-this.step, 2*dim+this.step
 			J(:,:) = this.J_to_sph(:, :, x, y, 2)
+			cos_theta = dcos(this.latlon_c(1, x, y, 2))
 
-			this.G_tensor(1, 1, x, y) = J(1, 1)**2 + J(2, 1)**2
-			this.G_tensor(1, 2, x, y) = J(1, 1)*J(1,2) + J(2, 1)*J(2,2)
+			this.G_tensor(1, 1, x, y) = (J(1, 1)**2)*(cos_theta**2) + J(2, 1)**2
+			this.G_tensor(1, 2, x, y) = (J(1, 1)*J(1,2))*(cos_theta**2) + J(2, 1)*J(2,2)
 			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
-			this.G_tensor(2, 2, x, y) = J(1, 2)**2 + J(2, 2)**2
+			this.G_tensor(2, 2, x, y) = (J(1, 2)**2)*(cos_theta**2) + J(2, 2)**2
 
 			this.G_inverse(1, 1, x, y) = 1.0/this.G_tensor(1, 1, x, y)
 			this.G_inverse(1, 2, x, y) = - this.G_tensor(1, 2, x, y)
 			this.G_inverse(2, 1, x, y) = - this.G_tensor(2, 1, x, y)
 			this.G_inverse(2, 2, x, y) = 1.0/this.G_tensor(2, 2, x, y)
+
+			! print *, real(this.G_tensor(:,:,x,y),4), x, y
 			end do
 		end do
 
@@ -271,43 +275,105 @@ CONTAINS
 
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta, temp(-2:2), cos_theta
-		integer(4) x, y, dim, i, k
+		real(8) x_1, x_2, g_coef, delta, temp(-2:2)
+		integer(4) x, y, dim, i, k, face
 
 		dim = this.dim
 		delta = (this.cube_coord_c(1, dim, dim) - this.cube_coord_c(1, dim-1, dim))
 
-		do i = 1, this.step
-			do k = 1, 2*dim
-				this.latlon_c(:, k, 2*dim + i, 2) = this.latlon_c(:,k, i, 6)
-				this.latlon_c(:, 2*dim + i, k, 2) = this.latlon_c(:, i, k, 3)
-				this.latlon_c(:, k, 1 - i, 2) = this.latlon_c(:,k, 2*dim - i + 1, 1)
-				this.latlon_c(:, 1 - i, k, 2) = this.latlon_c(:,2*dim - i + 1, k, 5)
+		call this.hem_of_face(this.latlon_c(1, :, :, 1:6))
+		call this.hem_of_face(this.latlon_c(2, :, :, 1:6))
+
+		do face = 1, 6
+			do y = 1, 2*dim
+				do x = 1, 2*dim
+
+					temp = this.latlon_c(2, x-2:x+2, y, face)
+					this.J_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
+					this.J_to_cube(1,1,x,y,face) = 2d0*delta/(temp(1) - temp(-1))
+
+					temp = this.latlon_c(2, x, y-2:y+2, face)
+					this.J_to_sph(1,2,x,y,face) = this.partial_c4(temp, delta)
+					this.J_to_cube(2,1,x,y,face) = 2d0*delta/(temp(1) - temp(-1))
+
+					temp = this.latlon_c(1, x-2:x+2, y, face)
+					this.J_to_sph(2,1,x,y,face) = this.partial_c4(temp, delta)
+					this.J_to_cube(1,2,x,y,face) = 2d0*delta/(temp(1) - temp(-1))
+
+					temp = this.latlon_c(1, x, y-2:y+2, face)
+					this.J_to_sph(2,2,x,y,face) = this.partial_c4(temp, delta)
+					this.J_to_cube(2,2,x,y,face) = 2d0*delta/(temp(1) - temp(-1))
+
+				end do
 			end do
 		end do
 
-		do y = 1, 2*dim
-			do x = 1, 2*dim
-				cos_theta = dcos(this.latlon_c(1, x, y, 2))
 
-				temp = this.latlon_c(2, x-2:x+2, y, 2)
-				this.J_to_sph(1,1,x,y,2) = cos_theta*this.partial_c4(temp, delta)
-				temp = this.latlon_c(2, x, y-2:y+2, 2)
-				this.J_to_sph(1,2,x,y,2) = cos_theta*this.partial_c4(temp, delta)
-				temp = this.latlon_c(1, x-2:x+2, y, 2)
-				this.J_to_sph(2,1,x,y,2) = this.partial_c4(temp, delta)
-				temp = this.latlon_c(1, x, y-2:y+2, 2)
-				this.J_to_sph(2,2,x,y,2) = this.partial_c4(temp, delta)
+		call this.hem_of_face(this.J_to_sph(1, 1, :, :, 1:6))
+		call this.hem_of_face(this.J_to_sph(1, 2, :, :, 1:6))
+		call this.hem_of_face(this.J_to_sph(2, 1, :, :, 1:6))
+		call this.hem_of_face(this.J_to_sph(2, 2, :, :, 1:6))
+
+		call this.hem_of_face(this.J_to_cube(1, 1, :, :, 1:6))
+		call this.hem_of_face(this.J_to_cube(1, 2, :, :, 1:6))
+		call this.hem_of_face(this.J_to_cube(2, 1, :, :, 1:6))
+		call this.hem_of_face(this.J_to_cube(2, 2, :, :, 1:6))
+
+		! this.J_to_sph(:, :, :, :, 3) = this.J_to_sph(:, :, :, :, 2);  this.J_to_sph(:, :, :, :, 4) = this.J_to_sph(:, :, :, :, 2); this.J_to_sph(:, :, :, :, 5) = this.J_to_sph(:, :, :, :, 2)
+
+
+	end subroutine
+
+
+
+	subroutine hem_of_face(this, cubic)
+		Class(metric) :: this
+		Real(8), intent(inout) :: cubic(1 - this.step:2*this.dim + this.step, 1 - this.step:2*this.dim + this.step, 1:6)
+		integer(4) dim, f, l, x, y, face, i, j, k, step
+
+		dim = this.dim;  step = this.step
+		f = 1-step; l = 2*dim + step
+
+		do i = 1, step
+			do j = 1 - step, 2*dim + step
+
+				cubic(j,2*dim+i,2) = cubic(j,i,6);      cubic(j,1-i,6) = cubic(j,2*dim+1-i,2)
+				cubic(2*dim+i,j,2) = cubic(i,j,3);      cubic(1-i,j,3) = cubic(2*dim+1-i,j,2)
+				cubic(j,1-i,2) = cubic(j,2*dim+1-i,1);  cubic(j,2*dim+i,1) = cubic(j,i,2)
+				cubic(1-i,j,2) = cubic(2*dim+1-i,j,5);  cubic(2*dim+i,j,5) = cubic(i,j,2)
 
 			end do
 		end do
 
-		do i = 1, this.step
-			do k = 1, 2*dim
-				this.J_to_sph(:, :, k, 2*dim + i, 2) = this.J_to_sph(:, :, k, i, 2)
-				this.J_to_sph(:, :, 2*dim + i, k, 2) = this.J_to_sph(:, :, i, k, 2)
-				this.J_to_sph(:, :, k, 1 - i, 2) = this.J_to_sph(:, :, k, 2*dim - i + 1, 2)
-				this.J_to_sph(:, :, 1 - i, k, 2) = this.J_to_sph(:, :, 2*dim - i + 1, k, 2)
+		do i = 1, step
+			do j = 1 - step, 2*dim + step
+			k = 2*dim + 1 -j
+
+				cubic(j,2*dim+i,4) = cubic(k,2*dim+1-i,6);     cubic(k,2*dim+i,6) = cubic(j,2*dim+1-i,4)
+				cubic(2*dim+i,j,4) = cubic(i,j,5);             cubic(1-i,j,5) = cubic(2*dim+1-i,j,4)
+				cubic(j,1-i,4) = cubic(k,i,1);                 cubic(k,1-i,1) = cubic(j,i,4)
+				cubic(1-i,j,4) = cubic(2*dim+1-i,j,3);         cubic(2*dim+i,j,3) = cubic(i,j,4)
+
+			end do
+		end do
+
+		do i = 1, step
+			do j = 1 - step, 2*dim + step
+			k = 2*dim + 1 -j
+
+				cubic(j,2*dim+i,3) = cubic(2*dim+1-i,j,6);     cubic(2*dim+i,j,6) = cubic(j,2*dim+1-i,3)
+				cubic(j,1-i,3) = cubic(2*dim+1-i,k,1);         cubic(2*dim+i,k,1) = cubic(j,i,3)
+
+			end do
+		end do
+
+		do i = 1, step
+			do j = 1 - step, 2*dim + step
+			k = 2*dim + 1 -j
+
+				cubic(j,2*dim+i,5) = cubic(i,k,6);     cubic(1-i,k,6) = cubic(j,2*dim+1-i,5)
+				cubic(j,1-i,5) = cubic(i,j,1);         cubic(1-i,k,1) = cubic(j,i,5)
+
 			end do
 		end do
 

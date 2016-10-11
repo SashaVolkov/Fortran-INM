@@ -210,26 +210,52 @@ CONTAINS
 	subroutine hem_of_face(this, cubic)
 		Class(interp) :: this
 		Real(8), intent(inout) :: cubic(0:2*this.dim+1, 0:2*this.dim+1, 1:6)
-		integer(4) dim, f, l, x, y, face, i
+		integer(4) dim, f, l, x, y, face, i, j, k, step
 
-		dim = this.dim;
+		dim = this.dim;  step = 1
 
-		cubic(2*dim+1,:,2) = cubic(1,:,3);  cubic(0,:,3) = cubic(2*dim,:,2)
-		cubic(2*dim+1,:,3) = cubic(1,:,4);  cubic(0,:,4) = cubic(2*dim,:,3)
-		cubic(2*dim+1,:,4) = cubic(1,:,5);  cubic(0,:,5) = cubic(2*dim,:,4)
-		cubic(2*dim+1,:,5) = cubic(1,:,2);  cubic(0,:,2) = cubic(2*dim,:,5)
+		do i = 1, step
+			do j = 1 - step, 2*dim + step
 
-		cubic(:,2*dim+1,2) = cubic(:,1,6);  cubic(:,0,6) = cubic(:,2*dim,2)
-		cubic(:,2*dim+1,3) = cubic(2*dim,:,6);  cubic(2*dim+1,:,6) = cubic(:,2*dim,3)
-		cubic(:,2*dim+1,4) = cubic(2*dim:1,2*dim,6);  cubic(2*dim:1,2*dim+1,6) = cubic(:,2*dim,4)
-		do i = 1, 2*dim
-			cubic(i,2*dim+1,5) = cubic(1,2*dim + 1 - i,6);  cubic(0,2*dim + 1 - i,6) = cubic(i,2*dim,5)
+				cubic(j,2*dim+i,2) = cubic(j,i,6);      cubic(j,1-i,6) = cubic(j,2*dim+1-i,2)
+				cubic(2*dim+i,j,2) = cubic(i,j,3);      cubic(1-i,j,3) = cubic(2*dim+1-i,j,2)
+				cubic(j,1-i,2) = cubic(j,2*dim+1-i,1);  cubic(j,2*dim+i,1) = cubic(j,i,2)
+				cubic(1-i,j,2) = cubic(2*dim+1-i,j,5);  cubic(2*dim+i,j,5) = cubic(i,j,2)
+
+			end do
 		end do
 
-		cubic(:,0,2) = cubic(:,2*dim,1);  cubic(:,2*dim+1,1) = cubic(:,1,2)
-		cubic(:,0,3) = cubic(2*dim,2*dim:1,1);  cubic(2*dim+1,2*dim:1,1) = cubic(:,1,3)
-		cubic(:,0,4) = cubic(2*dim:1,1,1);  cubic(2*dim:1,0,1) = cubic(:,1,4)
-		cubic(:,0,5) = cubic(1,:,1);  cubic(0,:,1) = cubic(:,1,5)
+		do i = 1, step
+			do j = 1 - step, 2*dim + step
+			k = 2*dim + 1 -j
+
+				cubic(j,2*dim+i,4) = cubic(k,2*dim+1-i,6);     cubic(k,2*dim+i,6) = cubic(j,2*dim+1-i,4)
+				cubic(2*dim+i,j,4) = cubic(i,j,5);             cubic(1-i,j,5) = cubic(2*dim+1-i,j,4)
+				cubic(j,1-i,4) = cubic(k,i,1);                 cubic(k,1-i,1) = cubic(j,i,4)
+				cubic(1-i,j,4) = cubic(2*dim+1-i,j,3);         cubic(2*dim+i,j,3) = cubic(i,j,4)
+
+			end do
+		end do
+
+		do i = 1, step
+			do j = 1 - step, 2*dim + step
+			k = 2*dim + 1 -j
+
+				cubic(j,2*dim+i,3) = cubic(2*dim+1-i,j,6);     cubic(2*dim+i,j,6) = cubic(j,2*dim+1-i,3)
+				cubic(j,1-i,3) = cubic(2*dim+1-i,k,1);         cubic(2*dim+i,k,1) = cubic(j,i,3)
+
+			end do
+		end do
+
+		do i = 1, step
+			do j = 1 - step, 2*dim + step
+			k = 2*dim + 1 -j
+
+				cubic(j,2*dim+i,5) = cubic(i,k,6);     cubic(1-i,k,6) = cubic(j,2*dim+1-i,5)
+				cubic(j,1-i,5) = cubic(i,j,1);         cubic(1-i,k,1) = cubic(j,i,5)
+
+			end do
+		end do
 
 	end subroutine
 
