@@ -127,11 +127,11 @@ CONTAINS
 					var_pr.u_cov(:, :, :)=var.u_cov(:, :, :)
 					var_pr.v_cov(:, :, :)=var.v_cov(:, :, :)
 
-					var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
-					var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
-
 					if(metr.grid_type == 1) then
 						call var_pr.Velocity_to_spherical_border(metr)
+					else
+						var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
+						var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
 					end if
 				end if
 
@@ -206,11 +206,11 @@ CONTAINS
 		integer(4), intent(in) :: vec_only
 		if(metr.grid_type == 1) then
 			if(vec_only == 0) then
-				call i.Lagrange(this.h_height, this.interp_factor)
+				! call i.Lagrange(this.h_height, this.interp_factor)
 			else
-			call i.Lagrange(this.lat_vel, this.interp_factor)
-			call i.Lagrange(this.lon_vel, this.interp_factor)
-			call this.Velocity_from_spherical_border(metr)
+				! call i.Lagrange(this.lat_vel, this.interp_factor)
+				! call i.Lagrange(this.lon_vel, this.interp_factor)
+				call this.Velocity_from_spherical_border(metr)
 			end if
 		else if (metr.grid_type == 0) then
 			if(vec_only == 1) then
@@ -312,14 +312,14 @@ this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, f
 		Real(8) :: vel_x_contr, vel_y_contr
 		Integer(4) :: x, y, face, i, x_fin(4), y_fin(4)
 
-		x_fin(:) = this.nf_x;  x_fin(4) = this.snd_xy(2, 4, 1) + this.step
-		y_fin(:) = this.nf_y;  y_fin(3) = this.snd_xy(2, 3, 2) + this.step
+		x_fin(:) = this.nf_x;  x_fin(4) = this.snd_xy(2, 4, 1) + this.step - 1
+		y_fin(:) = this.nf_y;  y_fin(3) = this.snd_xy(2, 3, 2) + this.step - 1
 
 		do face = 1, 6
 			do i = 1, 4
 				! if(this.interp_factor(i) == 1) then
-					do y = this.snd_xy(face, i, 2), y_fin(i)
-						do x = this.snd_xy(face, i, 1), x_fin(i)
+					do y = this.snd_xy(2, i, 2), y_fin(i)
+						do x = this.snd_xy(2, i, 1), x_fin(i)
 
 this.u_con(x, y, face) = metr.G_inverse(1, 1, x, y) * this.u_cov(x, y, face) + metr.G_inverse(1, 2, x, y) * this.v_cov(x, y, face)
 this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + metr.G_inverse(2, 1, x, y) * this.u_cov(x, y, face)
@@ -342,14 +342,14 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 		Class(metric) :: metr
 		Integer(4) :: x, y, face, i, x_fin(4), y_fin(4)
 
-		x_fin(:) = this.nf_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step;  x_fin(2) = this.last_x
-		y_fin(:) = this.nf_y;  y_fin(3) = this.rcv_xy(2, 3, 2) + this.step;  y_fin(1) = this.last_y
+		x_fin(:) = this.nf_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step - 1;  x_fin(2) = this.last_x
+		y_fin(:) = this.nf_y;  y_fin(3) = this.rcv_xy(2, 3, 2) + this.step - 1;  y_fin(1) = this.last_y
 
 		do face = 1, 6
 			do i = 1, 4
 				! if(this.interp_factor(i) == 1) then
-					do y = this.rcv_xy(face, i, 2), y_fin(i)
-						do x = this.rcv_xy(face, i, 1), x_fin(i)
+					do y = this.rcv_xy(2, i, 2), y_fin(i)
+						do x = this.rcv_xy(2, i, 1), x_fin(i)
 
 this.u_con(x, y, face) = metr.J_to_cube(1, 1, x, y, face) * this.lon_vel(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.lat_vel(x, y, face)
 this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.lon_vel(x, y, face)

@@ -187,6 +187,11 @@ CONTAINS
 					! call sphere2cart(x, y, z, 1d0, latitude, longitude)
 					! write(channel,*) x,y,z
 
+					! if(face == 6) then
+					! 	longitude = -datan(dtan(alpha)/atan(beta))
+					! 	latitude = pi/2d0 - datan(dsqrt(dtan(alpha)**2 + dtan(beta)**2))
+					! end if
+
 						if(abs(mod(i,2)) == 1 .and. abs(mod(j,2)) == 1) then
 							cube_coord_c(1, dim + (i+1)/2, dim + (j+1)/2) = alpha
 							cube_coord_c(2, dim + (i+1)/2, dim + (j+1)/2) = beta

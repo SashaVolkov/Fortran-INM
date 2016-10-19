@@ -239,10 +239,10 @@ CONTAINS
 			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
 			this.G_tensor(2, 2, x, y) = (J(1, 2)**2)*(cos_theta**2) + J(2, 2)**2
 
-			this.G_inverse(1, 1, x, y) = 1.0/this.G_tensor(1, 1, x, y)
+			this.G_inverse(1, 1, x, y) = 1d0/this.G_tensor(1, 1, x, y)
 			this.G_inverse(1, 2, x, y) = - this.G_tensor(1, 2, x, y)
 			this.G_inverse(2, 1, x, y) = - this.G_tensor(2, 1, x, y)
-			this.G_inverse(2, 2, x, y) = 1.0/this.G_tensor(2, 2, x, y)
+			this.G_inverse(2, 2, x, y) = 1d0/this.G_tensor(2, 2, x, y)
 
 			! print *, real(this.G_tensor(:,:,x,y),4), x, y
 			end do

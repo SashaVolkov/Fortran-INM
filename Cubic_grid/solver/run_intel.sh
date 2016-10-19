@@ -27,12 +27,13 @@ else
 	if [[ $1 != "compile" ]]; then
 		export OMP_NUM_THREADS=1
 		mpiexec -n $1 ./a.out
-		cd datFiles
-		./plotscript.sh
 
 		echo "Regridding"
-		cd ../regrid
-		./run_intel_reg.sh
+		cd regrid
+		# ./run_intel_reg.sh
+
+		cd ../datFiles
+		./plotscript.sh
 	fi
 
 fi

@@ -2,7 +2,7 @@
 
 rm -rf *.o *.mod *.out *.file analyze *~ 2>/dev/null
 
-Files="sphere_geometry.f90 scan-print.f90 grid_interp.f90"
+Files="sphere_geometry.f90 diagn.f90 scan-print.f90 grid_interp.f90"
 Files=$Files" Regridder.f90"
 
 

@@ -50,7 +50,7 @@ implicit none
 !subroutines calls
 
 	open(9,file='init')
-		read(9, *) dim, Tmax, speedup, rescale, grid_type
+		read(9, *) dim, Tmax, dt, speedup, rescale, grid_type
 	close(9)
 
 	start_init = MPI_Wtime()

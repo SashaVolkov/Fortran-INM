@@ -71,9 +71,9 @@ CONTAINS
 ! 			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
 
 			open(9,file='datFiles/'//trim(istring)//'CFL.dat')
-			open(11,file='datFiles/'//trim(istring)//'L1.dat')
-			open(12,file='datFiles/'//trim(istring)//'L2.dat')
-			open(13,file='datFiles/'//trim(istring)//'L_inf.dat')
+			! open(11,file='datFiles/'//trim(istring)//'L1.dat')
+			! open(12,file='datFiles/'//trim(istring)//'L2.dat')
+			! open(13,file='datFiles/'//trim(istring)//'L_inf.dat')
 
 		end if
 
@@ -101,9 +101,9 @@ CONTAINS
 
 		if(id == 0) then
 			close(9)
-			close(11)
-			close(12)
-			close(13)
+			! close(11)
+			! close(12)
+			! close(13)
 		end if
 
 	end subroutine

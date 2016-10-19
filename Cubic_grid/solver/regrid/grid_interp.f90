@@ -145,16 +145,6 @@ CONTAINS
 			do lat = -this.lat_max, this.lat_max
 			latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0; min = 10000.0
 
-			if(abs(lon) < 45) then
-				face(1:3) = (/1,2,6/)
-			else if(abs(lon) > 135) then
-				face(1:3) = (/1,4,6/)
-			else if(lon < -45 .and. lon > -135)then
-				face(1:3) = (/1,5,6/)
-			else if(lon > 45 .and. lon < 135)then
-				face(1:3) = (/1,3,6/)
-			end if
-
 					do x = 1, 2*dim
 						do y = 1, 2*dim
 							if(lat < -50)then
@@ -168,10 +158,21 @@ CONTAINS
 									min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,6/)
 								end if
 							else
+
+					if(abs(lon) <= 45) then
+						face(1:3) = (/1,2,6/)
+					else if(abs(lon) >= 135) then
+						face(1:3) = (/1,4,6/)
+					else if(lon < -45 .and. lon > -135)then
+						face(1:3) = (/1,5,6/)
+					else if(lon > 45 .and. lon < 135)then
+						face(1:3) = (/1,3,6/)
+					end if
+
 								do i = 1, 3
-									if( (this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0d5 .and. (this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0d5 ) then
+									if( (this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0.7 .and. (this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0.7 ) then
 										angle = g.angle(this.latlon_c_off(1:2, x, y, face(i)), latlon)
-										if(angle < min) then
+										if(angle < min .and. angle >= 0d0) then
 											min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,face(i)/)
 										end if
 									end if
