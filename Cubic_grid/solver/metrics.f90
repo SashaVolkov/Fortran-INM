@@ -152,8 +152,8 @@ CONTAINS
 
 	subroutine transf_matrix_equiang(this)   ! Ullrich phd thesis Appendix G.4
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, s(6), cos_theta
-		integer(4) x, y, face, delta
+		real(8) x_1, x_2, g_coef, s(6), cos_theta, delta
+		integer(4) x, y, face
 		s(1) = - 1d0;  s(6) = 1d0
 
 

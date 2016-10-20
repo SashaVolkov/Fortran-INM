@@ -30,7 +30,7 @@ else
 
 		echo "Regridding"
 		cd regrid
-		# ./run_intel_reg.sh
+		./run_intel_reg.sh
 
 		cd ../datFiles
 		./plotscript.sh

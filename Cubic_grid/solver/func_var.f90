@@ -206,10 +206,10 @@ CONTAINS
 		integer(4), intent(in) :: vec_only
 		if(metr.grid_type == 1) then
 			if(vec_only == 0) then
-				! call i.Lagrange(this.h_height, this.interp_factor)
+				call i.Lagrange(this.h_height, this.interp_factor)
 			else
-				! call i.Lagrange(this.lat_vel, this.interp_factor)
-				! call i.Lagrange(this.lon_vel, this.interp_factor)
+				call i.Lagrange(this.lat_vel, this.interp_factor)
+				call i.Lagrange(this.lon_vel, this.interp_factor)
 				call this.Velocity_from_spherical_border(metr)
 			end if
 		else if (metr.grid_type == 0) then
