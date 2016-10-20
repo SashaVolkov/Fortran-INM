@@ -71,7 +71,7 @@ module interpolation
 		Real(8), Intent(inout) :: Mass(this.first_x:this.last_x, this.first_y:this.last_y, 6)
 		Integer(4), Intent(in) :: interp_factor(1:4)
 		Real(8) :: temp(1:6), Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6)
-		Integer(4) xj, xk, k, j, n, x0, set_x, x, s, y, yk, i, face, x_fin(4), y_fin(4)
+		Integer(4) xj, xk, k, j, n, x0, set_x, x, s, y, yk, i, face, x_fin(4), y_fin(4), x_int(1:this.n)
 
 		x_fin(:) = this.last_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step
 		y_fin(:) = this.last_y;  y_fin(3) = this.rcv_xy(2, 3, 2) + this.step
@@ -86,8 +86,15 @@ module interpolation
 			do x = this.ns_x, this.nf_x
 				do i = 1, this.step
 
-					x0 = this.x0_mass(x, i)
-					Mass_temp(x, y+i, face) = Mass(x0, y+i, face)*this.weight(1, x0, x, i) + Mass(x0+1, y+i, face)*this.weight(2, x0, x, i)
+					x0 = this.x0_mass(x, i);  x_int(1) = x0 - n/2 + 1
+					do k = 2, n
+						x_int(k) = x_int(k-1)+1
+					end do
+
+					Mass_temp(x, y+i, face) = 0d0
+					do k = 1, n
+						Mass_temp(x, y+i, face) = Mass(x_int(k), y+i, face)*this.weight(k, x0, x, i) + Mass_temp(x, y+i, face)
+					end do
 
 				end do
 			end do
@@ -101,8 +108,14 @@ module interpolation
 			do y = this.ns_y, this.nf_y
 				do i = 1, this.step
 
-				x0 = this.x0_mass(y, i)
-				Mass_temp(x+i, y, face) = Mass(x+i, x0, face)*this.weight(1, x0, y, i) + Mass(x+i, x0+1, face)*this.weight(2, x0, y, i)
+					x0 = this.x0_mass(y, i);  x_int(1) = x0 - n/2 + 1
+					do k = 2, n
+						x_int(k) = x_int(k-1)+1
+					end do
+					Mass_temp(x+i, y, face) = 0d0
+					do k = 1, n
+						Mass_temp(x+i, y, face) = Mass(x+i, x_int(k), face)*this.weight(k, x0, y, i) + Mass_temp(x+i, y, face)
+					end do
 
 				end do
 			end do
@@ -116,9 +129,15 @@ module interpolation
 			do x = this.ns_x, this.nf_x
 				do i = 1, this.step
 
-					x0 = this.x0_mass(x, i)
-					Mass_temp(x, y-i, face) = Mass(x0, y-i, face)*this.weight(1, x0, x, i) + Mass(x0+1, y-i, face)*this.weight(2, x0, x, i)
+					x0 = this.x0_mass(x, i);  x_int(1) = x0 - n/2 + 1
+					do k = 2, n
+						x_int(k) = x_int(k-1)+1
+					end do
 
+					Mass_temp(x, y-i, face) = 0d0
+					do k = 1, n
+						Mass_temp(x, y-i, face) = Mass(x_int(k), y-i, face)*this.weight(k, x0, x, i) + Mass_temp(x, y-i, face)
+					end do
 				end do
 			end do
 			Mass(:, :, face) = Mass_temp(:, :, face)
@@ -131,9 +150,14 @@ module interpolation
 			do y = this.ns_y, this.nf_y
 				do i = 1, this.step
 
-				x0 = this.x0_mass(y, i)
-				Mass_temp(x-i, y, face) = Mass(x-i, x0, face)*this.weight(1, x0, y, i) + Mass(x-i, x0+1, face)*this.weight(2, x0, y, i)
-
+					x0 = this.x0_mass(y, i);  x_int(1) = x0 - n/2 + 1
+					do k = 2, n
+						x_int(k) = x_int(k-1)+1
+					end do
+					Mass_temp(x-i, y, face) = 0d0
+					do k = 1, n
+						Mass_temp(x-i, y, face) = Mass(x-i, x_int(k), face)*this.weight(k, x0, y, i) + Mass_temp(x-i, y, face)
+					end do
 				end do
 			end do
 			Mass(:, :, face) = Mass_temp(:, :, face)
@@ -175,10 +199,24 @@ module interpolation
 		Class(g_var) :: g
 		Type(geometry) :: geom
 		Integer(4), intent(in) :: step, x, x0
-		Real(8), intent(out) :: weight(2)
+		Real(8), intent(out) :: weight(1:this.n)
+		Integer(4) :: n, y(1:this.n), i, j
 
-		weight(1) = geom.angle(g.latlon_c(:,2*g.dim+1-step,x0+1,5), g.latlon_c(:,1-step,x,2))/geom.angle(g.latlon_c(:,2*g.dim+1-step,x0,5), g.latlon_c(:,2*g.dim+1-step,x0+1,5))
-		weight(2) = geom.angle(g.latlon_c(:,2*g.dim+1-step,x0,5), g.latlon_c(:,1-step,x,2))/geom.angle(g.latlon_c(:,2*g.dim+1-step,x0,5), g.latlon_c(:,2*g.dim+1-step,x0+1,5))
+		n = this.n;  y(1) = x0 - n/2 + 1;  weight(:) = 1d0
+		do i = 2, n
+			y(i) = y(i-1)+1
+		end do
+
+
+		do j = 1, n
+			do i = 1, n
+				if(j == i) then
+				else if(j /= i) then
+					weight(j) = weight(j)*geom.angle(g.latlon_c(:,2*g.dim+1-step,y(i),5), g.latlon_c(:,1-step,x,2))/geom.angle(g.latlon_c(:,2*g.dim+1-step,y(i),5), g.latlon_c(:,2*g.dim+1-step,y(j),5))
+				end if
+			end do
+		end do
+
 
 	end Subroutine
 

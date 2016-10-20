@@ -65,7 +65,7 @@ implicit none
 	call diagn.init( grid, paral, Tmax, id)
 	call sch.init(var_prev, grid)
 	call msg.init(grid_type)
-	call inter.init(grid, 1)
+	call inter.init(grid, 2)
 
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, grid_id, ncid, ncid_gr, rescale, grid_type)
@@ -75,8 +75,8 @@ implicit none
 
 	do time = 1, Tmax
 		! call sch.Linear(var, var_prev, grid, metr, inter, paral, msg)
-		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
-		! call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
+! 		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
+		call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
 		call diagn.L_norm(var_prev, grid, time)
 		call diagn.Courant(var_prev, grid, metr, time)
 			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
