@@ -92,6 +92,8 @@ CONTAINS
 			square = cos(lat*pi/180.0)
 			do lon = -this.lon_max+1, this.lon_max-1
 
+				if (isnan(surface_to(lon,lat))) then
+				else
 				F1 = this.surface_precise(lon, lat) - surface_to(lon,lat)
 				F1_prec = this.surface_precise(lon, lat)
 
@@ -100,6 +102,7 @@ CONTAINS
 
 				L1_prec = abs(F1_prec)*square + L1_prec
 				L2_prec = F1_prec*F1_prec*square + L2_prec
+				end if
 
 			end do
 		end do

@@ -170,7 +170,7 @@ CONTAINS
 					end if
 
 								do i = 1, 3
-									if( (this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0.7 .and. (this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0.7 ) then
+									if( (this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0.3 .and. (this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0.3 ) then
 										angle = g.angle(this.latlon_c_off(1:2, x, y, face(i)), latlon)
 										if(angle < min .and. angle >= 0d0) then
 											min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,face(i)/)

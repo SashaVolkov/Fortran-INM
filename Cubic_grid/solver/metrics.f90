@@ -187,7 +187,6 @@ CONTAINS
 					delta = dsqrt(1d0 + x_1**2 + x_2**2)
 					cos_theta = dcos(this.latlon_c(1, x, y, face))
 
-					if( (x_2**2 + x_1**2) > 0 ) then
 
 					this.J_to_cube(1,1,x,y,face) = -s(face)*x_2/(1d0 + x_1**2)
 					this.J_to_cube(1,2,x,y,face) = -s(face)*(delta**2)*x_1/((1d0 + x_1**2)*dsqrt(x_2**2 + x_1**2))
@@ -198,20 +197,6 @@ CONTAINS
 					this.J_to_sph(1,2,x,y,face) = s(face)*x_1*(1d0 + x_2**2)/(x_2**2 + x_1**2)
 					this.J_to_sph(2,1,x,y,face) = - s(face)*x_1*(1d0 + x_1**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
 					this.J_to_sph(2,2,x,y,face) = - s(face)*x_2*(1d0 + x_2**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
-
-					else
-
-					this.J_to_cube(1,1,x,y,face) = 0d0
-					this.J_to_cube(1,2,x,y,face) = -s(face)/dsqrt(2d0)
-					this.J_to_cube(2,1,x,y,face) = 0d0
-					this.J_to_cube(2,2,x,y,face) = -s(face)/dsqrt(2d0)
-
-					this.J_to_sph(1,1,x,y,face) = -s(face)*x_2/(x_2**2 + x_1**2)
-					this.J_to_sph(1,2,x,y,face) = s(face)*x_1/(x_2**2 + x_1**2)
-					this.J_to_sph(2,1,x,y,face) = - s(face)/dsqrt(2d0)
-					this.J_to_sph(2,2,x,y,face) = - s(face)/dsqrt(2d0)
-
-					end if
 
 				end do
 			end do

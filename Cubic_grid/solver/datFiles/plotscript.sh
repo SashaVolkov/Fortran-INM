@@ -4,6 +4,7 @@ gnuplot <<EOF
 set term png
 set output "pic/CFL.png"
 set xlabel "Days"
+set xrange [0:6]
 plot "simple/CFL.dat" w l ti "CFL_simple", "tan/CFL.dat" w l ti "CFL_tan", "equiang/CFL.dat" w l ti "CFL_equiang"
 EOF
 
@@ -40,6 +41,8 @@ gnuplot <<EOF
 set term png
 set output "pic/L_equiang.png"
 set xlabel "Days"
+set xrange [0:10]
+set yrange [0:18]
 plot "equiang/L1.dat" w l ti "L1", "equiang/L2.dat" w l ti "L2", "equiang/L_inf.dat" w l ti "L_inf"
 EOF
 
@@ -56,6 +59,14 @@ set term png
 set output "pic/L2.png"
 set xlabel "Days"
 plot "simple/L2.dat" w l ti "L2_simple", "tan/L2.dat" w l ti "L2_tan", "equiang/L2.dat" w l ti "L2_equiang"
+EOF
+
+gnuplot <<EOF
+set term png
+set output "pic/L2eq.png"
+set xlabel "Days"
+set xrange [0:6]
+plot "equiang/L2_2_2.dat" w l ti "L2_2_only", "equiang/L2.dat" w l ti "L2_2and4", "equiang/L2_4.dat" w l ti "L2_4_only"
 EOF
 
 gnuplot <<EOF

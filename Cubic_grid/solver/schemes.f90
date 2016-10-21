@@ -74,10 +74,10 @@ subroutine Linear(this, var, var_pr, grid, metr, inter, paral, msg)
 	Type(der) :: d
 
 	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), div, h
-	integer(4) face, x, y, dim, order
+	integer(4) face, x, y, dim, step
 
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
-	dt = grid.dt;  order = 2
+	dt = grid.dt;  step = grid.step
 
 
 	do face = 1, 6
@@ -85,17 +85,17 @@ subroutine Linear(this, var, var_pr, grid, metr, inter, paral, msg)
 			do x = var.ns_x, var.nf_x
 
 				h = grid.delta_on_cube
-				temp1(:) = var_pr.h_height(x-order:x+order, y, face)
-				partial = d.partial_c(temp1, h, order)
+				temp1(:) = var_pr.h_height(x-step:x+step, y, face)
+				partial = d.partial_c(temp1, h, step)
 				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
 
-				temp1(:) = var_pr.h_height(x, y-order:y+order, face)
-				partial = d.partial_c(temp1, h, order)
+				temp1(:) = var_pr.h_height(x, y-step:y+step, face)
+				partial = d.partial_c(temp1, h, step)
 				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial
 
-				temp1(:) = var_pr.u_con(x-order:x+order, y, face)
-				temp2(:) = var_pr.v_con(x, y-order:y+order, face)
-				div = d.div(metr, temp1, temp2, h, x, y, order)
+				temp1(:) = var_pr.u_con(x-step:x+step, y, face)
+				temp2(:) = var_pr.v_con(x, y-step:y+step, face)
+				div = d.div(metr, temp1, temp2, h, x, y, step)
 				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*div
 			end do
 		end do
@@ -120,10 +120,10 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 	Type(der) :: d
 
 	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), div, h
-	integer(4) face, x, y, dim, order
+	integer(4) face, x, y, dim, step
 
-	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
-	dt = grid.dt;  order = 2
+	g = grid.g;  height = var_pr.height;  dim = var_pr.dim;
+	dt = grid.dt;  step = grid.step
 
 
 	do face = 1, 6
@@ -131,12 +131,12 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 			do x = var.ns_x, var.nf_x
 
 				h = grid.delta_on_cube
-				temp1(:) = var_pr.h_height(x-order:x+order, y, face)
-				partial = d.partial_c(temp1, h, order)
+				temp1(:) = var_pr.h_height(x-step:x+step, y, face)
+				partial = d.partial_c(temp1, h, step)
 				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
 
-				temp1(:) = var_pr.h_height(x, y-order:y+order, face)
-				partial = d.partial_c(temp1, h, order)
+				temp1(:) = var_pr.h_height(x, y-step:y+step, face)
+				partial = d.partial_c(temp1, h, step)
 				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial
 
 			end do
@@ -154,9 +154,9 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
 			do x = var.ns_x, var.nf_x
-				temp1(:) = (var_pr.u_con(x-order:x+order, y, face) + this.ku_con(x-order:x+order, y, face, 0))/2d0
-				temp2(:) = (var_pr.v_con(x, y-order:y+order, face) + this.kv_con(x, y-order:y+order, face, 0))/2d0
-				div = d.div(metr, temp1, temp2, h, x, y, order)
+				temp1(:) = (var_pr.u_con(x-step:x+step, y, face) + this.ku_con(x-step:x+step, y, face, 0))/2d0
+				temp2(:) = (var_pr.v_con(x, y-step:y+step, face) + this.kv_con(x, y-step:y+step, face, 0))/2d0
+				div = d.div(metr, temp1, temp2, h, x, y, step)
 				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*div
 			end do
 		end do

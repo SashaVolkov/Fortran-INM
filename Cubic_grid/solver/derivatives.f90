@@ -42,14 +42,14 @@ CONTAINS
 
 
 
-	real(8) function partial_c(this, fun, h, order)
+	real(8) function partial_c(this, fun, h, step)
 		Class(der) :: this
-		integer(4), intent(in) :: order
-		real(8), intent(in) :: fun(-order:order), h
+		integer(4), intent(in) :: step
+		real(8), intent(in) :: fun(-step:step), h
 
-		if (order == 1) then
+		if (step == 1) then
 			partial_c = this.partial_c2(fun, h)
-		else if (order == 2) then
+		else if (step == 2) then
 			partial_c = this.partial_c4(fun, h)
 		end if
 
@@ -57,27 +57,27 @@ CONTAINS
 
 
 
-	real(8) function partial_c_fg(this, f_fun, g_fun, h, order)
+	real(8) function partial_c_fg(this, f_fun, g_fun, h, step)
 		Class(der) :: this
-		integer(4), intent(in) :: order
-		real(8), intent(in) :: f_fun(-order:order), g_fun(-order:order), h
+		integer(4), intent(in) :: step
+		real(8), intent(in) :: f_fun(-step:step), g_fun(-step:step), h
 
-			partial_c_fg = g_fun(0)*this.partial_c(f_fun, h, order) + f_fun(0)*this.partial_c(g_fun, h, order)
+			partial_c_fg = g_fun(0)*this.partial_c(f_fun, h, step) + f_fun(0)*this.partial_c(g_fun, h, step)
 
 	end function
 
 
 
-	real(8) function div(this, metr, u1_con, u2_con, h, x, y, order)
+	real(8) function div(this, metr, u1_con, u2_con, h, x, y, step)
 		Class(der) :: this
 		Class(metric) :: metr
-		integer(4), intent(in) :: x, y, order
-		real(8), intent(in) :: u1_con(-order:order), u2_con(-order:order), h
+		integer(4), intent(in) :: x, y, step
+		real(8), intent(in) :: u1_con(-step:step), u2_con(-step:step), h
 		integer(4) i, j
-		real(8) J_1(-order:order), J_2(-order:order), G(2,2)
+		real(8) J_1(-step:step), J_2(-step:step), G(2,2)
 
-		do i = -order, order
-! 			do j = -order, order
+		do i = -step, step
+! 			do j = -step, step
 			J_1(i) = metr.G_sqr(x+i, y)
 			J_2(i) = metr.G_sqr(x, y+i)
 ! 			G(1,1) = metr.G_inverse(1, 1, x+i, y+j)
@@ -89,7 +89,7 @@ CONTAINS
 ! 			end do
 		end do
 
-		div = ( this.partial_c_fg(u1_con, J_1, h, order) + this.partial_c_fg(u2_con, J_2, h, order))/J_1(0)
+		div = ( this.partial_c_fg(u1_con, J_1, h, step) + this.partial_c_fg(u2_con, J_2, h, step))/J_1(0)
 
 	end function
 

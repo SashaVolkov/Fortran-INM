@@ -65,7 +65,7 @@ implicit none
 	call diagn.init( grid, paral, Tmax, id)
 	call sch.init(var_prev, grid)
 	call msg.init(grid_type)
-	call inter.init(grid, 2)
+	call inter.init(grid, 4)
 
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, grid_id, ncid, ncid_gr, rescale, grid_type)
