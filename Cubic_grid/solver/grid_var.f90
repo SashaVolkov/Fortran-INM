@@ -92,12 +92,12 @@ CONTAINS
 		integer(4) f_x, f_y, l_x, l_y, dim, step, f, l
 
 		f_x = this.first_x;  l_x = this.last_x;  f_y = this.first_y;  l_y = this.last_y
-		dim = this.dim;  step = this.step;  f = 1-step; l = 2*dim + step
+		dim = this.dim;  step = this.step;  f = 1-2*step; l = 2*dim + 2*step
 
-		Allocate(this.f_cor(f_x:l_x , f_y:l_y, 1:6))
-		Allocate(this.latlon_c(1:2, f:l, f:l, 1:6))
-		Allocate(this.cube_coord_c(1:2, f:l , f:l))
-		Allocate(this.latlon(1:2, f:l+1 , f:l+1, 1:6))
+		Allocate(this.f_cor(f_x:l_x , f_y:l_y, 6))
+		Allocate(this.latlon_c(2, f:l, f:l, 6))
+		Allocate(this.cube_coord_c(2, f:l , f:l))
+		Allocate(this.latlon(2, f:l+1 , f:l+1, 6))
 
 		Allocate(this.square(1:2*dim, 1:2*dim))
 		Allocate(this.real_dist(this.ns_xy(1):this.nf_xy(1), this.ns_xy(2):this.nf_xy(2)))
@@ -166,7 +166,12 @@ CONTAINS
 		dim = this.dim;  step = this.step
 		sphere_area = 0
 
-		this.delta_on_cube = (this.cube_coord_c(1, dim, dim) - this.cube_coord_c(1, dim-1, dim))*this.r_sphere
+
+		if(this.grid_type == 0) then
+			this.delta_on_cube = 1d0/real(dim, 8)*this.r_sphere
+		else if(this.grid_type == 1)then
+			this.delta_on_cube = (this.cube_coord_c(1, dim, dim) - this.cube_coord_c(1, dim-1, dim))*this.r_sphere
+		end if
 
 		do x = 1, 2*dim
 			do y = 1, 2*dim

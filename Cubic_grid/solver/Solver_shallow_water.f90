@@ -77,13 +77,13 @@ implicit none
 		! call sch.Linear(var, var_prev, grid, metr, inter, paral, msg)
 ! 		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
 		call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
-		! call diagn.L_norm(var_prev, grid, time)
-		! call diagn.Courant(var_prev, grid, metr, time)
-		! 	if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
-		! 	if(mod(time, Tmax/10) == 0 .and. id == 0) then
-		! 		end_init = MPI_Wtime()
-		! 		print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
-		! 	end if
+		call diagn.L_norm(var_prev, grid, time)
+		call diagn.Courant(var_prev, grid, metr, time)
+			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
+			if(mod(10*time, Tmax) == 0 .and. id == 0) then
+				end_init = MPI_Wtime()
+				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
+			end if
 	end do
 
 

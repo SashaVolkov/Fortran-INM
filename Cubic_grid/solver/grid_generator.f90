@@ -29,9 +29,9 @@ CONTAINS
 		Class(generator) :: this
 		integer, intent(in) :: dim, step, rescale
 		real(8), intent(in) :: r_sphere
-		real(8), intent(out) :: latlon_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
-		real(8), intent(out) :: latlon(1:2, 1-step:2*dim+step+1, 1-step:2*dim+step+1, 1:6)
-		real(8), intent(out) :: cube_coord_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step)
+		real(8), intent(out) :: latlon_c(2, 1-2*step:2*dim+2*step, 1-2*step:2*dim+2*step, 6)
+		real(8), intent(out) :: latlon(2, 1-2*step:2*dim+2*step+1, 1-2*step:2*dim+2*step+1, 6)
+		real(8), intent(out) :: cube_coord_c(2, 1-2*step:2*dim+step, 1-2*step:2*dim+2*step)
 
 		character*14 filename
 		character istring
@@ -147,9 +147,9 @@ CONTAINS
 		Class(generator) :: this
 		Type(projection) :: projection
 		integer, intent(in) :: dim, step
-		real(8), intent(out) :: latlon_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step, 1:6)
-		real(8), intent(out) :: cube_coord_c(1:2, 1-step:2*dim+step, 1-step:2*dim+step)
-		real(8), intent(out) :: latlon(1:2, 1-step:2*dim+step+1, 1-step:2*dim+step+1, 1:6)
+		real(8), intent(out) :: latlon_c(2, 1-2*step:2*dim+2*step, 1-2*step:2*dim+2*step, 6)
+		real(8), intent(out) :: latlon(2, 1-2*step:2*dim+2*step+1, 1-2*step:2*dim+2*step+1, 6)
+		real(8), intent(out) :: cube_coord_c(2, 1-2*step:2*dim+step, 1-2*step:2*dim+2*step)
 		integer(4) face, i, j, k, min, max, channel
 		real(8) x,y,z,a, pi, r_vector(3), alpha,beta, latitude, longitude, radius, s(6)
 		character*14 filename
