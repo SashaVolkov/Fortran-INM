@@ -286,11 +286,11 @@ CONTAINS
 		end do
 
 
-			do x = 1-this.step, 2*dim+this.step
-				do y = 1-this.step, 2*dim+this.step
-					print *, this.J_to_sph(1, 1, x, y, 2), x, y
-				end do
-			end do
+			! do x = 1-this.step, 2*dim+this.step
+			! 	do y = 1-this.step, 2*dim+this.step
+			! 		print *, this.J_to_sph(1, 1, x, y, 2), x, y
+			! 	end do
+			! end do
 
 
 
