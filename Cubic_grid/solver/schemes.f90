@@ -17,7 +17,7 @@ module schemes
 
 	Type schema
 
-		integer(4) first_x, first_y, last_x, last_y
+		integer(4) first_x, first_y, last_x, last_y, space_step, dt, h, g
 
 		Real(8), Allocatable :: ku_cov(:, :, :, :)
 		Real(8), Allocatable :: kv_cov(:, :, :, :)
@@ -37,11 +37,12 @@ module schemes
 	CONTAINS
 
 
-Subroutine init(this, f, g)
+Subroutine init(this, f, g, space_step)
 
 	Class(g_var) :: g
 	Class(f_var) :: f
 	Class(schema) :: this
+	integer(4), intent(in) :: space_step
 
 	integer(4) f_x, f_y, l_x, l_y
 
@@ -50,6 +51,10 @@ Subroutine init(this, f, g)
 
 	this.first_x = f_x;  this.first_y = f_y
 	this.last_x = l_x;  this.last_y = l_y
+
+	this.space_step = space_step
+
+	this.dt = g.dt;  this.g = g.g;  this.h = g.delta_on_cube
 
 	Allocate(this.ku_cov(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kv_cov(f_x: l_x, f_y : l_y, 6, 0:4))
@@ -73,18 +78,18 @@ subroutine Linear(this, var, var_pr, grid, metr, inter, paral, msg)
 	Class(message) :: msg
 	Type(der) :: d
 
-	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), div, h
+	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), div, h
 	integer(4) face, x, y, dim, step
 
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
-	dt = grid.dt;  step = grid.step
+	dt = grid.dt;  step = this.space_step
 
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
 			do x = var.ns_x, var.nf_x
 
-				h = grid.delta_on_cube
+				h = this.h
 				temp1(:) = var_pr.h_height(x-step:x+step, y, face)
 				partial = d.partial_c(temp1, h, step)
 				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
@@ -119,18 +124,18 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 	Class(message) :: msg
 	Type(der) :: d
 
-	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), div, h
+	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), div, h
 	integer(4) face, x, y, dim, step
 
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim;
-	dt = grid.dt;  step = grid.step
+	dt = grid.dt;  step = this.space_step
 
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
 			do x = var.ns_x, var.nf_x
 
-				h = grid.delta_on_cube
+				h = this.h
 				temp1(:) = var_pr.h_height(x-step:x+step, y, face)
 				partial = d.partial_c(temp1, h, step)
 				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
@@ -244,30 +249,30 @@ Subroutine FRunge(this, grid, metr, var, i)
 	Type(der) :: d
 
 	integer(4), intent(in) :: i
-	real(8) g, height, dt, partial, temp1(-2:2), temp2(-2:2), coef(0:3), div, h
-	integer(4) x,y, face, order
+	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), coef(0:3), div, h
+	integer(4) x,y, face, step
 
 	coef(0) = 0d0;  coef(1) = 0d5;  coef(2) = 0d5;  coef(3) = 1d0;
 
 	dt = grid.dt;  g = grid.g; height = var.height
-	h = grid.delta_on_cube
-	order = 2
+	h = this.h
+	step = this.space_step
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
 			do x = var.ns_x, var.nf_x
 
-				temp1(:) = this.kh(x-order:x+order, y, face, 0) + coef(i-1)*this.kh(x-order:x+order, y, face, i-1)
-				partial = d.partial_c(temp1, h, order)
+				temp1(:) = this.kh(x-step:x+step, y, face, 0) + coef(i-1)*this.kh(x-step:x+step, y, face, i-1)
+				partial = d.partial_c(temp1, h, step)
 				this.ku_cov(x, y, face, i) = - dt*g*partial
 
-				temp2(:) = this.kh(x, y-order:y+order, face, 0) + coef(i-1)*this.kh(x, y-order:y+order, face, i-1)
-				partial = d.partial_c(temp2, h, order)
+				temp2(:) = this.kh(x, y-step:y+step, face, 0) + coef(i-1)*this.kh(x, y-step:y+step, face, i-1)
+				partial = d.partial_c(temp2, h, step)
 				this.kv_cov(x, y, face, i) =  - dt*g*partial
 
-				temp1(:) = this.ku_con(x-order:x+order, y, face, 0) + coef(i-1)*this.ku_con(x-order:x+order, y, face, i-1)
-				temp2(:) = this.kv_con(x, y-order:y+order, face, 0) + coef(i-1)*this.kv_con(x, y-order:y+order, face, i-1)
-				div = d.div(metr, temp1(:), temp2(:), h, x, y, order)
+				temp1(:) = this.ku_con(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y, face, i-1)
+				temp2(:) = this.kv_con(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x, y-step:y+step, face, i-1)
+				div = d.div(metr, temp1(:), temp2(:), h, x, y, step)
 				this.kh(x, y, face, i) = - dt*height*div
 
 			end do

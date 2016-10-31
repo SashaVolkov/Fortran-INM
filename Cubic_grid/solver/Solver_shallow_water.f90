@@ -18,7 +18,7 @@ implicit none
 
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	integer(4) dim, gr_step, Tmax, time, speedup, Wid, grid_id, xid, yid, faceid, ncid, ncid_gr, rescale, face, grid_type
+	integer(4) dim, space_step, Tmax, time, speedup, Wid, grid_id, xid, yid, faceid, ncid, ncid_gr, rescale, face, grid_type
 
 	integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
 
@@ -37,7 +37,7 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	gr_step = 2;  height = 100.0;  dt = 30.0
+	height = 100.0;  dt = 30.0
 ! r_sphere= 1d0
 	! rescale  0-simple, 1-tan, 2-pow(4/3)q
 	! grid_type  0 - conformal, 1 - equiangular
@@ -50,12 +50,12 @@ implicit none
 !subroutines calls
 
 	open(9,file='init')
-		read(9, *) dim, Tmax, dt, speedup, rescale, grid_type
+		read(9, *) dim, Tmax, dt, speedup, rescale, grid_type, space_step
 	close(9)
 
 	start_init = MPI_Wtime()
 
-	call paral.init(dim, gr_step, np, id)
+	call paral.init(dim, space_step, np, id)
 	call geom.init(r_sphere, pi)
 	call metr.init(paral)
 	call grid.init(geom, paral, metr, omega_cor, g, dt, rescale, grid_type)
@@ -63,9 +63,9 @@ implicit none
 	call var_prev.init(paral, metr, height)
 	call var_prev.start_conditions(metr, geom)
 	call diagn.init( grid, paral, Tmax, id)
-	call sch.init(var_prev, grid)
+	call sch.init(var_prev, grid, space_step)
 	call msg.init(grid_type)
-	call inter.init(grid, 4)
+	call inter.init(grid, 2)
 
 
 	call printer_nc.init(dim, Tmax, speedup, time, Wid, grid_id, ncid, ncid_gr, rescale, grid_type)
@@ -77,13 +77,13 @@ implicit none
 		! call sch.Linear(var, var_prev, grid, metr, inter, paral, msg)
 ! 		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
 		call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
-		call diagn.L_norm(var_prev, grid, time)
-		call diagn.Courant(var_prev, grid, metr, time)
-			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
-			if(mod(time, Tmax/10) == 0 .and. id == 0) then
-				end_init = MPI_Wtime()
-				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
-			end if
+		! call diagn.L_norm(var_prev, grid, time)
+		! call diagn.Courant(var_prev, grid, metr, time)
+		! 	if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, time, speedup, Wid, ncid, id)
+		! 	if(mod(time, Tmax/10) == 0 .and. id == 0) then
+		! 		end_init = MPI_Wtime()
+		! 		print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
+		! 	end if
 	end do
 
 

@@ -146,11 +146,12 @@ CONTAINS
 		Class(metric) :: metr
 		Class(geometry) :: geom
 		integer(4) dim
-		real(8) h0, r, R_BIG
+		real(8) h0, r, R_BIG, zero(2)
 
 		integer(4) x, y, face
 
 		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
+		zero(:) = (/0d0,0d0/)
 
 		do face = 1, 6
 
@@ -164,7 +165,7 @@ CONTAINS
 
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					r = geom.dist((/0d0,0d0/),metr.latlon_c(:,x,y,face))
+					r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
 					if ( r < R_BIG ) then
 						this.h_height(x, y, face) = (h0*0.5)*(1d0 + dcos(geom.pi * r/R_BIG))
 					else

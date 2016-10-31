@@ -13,8 +13,8 @@ module messenger
 	Type message
 
 	integer(4) :: var_count = 3
-	integer(4) snd_stat(MPI_STATUS_SIZE, 3, 4, 6), rcv_stat(MPI_STATUS_SIZE, 3, 4, 6)
-	integer(4) ier, np, snd_req(3, 4, 6), rcv_req(3, 4, 6), comm(3), grid_type, vec_only
+	integer(4) snd_stat(MPI_STATUS_SIZE, 4, 6, 3), rcv_stat(MPI_STATUS_SIZE, 4, 6, 3)
+	integer(4) ier, np, snd_req(4, 6, 3), rcv_req(4, 6, 3), comm(3), grid_type, vec_only
 
 		CONTAINS
 		Procedure, Public :: msg => msg
@@ -89,19 +89,19 @@ subroutine Simple_msg(this, paral, f)
 			rcv_tag = (paral.id + 1)*6*4  + face*4 + i
 
 			if (this.vec_only == 0) then
-				call MPI_IRecv(f.h_height(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(1), this.rcv_req(1, i, face), this.ier)
-				call MPI_ISend(f.h_height(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(1), this.snd_req(1, i, face), this.ier)
+				call MPI_IRecv(f.h_height(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(1), this.rcv_req(i, face, 1), this.ier)
+				call MPI_ISend(f.h_height(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(1), this.snd_req(i, face, 1), this.ier)
 			else
 				if(paral.border(face, i) == 0 .or. paral.border(face, i) == 2  .or. this.grid_type == 1) then ! coordinate rotation from one face to other if rotation 90 or -90 deg
-					call MPI_IRecv(f.lon_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(2, i, face), this.ier) ! x -> x
-					call MPI_IRecv(f.lat_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(3, i, face), this.ier) ! y -> y
+					call MPI_IRecv(f.lon_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(i, face, 2), this.ier) ! x -> x
+					call MPI_IRecv(f.lat_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(i, face, 3), this.ier) ! y -> y
 				else
-					call MPI_IRecv(f.lon_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(3, i, face), this.ier) ! x -> y
-					call MPI_IRecv(f.lat_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(2, i, face), this.ier) ! y -> x
+					call MPI_IRecv(f.lon_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(i, face, 3), this.ier) ! x -> y
+					call MPI_IRecv(f.lat_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(i, face, 2), this.ier) ! y -> x
 				end if
 
-				call MPI_ISend(f.lon_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(2), this.snd_req(2, i, face), this.ier)
-				call MPI_ISend(f.lat_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(3), this.snd_req(3, i, face), this.ier)
+				call MPI_ISend(f.lon_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(2), this.snd_req(i, face, 2), this.ier)
+				call MPI_ISend(f.lat_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(3), this.snd_req(i, face, 3), this.ier)
 			end if
 		end do
 	end do
@@ -116,11 +116,11 @@ subroutine Waiter(this, paral)
 	Class(parallel) :: paral
 
 	if (this.vec_only == 0) then
-		call MPI_Waitall(6*4, this.rcv_req(1, :, :), this.rcv_stat, this.ier)
-		call MPI_Waitall(6*4, this.snd_req(1, :, :), this.snd_stat, this.ier)
+		call MPI_Waitall(6*4, this.rcv_req(:, :, 1), this.rcv_stat, this.ier)
+		call MPI_Waitall(6*4, this.snd_req(:, :, 1), this.snd_stat, this.ier)
 	else
-		call MPI_Waitall(6*4*2, this.rcv_req(2:3, :, :), this.rcv_stat, this.ier)
-		call MPI_Waitall(6*4*2, this.snd_req(2:3, :, :), this.snd_stat, this.ier)
+		call MPI_Waitall(6*4*2, this.rcv_req(:, :, 2:3), this.rcv_stat, this.ier)
+		call MPI_Waitall(6*4*2, this.snd_req(:, :, 2:3), this.snd_stat, this.ier)
 	end if
 
 end subroutine

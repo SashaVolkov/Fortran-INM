@@ -11,7 +11,7 @@ netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
 netcdf="/home/sasha/netcdf"
 
  # -check all -traceback -ftrapuv
-mpiifort -O3 $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+mpiifort -check all -traceback -ftrapuv $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	CompStatus=$?
 	echo "compilation status" $CompStatus
@@ -28,12 +28,12 @@ else
 		export OMP_NUM_THREADS=1
 		mpiexec -n $1 ./a.out
 
-		echo "Regridding"
-		cd regrid
-		./run_intel_reg.sh
+		# echo "Regridding"
+		# cd regrid
+		# ./run_intel_reg.sh
 
-		cd ../datFiles
-		./plotscript.sh
+		# cd ../datFiles
+		# ./plotscript.sh
 	fi
 
 fi

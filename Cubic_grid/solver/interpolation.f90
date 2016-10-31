@@ -209,7 +209,7 @@ module interpolation
 		Integer(4), intent(in) :: step, x, x0
 		Real(8), intent(out) :: weight(1:this.n)
 		Integer(4) :: n, y(1:this.n), i, j, dim
-		Real(8) :: s
+		Real(8) :: s, numenator, denominator
 
 		n = this.n;  dim = this.dim
 		if((x == 1 .or. x == 2*dim) .and. step == 1) n = 2
@@ -223,7 +223,10 @@ module interpolation
 			do i = 1, n
 				if(j /= i) then
 					s = sign(1d0,(g.latlon_c(1,1-step,x,2) - g.latlon_c(1,2*g.dim+1-step,y(i),5))*(g.latlon_c(1,2*g.dim+1-step,y(j),5) - g.latlon_c(1,2*g.dim+1-step,y(i),5)))
-					weight(j) = s*weight(j)*geom.angle(g.latlon_c(:,1-step,x,2), g.latlon_c(:,2*g.dim+1-step,y(i),5))/geom.angle(g.latlon_c(:,2*g.dim+1-step,y(j),5), g.latlon_c(:,2*g.dim+1-step,y(i),5))
+
+					numenator = g.latlon_c(1,1-step,x,2) - g.latlon_c(1,2*g.dim+1-step,y(i),5)
+					denominator = g.latlon_c(1,2*g.dim+1-step,y(j),5) - g.latlon_c(1,2*g.dim+1-step,y(i),5)
+					weight(j) = s*weight(j)*numenator/denominator
 				end if
 			end do
 			! print *, weight(j), j, x, x0
