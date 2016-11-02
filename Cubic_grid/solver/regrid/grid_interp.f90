@@ -253,7 +253,7 @@ CONTAINS
 			k = 2*dim + 1 -j
 
 				cubic(j,2*dim+i,5) = cubic(i,k,6);     cubic(1-i,k,6) = cubic(j,2*dim+1-i,5)
-				cubic(j,1-i,5) = cubic(i,j,1);         cubic(1-i,k,1) = cubic(j,i,5)
+				cubic(j,1-i,5) = cubic(i,j,1);         cubic(1-i,j,1) = cubic(j,i,5)
 
 			end do
 		end do

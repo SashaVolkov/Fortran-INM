@@ -248,7 +248,7 @@ CONTAINS
 		integer(4) x, y, dim, i, k, face, step
 
 		dim = this.dim;  step = this.step
-		delta = (1d0/dble(dim))
+		delta = (1d0/dble(2*dim-1))
 
 		call this.hem_of_face(this.latlon_c(1, :, :, 1:6), 1)
 		call this.hem_of_face(this.latlon_c(2, :, :, 1:6), 1)
@@ -258,15 +258,15 @@ CONTAINS
 				do x = 1-this.step, 2*dim+this.step
 
 					temp = this.latlon_c(2, x-step:x+step, y, face)
-					xtemp = (/x-step:x+step/);  xtemp = dble(xtemp)/dble(2*dim)
+					xtemp = (/x-step:x+step/);  xtemp = dble(xtemp)/dble(2*dim-1)
 					this.J_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
 					if(this.J_to_sph(1,1,x,y,face) == 0d0) print *, x, y, face, "1 1"
-					this.J_to_cube(1,1,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
+					! this.J_to_cube(1,1,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 					temp = this.latlon_c(1, x-step:x+step, y, face)
 					this.J_to_sph(1,2,x,y,face) = (this.partial_c4(temp, delta))
 					if(this.J_to_sph(1,2,x,y,face) == 0d0) print *, x, y, face, "1 2"
-					this.J_to_cube(2,1,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
+					! this.J_to_cube(2,1,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 				end do
 			end do
@@ -280,15 +280,15 @@ CONTAINS
 				do y = 1-this.step, 2*dim+this.step
 
 					temp = this.latlon_c(2, x, y-step:y+step, face)
-					xtemp = (/y-step:y+step/);  xtemp = dble(xtemp)/dble(2*dim)
+					xtemp = (/y-step:y+step/);  xtemp = dble(xtemp)/dble(2*dim-1)
 					this.J_to_sph(2,1,x,y,face) = (this.partial_c4(temp, delta))
 					if(this.J_to_sph(2,1,x,y,face) == 0d0) print *, x, y, face, "2 1"
-					this.J_to_cube(1,2,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
+					! this.J_to_cube(1,2,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 					temp = this.latlon_c(1, x, y-step:y+step, face)
 					this.J_to_sph(2,2,x,y,face) = (this.partial_c4(temp, delta))
 					if(this.J_to_sph(2,2,x,y,face) == 0d0) print *, x, y, face, "2 2"
-					this.J_to_cube(2,2,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
+					! this.J_to_cube(2,2,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 					call this.inverse(this.J_to_sph(:,:,x,y,face), this.J_to_cube(:,:,x,y,face), 2)
 
@@ -299,7 +299,7 @@ CONTAINS
 
 			! do x = 1-this.step, 2*dim+this.step
 			! 	do y = 1-this.step, 2*dim+this.step
-			! 		print '(" J =", f9.2, f9.2, f9.2, f9.2, I6, I3)', this.J_to_cube(:, :, x, y, 6), x, y
+			! 		print '(" J =", f9.2, f9.2, f9.2, f9.2, I6, I3)', this.J_to_sph(:, :, x, y, 1), x, y
 			! 	end do
 			! end do
 
@@ -356,7 +356,7 @@ CONTAINS
 			k = 2*dim + 1 -j
 
 				cubic(j,2*dim+i,5) = cubic(i,k,6);     cubic(1-i,k,6) = cubic(j,2*dim+1-i,5)
-				cubic(j,1-i,5) = cubic(i,j,1);         cubic(1-i,k,1) = cubic(j,i,5)
+				cubic(j,1-i,5) = cubic(i,j,1);         cubic(1-i,j,1) = cubic(j,i,5)
 
 			end do
 		end do
@@ -364,14 +364,16 @@ CONTAINS
 		do i = 1, 2*step
 			do j = 1, 2*step
 				if( x_or_y == 1) then
-					cubic(1-j, 1-i, :) = cubic(1-i, j, :)
-					cubic(2*dim + i, 1-j, :) = cubic(2*dim+j, i, :)
+					cubic(1-i, 1-j, :) = cubic(2*step+1-j, i, :)
 					cubic(1-i, 2*dim + j, :) = cubic(1-j, 2*dim+1-i, :)
+
+					cubic(2*dim + i, 1-j, :) = cubic(2*dim+j, i, :)
 					cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim+j, 2*dim+1-i, :)
 				else if(x_or_y == 2) then
-					cubic(1-j, 1-i, :) = cubic(i, 1-j, :)
-					cubic(2*dim + i, 1-j, :) = cubic(2*dim+1-j, 1-i, :)
+					cubic(1-i, 1-j, :) = cubic(j, 1-i, :)
 					cubic(1-i, 2*dim + j, :) = cubic(j, 2*dim+i, :)
+
+					cubic(2*dim + i, 1-j, :) = cubic(2*dim+1-j, 1-i, :)
 					cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim+1-j, 2*dim+i, :)
 				end if
 			end do

@@ -18,7 +18,7 @@ implicit none
 
 !variables
 	real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	integer(4) dim, space_step, Tmax, time, speedup, Wid, grid_id, xid, yid, faceid, ncid, ncid_gr, rescale, face, grid_type
+	integer(4) dim, space_step, Tmax, time, speedup, Wid, grid_id, xid, yid, faceid, ncid, ncid_gr, rescale, face, grid_type, x, y, flag
 
 	integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
 
@@ -37,7 +37,7 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	height = 100.0;  dt = 30.0
+	height = 100.0;  dt = 30.0;  flag = 0
 ! r_sphere= 1d0
 	! rescale  0-simple, 1-tan, 2-pow(4/3)q
 	! grid_type  0 - conformal, 1 - equiangular
@@ -84,6 +84,17 @@ implicit none
 				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
 			end if
+									do x =1, 2*dim
+									do y =1, 2*dim
+									do face =1, 6
+									if(var.h_height(x, y, face) > 15000) then
+										print *, x, y, face, time
+										flag = 1
+									end if
+									end do
+									end do
+									end do
+									if (flag == 1) EXIT
 	end do
 
 

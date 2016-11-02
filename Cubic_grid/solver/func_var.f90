@@ -146,12 +146,13 @@ CONTAINS
 		Class(metric) :: metr
 		Class(geometry) :: geom
 		integer(4) dim
-		real(8) h0, r, R_BIG, zero(2)
-
+		real(8) h0, r, R_BIG, zero(2), pi
 		integer(4) x, y, face
 
+		pi = 314159265358979323846d-20
+
 		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
-		zero(:) = (/0d0,0d0/)
+		zero(:) = (/0d0, -5d-1*pi/)
 
 		do face = 1, 6
 
