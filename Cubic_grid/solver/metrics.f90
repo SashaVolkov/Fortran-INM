@@ -36,6 +36,8 @@ implicit none
 
 		Procedure, Private :: hem_of_face => hem_of_face
 		Procedure, Private :: partial_c4 => partial_c4
+		Procedure, Private :: partial_c4_nonunif => partial_c4_nonunif
+		Procedure, Private :: inverse => inverse
 
 
 	End Type
@@ -230,10 +232,8 @@ CONTAINS
 			this.G_inverse(2, 1, x, y) = - this.G_tensor(2, 1, x, y)
 			this.G_inverse(2, 2, x, y) = 1d0/this.G_tensor(2, 2, x, y)
 
-			! print *, real(this.G_tensor(:,:,x,y),4), x, y
-
 			this.G_sqr(x, y) = dsqrt(this.G_tensor(1, 1, x, y) * this.G_tensor(2, 2, x, y) - this.G_tensor(2, 1, x, y) * this.G_tensor(1, 2, x, y))
-			if(this.G_sqr(x, y) == 0d0) print*, "Pizdec:", x, y
+			if(this.G_sqr(x, y) == 0d0) print*, "Divide by zero:", x, y
 			end do
 		end do
 
@@ -244,43 +244,54 @@ CONTAINS
 
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step)
+		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), xtemp(-this.step:this.step)
 		integer(4) x, y, dim, i, k, face, step
 
 		dim = this.dim;  step = this.step
-
-		print *, "Step = ", step
-
-		call this.hem_of_face(this.latlon_c(1, :, :, 1:6))
-		call this.hem_of_face(this.latlon_c(2, :, :, 1:6))
 		delta = (1d0/dble(dim))
+
+		call this.hem_of_face(this.latlon_c(1, :, :, 1:6), 1)
+		call this.hem_of_face(this.latlon_c(2, :, :, 1:6), 1)
 
 		do face = 1, 6
 			do y = 1-this.step, 2*dim+this.step
 				do x = 1-this.step, 2*dim+this.step
 
 					temp = this.latlon_c(2, x-step:x+step, y, face)
+					xtemp = (/x-step:x+step/);  xtemp = dble(xtemp)/dble(2*dim)
 					this.J_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
-					this.J_to_cube(1,1,x,y,face) = 2d0*delta/(temp(1) - temp(-1))
-					
+					if(this.J_to_sph(1,1,x,y,face) == 0d0) print *, x, y, face, "1 1"
+					this.J_to_cube(1,1,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 					temp = this.latlon_c(1, x-step:x+step, y, face)
 					this.J_to_sph(1,2,x,y,face) = (this.partial_c4(temp, delta))
-					this.J_to_cube(2,1,x,y,face) = 2d0*delta/(temp(1) - temp(-1))
+					if(this.J_to_sph(1,2,x,y,face) == 0d0) print *, x, y, face, "1 2"
+					this.J_to_cube(2,1,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
+
+				end do
+			end do
+		end do
+
+		call this.hem_of_face(this.latlon_c(1, :, :, 1:6), 2)
+		call this.hem_of_face(this.latlon_c(2, :, :, 1:6), 2)
+
+		do face = 1, 6
+			do x = 1-this.step, 2*dim+this.step
+				do y = 1-this.step, 2*dim+this.step
 
 					temp = this.latlon_c(2, x, y-step:y+step, face)
+					xtemp = (/y-step:y+step/);  xtemp = dble(xtemp)/dble(2*dim)
 					this.J_to_sph(2,1,x,y,face) = (this.partial_c4(temp, delta))
-					this.J_to_cube(1,2,x,y,face) = 2d0*delta/(temp(1) - temp(-1))
+					if(this.J_to_sph(2,1,x,y,face) == 0d0) print *, x, y, face, "2 1"
+					this.J_to_cube(1,2,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 					temp = this.latlon_c(1, x, y-step:y+step, face)
 					this.J_to_sph(2,2,x,y,face) = (this.partial_c4(temp, delta))
-					this.J_to_cube(2,2,x,y,face) = 2d0*delta/(temp(1) - temp(-1))
+					if(this.J_to_sph(2,2,x,y,face) == 0d0) print *, x, y, face, "2 2"
+					this.J_to_cube(2,2,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
+					call this.inverse(this.J_to_sph(:,:,x,y,face), this.J_to_cube(:,:,x,y,face), 2)
 
-
-				end do
-				do i = 0, 2*step
-					this.J_to_sph(:,:,2*dim-step+i, y, face) = this.J_to_sph(:,:,1+step-i, y, face)
 				end do
 			end do
 		end do
@@ -288,7 +299,7 @@ CONTAINS
 
 			! do x = 1-this.step, 2*dim+this.step
 			! 	do y = 1-this.step, 2*dim+this.step
-			! 		print *, this.J_to_sph(1, 1, x, y, 2), x, y
+			! 		print '(" J =", f9.2, f9.2, f9.2, f9.2, I6, I3)', this.J_to_cube(:, :, x, y, 6), x, y
 			! 	end do
 			! end do
 
@@ -298,9 +309,10 @@ CONTAINS
 
 
 
-	subroutine hem_of_face(this, cubic)
+	subroutine hem_of_face(this, cubic, x_or_y)
 		Class(metric) :: this
 		Real(8), intent(inout) :: cubic(1 - 2*this.step:2*this.dim + 2*this.step, 1 - 2*this.step:2*this.dim + 2*this.step, 6)
+		integer(4), intent(in) :: x_or_y
 		integer(4) dim, f, l, x, y, face, i, j, k, step
 
 		dim = this.dim;  step = this.step
@@ -351,10 +363,17 @@ CONTAINS
 
 		do i = 1, 2*step
 			do j = 1, 2*step
-			cubic(1-j, 1-i, :) = cubic(i, 1-j, :)
-			cubic(2*dim + i, 1-j, :) = cubic(2*dim+i, j, :)
-			cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim-j, 2*dim+i, :)
-			cubic(1-i, 2*dim + j, :) = cubic(j, 2*dim+i, :)
+				if( x_or_y == 1) then
+					cubic(1-j, 1-i, :) = cubic(1-i, j, :)
+					cubic(2*dim + i, 1-j, :) = cubic(2*dim+j, i, :)
+					cubic(1-i, 2*dim + j, :) = cubic(1-j, 2*dim+1-i, :)
+					cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim+j, 2*dim+1-i, :)
+				else if(x_or_y == 2) then
+					cubic(1-j, 1-i, :) = cubic(i, 1-j, :)
+					cubic(2*dim + i, 1-j, :) = cubic(2*dim+1-j, 1-i, :)
+					cubic(1-i, 2*dim + j, :) = cubic(j, 2*dim+i, :)
+					cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim+1-j, 2*dim+i, :)
+				end if
 			end do
 		end do
 
@@ -371,6 +390,110 @@ CONTAINS
 		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
 
 	end function
+
+
+	real(8) function partial_c4_nonunif(this, fun, x)
+		Class(metric) :: this
+		real(8), intent(in) :: fun(-2:2), x(-2:2)
+		real(8) A , B, C, D, E, h(-1:2)
+
+		h(-1) = x(-1) - x(-2);  h(0) = x(0) - x(-1)
+		h(1) = x(1) - x(0);  h(2) = x(2) - x(1)
+
+		A = (h(-1)*h(0)*h(1) + h(0)*h(0)*h(1) + h(-1)*h(0)*h(2) + h(0)*h(0)*h(2))/(h(1)*h(2)*(h(0) + h(1))*(h(-1) + h(0) + h(1)))
+		B = -(h(-1)*h(1)*h(1) + h(0)*h(1)*h(1) + h(-1)*h(1)*h(2) + h(0)*h(1)*h(2))/(h(-1)*h(0)*(h(0) + h(1))*(h(0) + h(1) + h(2)))
+
+		C = -(h(-1)*h(0)*h(1) + h(0)*h(0)*h(1))/(h(2)*(h(1) + h(2))*(h(0) + h(1) + h(2))*(h(-1) + h(0) + h(1) + h(2)))
+		D = (h(0)*h(1)*h(1) + h(0)*h(1)*h(2))/(h(-1)*(h(-1) + h(0))*(h(-1) + h(0) + h(1))*(h(-1) + h(0) + h(1) + h(2)))
+
+		E = -(A + B + C + D)
+
+
+		partial_c4_nonunif = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
+
+	end function
+
+
+
+	subroutine inverse(this, a,c,n)
+	!============================================================
+	! Inverse matrix
+	! Method: Based on Doolittle LU factorization for Ax=b
+	! Alex G. December 2009
+	!-----------------------------------------------------------
+	! input ...
+	! a(n,n) - array of coefficients for matrix A
+	! n      - dimension
+	! output ...
+	! c(n,n) - inverse matrix of A
+	! comments ...
+	! the original matrix a(n,n) will be destroyed 
+	! during the calculation
+	!===========================================================
+	Class(metric) :: this
+	integer n
+	double precision a(n,n), c(n,n)
+	double precision L(n,n), U(n,n), b(n), d(n), x(n)
+	double precision coeff
+	integer i, j, k
+
+	! step 0: initialization for matrices L and U and b
+	! Fortran 90/95 aloows such operations on matrices
+	L=0.0
+	U=0.0
+	b=0.0
+
+	! step 1: forward elimination
+	do k=1, n-1
+	   do i=k+1,n
+	      coeff=a(i,k)/a(k,k)
+	      L(i,k) = coeff
+	      do j=k+1,n
+	         a(i,j) = a(i,j)-coeff*a(k,j)
+	      end do
+	   end do
+	end do
+
+	! Step 2: prepare L and U matrices 
+	! L matrix is a matrix of the elimination coefficient
+	! + the diagonal elements are 1.0
+	do i=1,n
+	  L(i,i) = 1.0
+	end do
+	! U matrix is the upper triangular part of A
+	do j=1,n
+	  do i=1,j
+	    U(i,j) = a(i,j)
+	  end do
+	end do
+
+	! Step 3: compute columns of the inverse matrix C
+	do k=1,n
+	  b(k)=1.0
+	  d(1) = b(1)
+	! Step 3a: Solve Ld=b using the forward substitution
+	  do i=2,n
+	    d(i)=b(i)
+	    do j=1,i-1
+	      d(i) = d(i) - L(i,j)*d(j)
+	    end do
+	  end do
+	! Step 3b: Solve Ux=d using the back substitution
+	  x(n)=d(n)/U(n,n)
+	  do i = n-1,1,-1
+	    x(i) = d(i)
+	    do j=n,i+1,-1
+	      x(i)=x(i)-U(i,j)*x(j)
+	    end do
+	    x(i) = x(i)/u(i,i)
+	  end do
+	! Step 3c: fill the solutions x(n) into column k of C
+	  do i=1,n
+	    c(i,k) = x(i)
+	  end do
+	  b(k)=0.0
+	end do
+	end subroutine inverse
 
 
 

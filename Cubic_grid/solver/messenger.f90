@@ -59,10 +59,10 @@ subroutine msg(this, f, paral, vec_only)
 
 	call this.Waiter(paral)
 
-	if (this.grid_type == 0) then
-		call this.Halo_Rotations(paral, f.lon_vel, 1, 0)
-		call this.Halo_Rotations(paral, f.lat_vel, 0, 1)
-	end if
+	! if (this.grid_type == 0) then
+	! 	call this.Halo_Rotations(paral, f.lon_vel, 1, 0)
+	! 	call this.Halo_Rotations(paral, f.lat_vel, 0, 1)
+	! end if
 
 
 end subroutine
@@ -92,13 +92,13 @@ subroutine Simple_msg(this, paral, f)
 				call MPI_IRecv(f.h_height(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(1), this.rcv_req(i, face, 1), this.ier)
 				call MPI_ISend(f.h_height(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(1), this.snd_req(i, face, 1), this.ier)
 			else
-				if(paral.border(face, i) == 0 .or. paral.border(face, i) == 2  .or. this.grid_type == 1) then ! coordinate rotation from one face to other if rotation 90 or -90 deg
+				! if(paral.border(face, i) == 0 .or. paral.border(face, i) == 2  .or. this.grid_type == 1) then ! coordinate rotation from one face to other if rotation 90 or -90 deg
 					call MPI_IRecv(f.lon_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(i, face, 2), this.ier) ! x -> x
 					call MPI_IRecv(f.lat_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(i, face, 3), this.ier) ! y -> y
-				else
-					call MPI_IRecv(f.lon_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(i, face, 3), this.ier) ! x -> y
-					call MPI_IRecv(f.lat_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(i, face, 2), this.ier) ! y -> x
-				end if
+				! else
+				! 	call MPI_IRecv(f.lon_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(3), this.rcv_req(i, face, 3), this.ier) ! x -> y
+				! 	call MPI_IRecv(f.lat_vel(rx, ry, face), 1, paral.halo(face, i), neib_id, rcv_tag, this.comm(2), this.rcv_req(i, face, 2), this.ier) ! y -> x
+				! end if
 
 				call MPI_ISend(f.lon_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(2), this.snd_req(i, face, 2), this.ier)
 				call MPI_ISend(f.lat_vel(sx, sy, face), 1, paral.halo(face, i), neib_id, snd_tag, this.comm(3), this.snd_req(i, face, 3), this.ier)

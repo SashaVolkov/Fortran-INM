@@ -28,12 +28,12 @@ else
 		export OMP_NUM_THREADS=1
 		mpiexec -n $1 ./a.out
 
-		echo "Regridding"
-		cd regrid
-		./run_intel_reg.sh
+		# echo "Regridding"
+		# cd regrid
+		# ./run_intel_reg.sh
 
-		cd ../datFiles
-		./plotscript.sh
+		# cd ../datFiles
+		# ./plotscript.sh
 	fi
 
 fi

@@ -47,6 +47,7 @@ Subroutine parallel_init(this, dim, step, np, id)
 
 	k=1; i = 0; j = 0; p = 0
 	this.step = step
+	if(step == 1) this.step = 2
 	this.dim = dim
 	this.id = id
 
@@ -74,8 +75,8 @@ Subroutine parallel_init(this, dim, step, np, id)
 	this.ns_xy(1) = 1 + this.Xsize*this.block_x  ; this.nf_xy(1) = this.Xsize*(this.block_x + 1)
 	this.ns_xy(2) = 1 + this.Ysize*this.block_y  ; this.nf_xy(2) = this.Ysize*(this.block_y + 1)
 
-	this.first_x = this.ns_xy(1) - step;  this.first_y = this.ns_xy(2) - step
-	this.last_x = this.nf_xy(1) + step;  this.last_y = this.nf_xy(2) + step
+	this.first_x = this.ns_xy(1) - this.step;  this.first_y = this.ns_xy(2) - this.step
+	this.last_x = this.nf_xy(1) + this.step;  this.last_y = this.nf_xy(2) + this.step
 
 
 	call this.Neighbourhood(id)

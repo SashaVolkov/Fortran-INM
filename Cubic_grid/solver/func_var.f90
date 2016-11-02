@@ -127,12 +127,12 @@ CONTAINS
 					var_pr.u_cov(:, :, :)=var.u_cov(:, :, :)
 					var_pr.v_cov(:, :, :)=var.v_cov(:, :, :)
 
-					if(metr.grid_type == 1) then
+					! if(metr.grid_type == 1) then
 						call var_pr.Velocity_to_spherical_border(metr)
-					else
-						var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
-						var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
-					end if
+					! else
+					! 	var_pr.lon_vel(:, :, :)=var_pr.u_cov(:, :, :)
+					! 	var_pr.lat_vel(:, :, :)=var_pr.v_cov(:, :, :)
+					! end if
 				end if
 
 
@@ -205,7 +205,7 @@ CONTAINS
 		Class(interp) :: i
 		Class(metric) :: metr
 		integer(4), intent(in) :: vec_only
-		if(metr.grid_type == 1) then
+		! if(metr.grid_type == 1) then
 			if(vec_only == 0) then
 				call i.Lagrange(this.h_height, this.interp_factor)
 			else
@@ -213,12 +213,12 @@ CONTAINS
 				call i.Lagrange(this.lon_vel, this.interp_factor)
 				call this.Velocity_from_spherical_border(metr)
 			end if
-		else if (metr.grid_type == 0) then
-			if(vec_only == 1) then
-				this.u_cov(:, :, :)=this.lon_vel(:, :, :)
-				this.v_cov(:, :, :)=this.lat_vel(:, :, :)
-			end if
-		end if
+		! else if (metr.grid_type == 0) then
+		! 	if(vec_only == 1) then
+		! 		this.u_cov(:, :, :)=this.lon_vel(:, :, :)
+		! 		this.v_cov(:, :, :)=this.lat_vel(:, :, :)
+		! 	end if
+		! end if
 
 		if(vec_only == 1) call this.cov_to_con(metr)
 
