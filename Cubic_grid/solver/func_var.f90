@@ -152,7 +152,7 @@ CONTAINS
 		pi = 314159265358979323846d-20
 
 		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
-		zero(:) = (/0d0, -5d-1*pi/)
+		zero(:) = (/5d-1*pi, 0d0/)
 
 		do face = 1, 6
 
@@ -319,9 +319,8 @@ this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, f
 
 		do face = 1, 6
 			do i = 1, 4
-				! if(this.interp_factor(i) == 1) then
-					do y = this.snd_xy(2, i, 2), y_fin(i)
-						do x = this.snd_xy(2, i, 1), x_fin(i)
+				do y = this.snd_xy(2, i, 2), y_fin(i)
+					do x = this.snd_xy(2, i, 1), x_fin(i)
 
 this.u_con(x, y, face) = metr.G_inverse(1, 1, x, y) * this.u_cov(x, y, face) + metr.G_inverse(1, 2, x, y) * this.v_cov(x, y, face)
 this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + metr.G_inverse(2, 1, x, y) * this.u_cov(x, y, face)
@@ -329,9 +328,8 @@ this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + m
 this.lon_vel(x, y, face) = metr.J_to_sph(1, 1, x, y, face) * this.u_con(x, y, face) + metr.J_to_sph(1, 2, x, y, face) * this.v_con(x, y, face)
 this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, face) + metr.J_to_sph(2, 1, x, y, face) * this.u_con(x, y, face)
 
-						end do
 					end do
-				! end if
+				end do
 			end do
 		end do
 
@@ -349,9 +347,8 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 
 		do face = 1, 6
 			do i = 1, 4
-				! if(this.interp_factor(i) == 1) then
-					do y = this.rcv_xy(2, i, 2), y_fin(i)
-						do x = this.rcv_xy(2, i, 1), x_fin(i)
+				do y = this.rcv_xy(2, i, 2), y_fin(i)
+					do x = this.rcv_xy(2, i, 1), x_fin(i)
 
 this.u_con(x, y, face) = metr.J_to_cube(1, 1, x, y, face) * this.lon_vel(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.lat_vel(x, y, face)
 this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.lon_vel(x, y, face)
@@ -359,9 +356,8 @@ this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, f
 this.u_cov(x, y, face) = metr.G_tensor(1, 1, x, y) * this.u_con(x, y, face) + metr.G_tensor(1, 2, x, y) * this.v_con(x, y, face)
 this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + metr.G_tensor(2, 1, x, y) * this.u_con(x, y, face)
 
-						end do
 					end do
-				! end if
+				end do
 			end do
 		end do
 

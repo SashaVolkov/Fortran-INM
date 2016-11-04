@@ -133,6 +133,7 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
+		if (face == 3) exit
 			do x = var.ns_x, var.nf_x
 
 				h = this.h

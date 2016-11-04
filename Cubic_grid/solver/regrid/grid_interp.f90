@@ -260,10 +260,11 @@ CONTAINS
 
 		do i = 1, step
 			do j = 1, step
-			cubic(1-j, 1-i, :) = cubic(i, 1-j, :)
-			cubic(2*dim + i, 1-j, :) = cubic(2*dim+i, j, :)
-			cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim-j, 2*dim+i, :)
-			cubic(1-i, 2*dim + j, :) = cubic(j, 2*dim+i, :)
+			cubic(1-i, 1-j, :) = cubic(2*step+1-j, i, :)
+			cubic(1-i, 2*dim + j, :) = cubic(1-j, 2*dim+1-i, :)
+
+			cubic(2*dim + i, 1-j, :) = cubic(2*dim+j, i, :)
+			cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim+j, 2*dim+1-i, :)
 			end do
 		end do
 

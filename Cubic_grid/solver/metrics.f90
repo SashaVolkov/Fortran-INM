@@ -36,7 +36,6 @@ implicit none
 
 		Procedure, Private :: hem_of_face => hem_of_face
 		Procedure, Private :: partial_c4 => partial_c4
-		Procedure, Private :: partial_c4_nonunif => partial_c4_nonunif
 		Procedure, Private :: inverse => inverse
 
 
@@ -244,65 +243,58 @@ CONTAINS
 
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), xtemp(-this.step:this.step)
+		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), A_matr(2,2)
 		integer(4) x, y, dim, i, k, face, step
 
 		dim = this.dim;  step = this.step
 		delta = (1d0/dble(2*dim-1))
 
-		call this.hem_of_face(this.latlon_c(1, :, :, 1:6), 1)
-		call this.hem_of_face(this.latlon_c(2, :, :, 1:6), 1)
+		call this.hem_of_face(this.latlon_c(:, :, :, 1:6), 1)
 
 		do face = 1, 6
 			do y = 1-this.step, 2*dim+this.step
 				do x = 1-this.step, 2*dim+this.step
 
 					temp = this.latlon_c(2, x-step:x+step, y, face)
-					xtemp = (/x-step:x+step/);  xtemp = dble(xtemp)/dble(2*dim-1)
 					this.J_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
 					if(this.J_to_sph(1,1,x,y,face) == 0d0) print *, x, y, face, "1 1"
-					! this.J_to_cube(1,1,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 					temp = this.latlon_c(1, x-step:x+step, y, face)
 					this.J_to_sph(1,2,x,y,face) = (this.partial_c4(temp, delta))
 					if(this.J_to_sph(1,2,x,y,face) == 0d0) print *, x, y, face, "1 2"
-					! this.J_to_cube(2,1,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 				end do
 			end do
 		end do
 
-		call this.hem_of_face(this.latlon_c(1, :, :, 1:6), 2)
-		call this.hem_of_face(this.latlon_c(2, :, :, 1:6), 2)
+		call this.hem_of_face(this.latlon_c(:, :, :, 1:6), 2)
 
 		do face = 1, 6
 			do x = 1-this.step, 2*dim+this.step
 				do y = 1-this.step, 2*dim+this.step
 
 					temp = this.latlon_c(2, x, y-step:y+step, face)
-					xtemp = (/y-step:y+step/);  xtemp = dble(xtemp)/dble(2*dim-1)
 					this.J_to_sph(2,1,x,y,face) = (this.partial_c4(temp, delta))
 					if(this.J_to_sph(2,1,x,y,face) == 0d0) print *, x, y, face, "2 1"
-					! this.J_to_cube(1,2,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
 					temp = this.latlon_c(1, x, y-step:y+step, face)
 					this.J_to_sph(2,2,x,y,face) = (this.partial_c4(temp, delta))
 					if(this.J_to_sph(2,2,x,y,face) == 0d0) print *, x, y, face, "2 2"
-					! this.J_to_cube(2,2,x,y,face) = this.partial_c4_nonunif(xtemp, temp)
 
-					call this.inverse(this.J_to_sph(:,:,x,y,face), this.J_to_cube(:,:,x,y,face), 2)
+					A_matr(:,:) = this.J_to_sph(:,:,x,y,face)
+
+					call this.inverse(A_matr, this.J_to_cube(:,:,x,y,face), 2)
 
 				end do
 			end do
 		end do
 
 
-			! do x = 1-this.step, 2*dim+this.step
-			! 	do y = 1-this.step, 2*dim+this.step
-			! 		print '(" J =", f9.2, f9.2, f9.2, f9.2, I6, I3)', this.J_to_sph(:, :, x, y, 1), x, y
-			! 	end do
-			! end do
-
+		! do y = 1-this.step, 2*dim+this.step
+		! 	do x = 1-this.step, 2*dim+this.step
+		! 		print '("J =" f8.4, f8.4, f8.4, f8.4, I6, I4)', this.J_to_cube(:,:,x,y,6), x, y
+		! 	end do
+		! end do
 
 
 	end subroutine
@@ -311,7 +303,7 @@ CONTAINS
 
 	subroutine hem_of_face(this, cubic, x_or_y)
 		Class(metric) :: this
-		Real(8), intent(inout) :: cubic(1 - 2*this.step:2*this.dim + 2*this.step, 1 - 2*this.step:2*this.dim + 2*this.step, 6)
+		Real(8), intent(inout) :: cubic(1:2, 1 - 2*this.step:2*this.dim + 2*this.step, 1 - 2*this.step:2*this.dim + 2*this.step, 6)
 		integer(4), intent(in) :: x_or_y
 		integer(4) dim, f, l, x, y, face, i, j, k, step
 
@@ -321,10 +313,10 @@ CONTAINS
 		do i = 1, 2*step
 			do j = 1, 2*dim
 
-				cubic(j,2*dim+i,2) = cubic(j,i,6);      cubic(j,1-i,6) = cubic(j,2*dim+1-i,2)
-				cubic(2*dim+i,j,2) = cubic(i,j,3);      cubic(1-i,j,3) = cubic(2*dim+1-i,j,2)
-				cubic(j,1-i,2) = cubic(j,2*dim+1-i,1);  cubic(j,2*dim+i,1) = cubic(j,i,2)
-				cubic(1-i,j,2) = cubic(2*dim+1-i,j,5);  cubic(2*dim+i,j,5) = cubic(i,j,2)
+				cubic(:,j,2*dim+i,2) = cubic(:,j,i,6);      cubic(:,j,1-i,6) = cubic(:,j,2*dim+1-i,2)
+				cubic(:,2*dim+i,j,2) = cubic(:,i,j,3);      cubic(:,1-i,j,3) = cubic(:,2*dim+1-i,j,2)
+				cubic(:,j,1-i,2) = cubic(:,j,2*dim+1-i,1);  cubic(:,j,2*dim+i,1) = cubic(:,j,i,2)
+				cubic(:,1-i,j,2) = cubic(:,2*dim+1-i,j,5);  cubic(:,2*dim+i,j,5) = cubic(:,i,j,2)
 
 			end do
 		end do
@@ -333,10 +325,10 @@ CONTAINS
 			do j = 1, 2*dim
 			k = 2*dim + 1 -j
 
-				cubic(j,2*dim+i,4) = cubic(k,2*dim+1-i,6);     cubic(k,2*dim+i,6) = cubic(j,2*dim+1-i,4)
-				cubic(2*dim+i,j,4) = cubic(i,j,5);             cubic(1-i,j,5) = cubic(2*dim+1-i,j,4)
-				cubic(j,1-i,4) = cubic(k,i,1);                 cubic(k,1-i,1) = cubic(j,i,4)
-				cubic(1-i,j,4) = cubic(2*dim+1-i,j,3);         cubic(2*dim+i,j,3) = cubic(i,j,4)
+				cubic(:,j,2*dim+i,4) = cubic(:,k,2*dim+1-i,6);     cubic(:,k,2*dim+i,6) = cubic(:,j,2*dim+1-i,4)
+				cubic(:,2*dim+i,j,4) = cubic(:,i,j,5);             cubic(:,1-i,j,5) = cubic(:,2*dim+1-i,j,4)
+				cubic(:,j,1-i,4) = cubic(:,k,i,1);                 cubic(:,k,1-i,1) = cubic(:,j,i,4)
+				cubic(:,1-i,j,4) = cubic(:,2*dim+1-i,j,3);         cubic(:,2*dim+i,j,3) = cubic(:,i,j,4)
 
 			end do
 		end do
@@ -345,8 +337,8 @@ CONTAINS
 			do j = 1, 2*dim
 			k = 2*dim + 1 -j
 
-				cubic(j,2*dim+i,3) = cubic(2*dim+1-i,j,6);     cubic(2*dim+i,j,6) = cubic(j,2*dim+1-i,3)
-				cubic(j,1-i,3) = cubic(2*dim+1-i,k,1);         cubic(2*dim+i,k,1) = cubic(j,i,3)
+				cubic(:,j,2*dim+i,3) = cubic(:,2*dim+1-i,j,6);     cubic(:,2*dim+i,j,6) = cubic(:,j,2*dim+1-i,3)
+				cubic(:,j,1-i,3) = cubic(:,2*dim+1-i,k,1);         cubic(:,2*dim+i,k,1) = cubic(:,j,i,3)
 
 			end do
 		end do
@@ -355,8 +347,8 @@ CONTAINS
 			do j = 1, 2*dim
 			k = 2*dim + 1 -j
 
-				cubic(j,2*dim+i,5) = cubic(i,k,6);     cubic(1-i,k,6) = cubic(j,2*dim+1-i,5)
-				cubic(j,1-i,5) = cubic(i,j,1);         cubic(1-i,j,1) = cubic(j,i,5)
+				cubic(:,j,2*dim+i,5) = cubic(:,i,k,6);     cubic(:,1-i,k,6) = cubic(:,j,2*dim+1-i,5)
+				cubic(:,j,1-i,5) = cubic(:,i,j,1);         cubic(:,1-i,j,1) = cubic(:,j,i,5)
 
 			end do
 		end do
@@ -364,17 +356,17 @@ CONTAINS
 		do i = 1, 2*step
 			do j = 1, 2*step
 				if( x_or_y == 1) then
-					cubic(1-i, 1-j, :) = cubic(2*step+1-j, i, :)
-					cubic(1-i, 2*dim + j, :) = cubic(1-j, 2*dim+1-i, :)
+					cubic(:,1-i, 1-j, :) = cubic(:,2*step+1-j, i, :)
+					cubic(:,1-i, 2*dim + j, :) = cubic(:,1-j, 2*dim+1-i, :)
 
-					cubic(2*dim + i, 1-j, :) = cubic(2*dim+j, i, :)
-					cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim+j, 2*dim+1-i, :)
+					cubic(:,2*dim + i, 1-j, :) = cubic(:,2*dim+j, i, :)
+					cubic(:,2*dim + i, 2*dim + j, :) = cubic(:,2*dim+j, 2*dim+1-i, :)
 				else if(x_or_y == 2) then
-					cubic(1-i, 1-j, :) = cubic(j, 1-i, :)
-					cubic(1-i, 2*dim + j, :) = cubic(j, 2*dim+i, :)
+					cubic(:,1-i, 1-j, :) = cubic(:,j, 1-i, :)
+					cubic(:,1-i, 2*dim + j, :) = cubic(:,j, 2*dim+i, :)
 
-					cubic(2*dim + i, 1-j, :) = cubic(2*dim+1-j, 1-i, :)
-					cubic(2*dim + i, 2*dim + j, :) = cubic(2*dim+1-j, 2*dim+i, :)
+					cubic(:,2*dim + i, 1-j, :) = cubic(:,2*dim+1-j, 1-i, :)
+					cubic(:,2*dim + i, 2*dim + j, :) = cubic(:,2*dim+1-j, 2*dim+i, :)
 				end if
 			end do
 		end do
@@ -390,28 +382,6 @@ CONTAINS
 
 		A = 2.0/(3.0*h);  B = - 2.0/(3.0*h);  C = - 1.0/(12.0*h);  D = 1.0/(12.0*h);  E = 0.0
 		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
-
-	end function
-
-
-	real(8) function partial_c4_nonunif(this, fun, x)
-		Class(metric) :: this
-		real(8), intent(in) :: fun(-2:2), x(-2:2)
-		real(8) A , B, C, D, E, h(-1:2)
-
-		h(-1) = x(-1) - x(-2);  h(0) = x(0) - x(-1)
-		h(1) = x(1) - x(0);  h(2) = x(2) - x(1)
-
-		A = (h(-1)*h(0)*h(1) + h(0)*h(0)*h(1) + h(-1)*h(0)*h(2) + h(0)*h(0)*h(2))/(h(1)*h(2)*(h(0) + h(1))*(h(-1) + h(0) + h(1)))
-		B = -(h(-1)*h(1)*h(1) + h(0)*h(1)*h(1) + h(-1)*h(1)*h(2) + h(0)*h(1)*h(2))/(h(-1)*h(0)*(h(0) + h(1))*(h(0) + h(1) + h(2)))
-
-		C = -(h(-1)*h(0)*h(1) + h(0)*h(0)*h(1))/(h(2)*(h(1) + h(2))*(h(0) + h(1) + h(2))*(h(-1) + h(0) + h(1) + h(2)))
-		D = (h(0)*h(1)*h(1) + h(0)*h(1)*h(2))/(h(-1)*(h(-1) + h(0))*(h(-1) + h(0) + h(1))*(h(-1) + h(0) + h(1) + h(2)))
-
-		E = -(A + B + C + D)
-
-
-		partial_c4_nonunif = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
 
 	end function
 
