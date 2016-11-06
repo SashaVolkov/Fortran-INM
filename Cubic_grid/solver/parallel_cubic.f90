@@ -47,7 +47,7 @@ Subroutine parallel_init(this, dim, step, np, id)
 
 	k=1; i = 0; j = 0; p = 0
 	this.step = step
-	if(step == 1) this.step = 2
+	! if(step == 1) this.step = 2
 	this.dim = dim
 	this.id = id
 

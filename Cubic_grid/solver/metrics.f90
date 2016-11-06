@@ -225,14 +225,16 @@ CONTAINS
 			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
 			this.G_tensor(2, 2, x, y) = (J(2, 1)**2)*(cos_theta**2) + J(2, 2)**2
 
-
-			this.G_inverse(1, 1, x, y) = 1d0/this.G_tensor(1, 1, x, y)
-			this.G_inverse(1, 2, x, y) = - this.G_tensor(1, 2, x, y)
-			this.G_inverse(2, 1, x, y) = - this.G_tensor(2, 1, x, y)
-			this.G_inverse(2, 2, x, y) = 1d0/this.G_tensor(2, 2, x, y)
-
 			this.G_sqr(x, y) = dsqrt(this.G_tensor(1, 1, x, y) * this.G_tensor(2, 2, x, y) - this.G_tensor(2, 1, x, y) * this.G_tensor(1, 2, x, y))
 			if(this.G_sqr(x, y) == 0d0) print*, "Divide by zero:", x, y
+
+			! this.G_inverse(1, 1, x, y) = this.G_tensor(2, 2, x, y)/this.G_sqr(x, y)
+			! this.G_inverse(1, 2, x, y) = - this.G_tensor(1, 2, x, y)/this.G_sqr(x, y)
+			! this.G_inverse(2, 1, x, y) = - this.G_tensor(2, 1, x, y)/this.G_sqr(x, y)
+			! this.G_inverse(2, 2, x, y) = this.G_tensor(1, 1, x, y)/this.G_sqr(x, y)
+
+			call this.inverse(this.G_tensor(:, :, x, y), this.G_inverse(:, :, x, y), 2)
+
 			end do
 		end do
 
@@ -243,17 +245,18 @@ CONTAINS
 
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), A_matr(2,2)
+		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), J(2,2), det
 		integer(4) x, y, dim, i, k, face, step
 
 		dim = this.dim;  step = this.step
-		delta = (1d0/dble(2*dim-1))
 
 		call this.hem_of_face(this.latlon_c(:, :, :, 1:6), 1)
 
 		do face = 1, 6
 			do y = 1-this.step, 2*dim+this.step
 				do x = 1-this.step, 2*dim+this.step
+
+					delta = (1d0/dble(dim - 5d-1))
 
 					temp = this.latlon_c(2, x-step:x+step, y, face)
 					this.J_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
@@ -272,6 +275,7 @@ CONTAINS
 		do face = 1, 6
 			do x = 1-this.step, 2*dim+this.step
 				do y = 1-this.step, 2*dim+this.step
+					delta = (1d0/dble(dim - 5d-1))
 
 					temp = this.latlon_c(2, x, y-step:y+step, face)
 					this.J_to_sph(2,1,x,y,face) = (this.partial_c4(temp, delta))
@@ -281,9 +285,17 @@ CONTAINS
 					this.J_to_sph(2,2,x,y,face) = (this.partial_c4(temp, delta))
 					if(this.J_to_sph(2,2,x,y,face) == 0d0) print *, x, y, face, "2 2"
 
-					A_matr(:,:) = this.J_to_sph(:,:,x,y,face)
+					J(:,:) = this.J_to_sph(:,:,x,y,face)
+					! det = J(1,1)*J(2,2) - J(2,1)*J(1,2)
+					! if(det == 0d0) print*, "Divide by zero:", x, y
 
-					call this.inverse(A_matr, this.J_to_cube(:,:,x,y,face), 2)
+					! this.J_to_cube(1, 1, x, y, face) = this.J_to_sph(2, 2, x, y, face)/det
+					! this.J_to_cube(1, 2, x, y, face) = -this.J_to_sph(1, 2, x, y, face)/det
+					! this.J_to_cube(2, 1, x, y, face) = -this.J_to_sph(2, 1, x, y, face)/det
+					! this.J_to_cube(2, 2, x, y, face) = this.J_to_sph(2, 2, x, y, face)/det
+
+
+					call this.inverse(J, this.J_to_cube(:,:,x,y,face), 2)
 
 				end do
 			end do
@@ -353,22 +365,24 @@ CONTAINS
 			end do
 		end do
 
+		do face = 1, 6
 		do i = 1, 2*step
 			do j = 1, 2*step
 				if( x_or_y == 1) then
-					cubic(:,1-i, 1-j, :) = cubic(:,2*step+1-j, i, :)
-					cubic(:,1-i, 2*dim + j, :) = cubic(:,1-j, 2*dim+1-i, :)
+					cubic(:,1-i, 1-j, face) = cubic(:,1-j, i, face)
+					cubic(:,1-i, 2*dim + j, face) = cubic(:,1-j, 2*dim+1-i, face)
 
-					cubic(:,2*dim + i, 1-j, :) = cubic(:,2*dim+j, i, :)
-					cubic(:,2*dim + i, 2*dim + j, :) = cubic(:,2*dim+j, 2*dim+1-i, :)
+					cubic(:,2*dim + i, 1-j, face) = cubic(:,2*dim+j, i, face)
+					cubic(:,2*dim + i, 2*dim + j, face) = cubic(:,2*dim+j, 2*dim+1-i, face)
 				else if(x_or_y == 2) then
-					cubic(:,1-i, 1-j, :) = cubic(:,j, 1-i, :)
-					cubic(:,1-i, 2*dim + j, :) = cubic(:,j, 2*dim+i, :)
+					cubic(:,1-i, 1-j, face) = cubic(:,j, 1-i, face)
+					cubic(:,1-i, 2*dim + j, face) = cubic(:,j, 2*dim+i, face)
 
-					cubic(:,2*dim + i, 1-j, :) = cubic(:,2*dim+1-j, 1-i, :)
-					cubic(:,2*dim + i, 2*dim + j, :) = cubic(:,2*dim+1-j, 2*dim+i, :)
+					cubic(:,2*dim + i, 1-j, face) = cubic(:,2*dim+1-j, 1-i, face)
+					cubic(:,2*dim + i, 2*dim + j, face) = cubic(:,2*dim+1-j, 2*dim+i, face)
 				end if
 			end do
+		end do
 		end do
 
 	end subroutine
@@ -385,6 +399,17 @@ CONTAINS
 
 	end function
 
+
+
+	! real(8) function partial_c4(this, fun, h)
+	! 	Class(metric) :: this
+	! 	real(8), intent(in) :: fun(-3:3), h
+	! 	real(8) A , B, C, D, E, F
+
+	! 	A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h);  E = 1d0/(60d0*h);  F = - 1d0/(60d0*h)
+	! 	partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
+
+	! end function
 
 
 	subroutine inverse(this, a,c,n)

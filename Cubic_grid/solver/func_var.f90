@@ -152,7 +152,7 @@ CONTAINS
 		pi = 314159265358979323846d-20
 
 		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
-		zero(:) = (/5d-1*pi, 0d0/)
+		zero(:) = (/0d0, 10d-1*pi/)
 
 		do face = 1, 6
 
@@ -274,8 +274,8 @@ this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + me
 		Integer(4) :: x, y, face
 
 		do face = 1, 6
-			do y = this.ns_y, this.nf_y
-				do x = this.ns_x, this.nf_x
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
 
 this.lon_vel(x, y, face) = metr.J_to_sph(1, 1, x, y, face) * this.u_con(x, y, face) + metr.J_to_sph(1, 2, x, y, face) * this.v_con(x, y, face)
 this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, face) + metr.J_to_sph(2, 1, x, y, face) * this.u_con(x, y, face)

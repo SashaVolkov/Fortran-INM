@@ -13,6 +13,7 @@ implicit none
 		Procedure, Public :: partial_c => partial_c
 		Procedure, Public :: partial_c2 => partial_c2
 		Procedure, Public :: partial_c4 => partial_c4
+		Procedure, Public :: partial_c6 => partial_c6
 		Procedure, Public :: partial_c_fg => partial_c_fg
 		Procedure, Public :: div => div
 	End Type
@@ -24,7 +25,7 @@ CONTAINS
 	real(8) function partial_c2(this, fun, h)
 		Class(der) :: this
 		real(8), intent(in) :: fun(-1:1), h
-		partial_c2 = (fun(1) - fun(-1))/(2.0*h)
+		partial_c2 = (fun(1) - fun(-1))/(2d0*h)
 
 	end function
 
@@ -33,10 +34,21 @@ CONTAINS
 	real(8) function partial_c4(this, fun, h)
 		Class(der) :: this
 		real(8), intent(in) :: fun(-2:2), h
-		real(8) A , B, C, D, E
+		real(8) A , B, C, D
 
-		A = 2.0/(3.0*h);  B = - 2.0/(3.0*h);  C = - 1.0/(12.0*h);  D = 1.0/(12.0*h);  E = 0.0
-		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
+		A = 2d0/(3d0*h);  B = - 2d0/(3d0*h);  C = - 1.0/(12d0*h);  D = 1d0/(12d0*h)
+		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2)
+
+	end function
+
+
+	real(8) function partial_c6(this, fun, h)
+		Class(der) :: this
+		real(8), intent(in) :: fun(-3:3), h
+		real(8) A , B, C, D, E, F
+
+		A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h);  E = 1d0/(60d0*h);  F = - 1d0/(60d0*h)
+		partial_c6 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
 
 	end function
 
@@ -51,6 +63,8 @@ CONTAINS
 			partial_c = this.partial_c2(fun, h)
 		else if (step == 2) then
 			partial_c = this.partial_c4(fun, h)
+		else if (step == 3) then
+			partial_c = this.partial_c6(fun, h)
 		end if
 
 	end function
