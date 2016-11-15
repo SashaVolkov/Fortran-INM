@@ -210,7 +210,7 @@ CONTAINS
 	subroutine metric_tensor_conf(this)
 		Class(metric) :: this
 		integer(4) x, y, i, k, dim
-		real(8) :: J(2,2), cos_theta
+		real(8) :: J(2,2), cos_theta, J_T(2,2)
 
 		dim = this.dim
 		call this.transf_matrix_conf()
@@ -256,7 +256,7 @@ CONTAINS
 			do y = 1-this.step, 2*dim+this.step
 				do x = 1-this.step, 2*dim+this.step
 
-					delta = (1d0/dble(dim - 5d-1))
+					delta = (1d0/dble(dim + 5d-1))
 
 					temp = this.latlon_c(2, x-step:x+step, y, face)
 					this.J_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
@@ -275,7 +275,7 @@ CONTAINS
 		do face = 1, 6
 			do x = 1-this.step, 2*dim+this.step
 				do y = 1-this.step, 2*dim+this.step
-					delta = (1d0/dble(dim - 5d-1))
+					delta = (1d0/dble(dim + 5d-1))
 
 					temp = this.latlon_c(2, x, y-step:y+step, face)
 					this.J_to_sph(2,1,x,y,face) = (this.partial_c4(temp, delta))
@@ -286,16 +286,16 @@ CONTAINS
 					if(this.J_to_sph(2,2,x,y,face) == 0d0) print *, x, y, face, "2 2"
 
 					J(:,:) = this.J_to_sph(:,:,x,y,face)
-					! det = J(1,1)*J(2,2) - J(2,1)*J(1,2)
-					! if(det == 0d0) print*, "Divide by zero:", x, y
+					det = J(1,1)*J(2,2) - J(2,1)*J(1,2)
+					if(det == 0d0) print*, "Divide by zero:", x, y
 
-					! this.J_to_cube(1, 1, x, y, face) = this.J_to_sph(2, 2, x, y, face)/det
-					! this.J_to_cube(1, 2, x, y, face) = -this.J_to_sph(1, 2, x, y, face)/det
-					! this.J_to_cube(2, 1, x, y, face) = -this.J_to_sph(2, 1, x, y, face)/det
-					! this.J_to_cube(2, 2, x, y, face) = this.J_to_sph(2, 2, x, y, face)/det
+					this.J_to_cube(1, 1, x, y, face) = J(2, 2)/det
+					this.J_to_cube(1, 2, x, y, face) = -J(1, 2)/det
+					this.J_to_cube(2, 1, x, y, face) = -J(2, 1)/det
+					this.J_to_cube(2, 2, x, y, face) = J(1, 1)/det
 
 
-					call this.inverse(J, this.J_to_cube(:,:,x,y,face), 2)
+					! call this.inverse(J, this.J_to_cube(:,:,x,y,face), 2)
 
 				end do
 			end do

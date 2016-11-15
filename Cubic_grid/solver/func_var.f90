@@ -152,7 +152,7 @@ CONTAINS
 		pi = 314159265358979323846d-20
 
 		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
-		zero(:) = (/0d0, 0d-1*pi/)
+		zero(:) = (/0d0, 5d-1*pi/)
 
 		do face = 1, 6
 
@@ -213,6 +213,7 @@ CONTAINS
 				call i.Lagrange(this.lat_vel, this.interp_factor)
 				call i.Lagrange(this.lon_vel, this.interp_factor)
 				call this.Velocity_from_spherical_border(metr)
+				call this.cov_to_con(metr)
 			end if
 		! else if (metr.grid_type == 0) then
 		! 	if(vec_only == 1) then
@@ -221,7 +222,6 @@ CONTAINS
 		! 	end if
 		! end if
 
-		if(vec_only == 1) call this.cov_to_con(metr)
 
 	end subroutine
 
@@ -311,7 +311,7 @@ this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, f
 	subroutine Velocity_to_spherical_border(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Real(8) :: vel_x_contr, vel_y_contr
+		Real(8) :: G_inv(2,2), J(2,2)
 		Integer(4) :: x, y, face, i, x_fin(4), y_fin(4)
 
 		x_fin(:) = this.nf_x;  x_fin(4) = this.snd_xy(2, 4, 1) + this.step - 1
@@ -322,11 +322,14 @@ this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, f
 				do y = this.snd_xy(2, i, 2), y_fin(i)
 					do x = this.snd_xy(2, i, 1), x_fin(i)
 
-this.u_con(x, y, face) = metr.G_inverse(1, 1, x, y) * this.u_cov(x, y, face) + metr.G_inverse(1, 2, x, y) * this.v_cov(x, y, face)
-this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + metr.G_inverse(2, 1, x, y) * this.u_cov(x, y, face)
+					J(:,:) = metr.J_to_sph(:,:, x, y, face)
+					G_inv(:,:) = metr.G_inverse(:,:, x, y)
 
-this.lon_vel(x, y, face) = metr.J_to_sph(1, 1, x, y, face) * this.u_con(x, y, face) + metr.J_to_sph(1, 2, x, y, face) * this.v_con(x, y, face)
-this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, face) + metr.J_to_sph(2, 1, x, y, face) * this.u_con(x, y, face)
+this.u_con(x, y, face) = G_inv(1, 1) * this.u_cov(x, y, face) + G_inv(1, 2) * this.v_cov(x, y, face)
+this.v_con(x, y, face) = G_inv(2, 2) * this.v_cov(x, y, face) + G_inv(2, 1) * this.u_cov(x, y, face)
+
+this.lon_vel(x, y, face) = J(1, 1) * this.u_con(x, y, face) + J(1, 2) * this.v_con(x, y, face)
+this.lat_vel(x, y, face) = J(2, 2) * this.v_con(x, y, face) + J(2, 1) * this.u_con(x, y, face)
 
 					end do
 				end do
@@ -340,6 +343,7 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 	subroutine Velocity_from_spherical_border(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
+		Real(8) :: G(2,2), J_T(2,2)
 		Integer(4) :: x, y, face, i, x_fin(4), y_fin(4)
 
 		x_fin(:) = this.nf_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step - 1;  x_fin(2) = this.last_x
@@ -350,11 +354,14 @@ this.lat_vel(x, y, face) = metr.J_to_sph(2, 2, x, y, face) * this.v_con(x, y, fa
 				do y = this.rcv_xy(2, i, 2), y_fin(i)
 					do x = this.rcv_xy(2, i, 1), x_fin(i)
 
-this.u_con(x, y, face) = metr.J_to_cube(1, 1, x, y, face) * this.lon_vel(x, y, face) + metr.J_to_cube(1, 2, x, y, face) * this.lat_vel(x, y, face)
-this.v_con(x, y, face) = metr.J_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, face) + metr.J_to_cube(2, 1, x, y, face) * this.lon_vel(x, y, face)
+					J_T(:,:) = metr.J_to_cube(:,:, x, y, face)
+					G(:,:) = metr.G_tensor(:,:, x, y)
 
-this.u_cov(x, y, face) = metr.G_tensor(1, 1, x, y) * this.u_con(x, y, face) + metr.G_tensor(1, 2, x, y) * this.v_con(x, y, face)
-this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + metr.G_tensor(2, 1, x, y) * this.u_con(x, y, face)
+this.u_con(x, y, face) = J_T(1, 1) * this.lon_vel(x, y, face) + J_T(1, 2) * this.lat_vel(x, y, face)
+this.v_con(x, y, face) = J_T(2, 2) * this.lat_vel(x, y, face) + J_T(2, 1) * this.lon_vel(x, y, face)
+
+this.u_cov(x, y, face) = G(1, 1) * this.u_con(x, y, face) + G(1, 2) * this.v_con(x, y, face)
+this.v_cov(x, y, face) = G(2, 2) * this.v_con(x, y, face) + G(2, 1) * this.u_con(x, y, face)
 
 					end do
 				end do
