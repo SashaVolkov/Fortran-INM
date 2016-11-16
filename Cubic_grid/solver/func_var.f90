@@ -71,8 +71,8 @@ CONTAINS
 		do i = 1, 4
 			if(metr.grid_type == 1) then
 				if(paral.Neighbours_face(2, i) /= 2) this.interp_factor(i) = 1
-			else
-				this.interp_factor(i) = 0
+! 			else
+! 				this.interp_factor(i) = 0
 			end if
 		end do
 
