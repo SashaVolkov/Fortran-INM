@@ -36,6 +36,7 @@ implicit none
 
 		Procedure, Private :: hem_of_face => hem_of_face
 		Procedure, Private :: partial_c4 => partial_c4
+! 		Procedure, Private :: partial_c4_non => partial_c4_non
 
 
 	End Type
@@ -209,29 +210,32 @@ CONTAINS
 	subroutine metric_tensor_conf(this)
 		Class(metric) :: this
 		integer(4) x, y, i, k, dim
-		real(8) :: J(2,2), cos_theta, J_T(2,2), G(2,2)
+		real(8) :: J(2,2), J_T(2,2), G(2,2), det, cos_theta
 
 		dim = this.dim
 		call this.transf_matrix_conf()
 
 		do y = 1-this.step, 2*dim+this.step
 			do x = 1-this.step, 2*dim+this.step
-			J(:,:) = this.J_to_sph(:, :, x, y, 2)
-			J_T(:,:) = this.J_to_cube(:, :, x, y, 2)
+			J_T(:,:) = this.J_to_sph(:, :, x, y, 2)
+			J(:,:) = this.J_to_cube(:, :, x, y, 2)
+			cos_theta = dcos(this.latlon_c(1, x, y, 2))
 
-			this.G_tensor(1, 1, x, y) = (J(1, 1)**2) + J(1, 2)**2
-			this.G_tensor(1, 2, x, y) = (J(1, 1)*J(2,1)) + J(1, 2)*J(2,2)
+			this.G_tensor(1, 1, x, y) = (J(1, 1)**2)*(cos_theta**2) + J(2, 1)**2
+			this.G_tensor(1, 2, x, y) = (J(1, 1)*J(1,2))*(cos_theta**2) + J(2, 1)*J(2,2)
 			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
-			this.G_tensor(2, 2, x, y) = (J(2, 1)**2) + J(2, 2)**2
+			this.G_tensor(2, 2, x, y) = (J(1, 2)**2)*(cos_theta**2) + J(2, 2)**2
 			G(:,:) = this.G_tensor(:, :, x, y)
 
-			this.G_sqr(x, y) = dsqrt(G(1,1)*G(2,2) - G(2,1)*G(1,2))
+			det = G(1,1)*G(2,2) - G(2,1)*G(1,2)
+			this.G_sqr(x, y) = dsqrt(det)
 			if(this.G_sqr(x, y) == 0d0) print*, "Divide by zero:", x, y
 
-			this.G_inverse(1, 1, x, y) = (J_T(1, 1)**2) + J_T(1, 2)**2
-			this.G_inverse(1, 2, x, y) = (J_T(1, 1)*J_T(2,1)) + J_T(1, 2)*J_T(2,2)
-			this.G_inverse(2, 1, x, y) = this.G_inverse(1, 2, x, y)
-			this.G_inverse(2, 2, x, y) = (J_T(2, 1)**2) + J_T(2, 2)**2
+
+			this.G_inverse(1, 1, x, y) = this.G_tensor(2, 2, x, y)/det
+			this.G_inverse(1, 2, x, y) = -this.G_tensor(1, 2, x, y)/det
+			this.G_inverse(2, 1, x, y) = -this.G_tensor(2, 1, x, y)/det
+			this.G_inverse(2, 2, x, y) = this.G_tensor(1, 1, x, y)/det
 
 			end do
 		end do
@@ -243,28 +247,23 @@ CONTAINS
 
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), J(2,2), det, cos_theta
+		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), J(2,2), cos_theta, det
 		integer(4) x, y, dim, i, k, face, step
 
 		dim = this.dim;  step = this.step
+		delta = (1d0/dble(dim + 5d-1))
 
 		call this.hem_of_face(this.latlon_c(:, :, :, 1:6), 1)
 
 		do face = 1, 6
 			do y = 1-this.step, 2*dim+this.step
 				do x = 1-this.step, 2*dim+this.step
-
-					delta = (1d0/dble(dim))
 					cos_theta = dcos(this.latlon_c(1, x, y, 2))
-
 					temp = this.latlon_c(2, x-step:x+step, y, face)
-					this.J_to_cube(1,1,x,y,face) = this.partial_c4(temp, delta)*cos_theta
-					if(this.J_to_cube(1,1,x,y,face) == 0d0) print *, x, y, face, "1 1"
+					this.J_to_cube(1,1,x,y,face) = this.partial_c4(temp, delta)
 
 					temp = this.latlon_c(1, x-step:x+step, y, face)
-					this.J_to_cube(1,2,x,y,face) = (this.partial_c4(temp, delta))
-					if(this.J_to_cube(1,2,x,y,face) == 0d0) print *, x, y, face, "1 2"
-
+					this.J_to_cube(1,2,x,y,face) = this.partial_c4(temp, delta)
 				end do
 			end do
 		end do
@@ -274,38 +273,24 @@ CONTAINS
 		do face = 1, 6
 			do x = 1-this.step, 2*dim+this.step
 				do y = 1-this.step, 2*dim+this.step
-
-					delta = (1d0/dble(dim))
-					cos_theta = dcos(this.latlon_c(1, x, y, 2))
-
 					temp = this.latlon_c(2, x, y-step:y+step, face)
-					this.J_to_cube(2,1,x,y,face) = (this.partial_c4(temp, delta))*cos_theta
-					if(this.J_to_cube(2,1,x,y,face) == 0d0) print *, x, y, face, "2 1"
+					this.J_to_cube(2,1,x,y,face) = this.partial_c4(temp, delta)
 
 					temp = this.latlon_c(1, x, y-step:y+step, face)
-					this.J_to_cube(2,2,x,y,face) = (this.partial_c4(temp, delta))
-					if(this.J_to_cube(2,2,x,y,face) == 0d0) print *, x, y, face, "2 2"
+					this.J_to_cube(2,2,x,y,face) = this.partial_c4(temp, delta)
 
-					J(:,:) = this.J_to_cube(:,:,x,y,face)
+					J = this.J_to_cube(:,:,x,y,face)
 					det = J(1,1)*J(2,2) - J(2,1)*J(1,2)
-					if(det == 0d0) print*, "Divide by zero:", x, y
 
-					this.J_to_sph(1, 1, x, y, face) = J(2, 2)/det
-					this.J_to_sph(1, 2, x, y, face) = -J(1, 2)/det
-					this.J_to_sph(2, 1, x, y, face) = -J(2, 1)/det
-					this.J_to_sph(2, 2, x, y, face) = J(1, 1)/det
+					this.J_to_sph(1,1,x,y,face) = J(2,2)/det
+					this.J_to_sph(1,2,x,y,face) = -J(1,2)/det
+					this.J_to_sph(2,1,x,y,face) = -J(2,1)/det
+					this.J_to_sph(2,2,x,y,face) = J(1,1)/det
 
 				end do
 			end do
 		end do
 
-
-! 		do x = 1-this.step, 1
-! ! 		do x = 2*dim, 2*dim+this.step
-! 			do y = 1-this.step, dim-1
-! 				print '("J =" f8.4, f8.4, f8.4, f8.4, I6, I4)', this.J_to_sph(:,:,x,y,6), x, y
-! 			end do
-! 		end do
 
 
 	end subroutine
@@ -409,6 +394,19 @@ CONTAINS
 	! 	partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
 
 	! end function
+
+! 	real(8) function partial_c4_non(this, fun, h)
+! 		Class(metric) :: this
+! 		real(8), intent(in) :: fun(-2:2), h(-2:2)
+! 		real(8) A , B, C, D, E, F
+
+! 		A = (h(-1)*h(0)*h(1) + h(0)*h(0)*h(1) + h(-1)*h(0)*h(2) + h(0)*h(0)*h(2))/(h(1)*h(2)*(h(0) +h(1))*(h(-1) + h(0) +h(1)))
+! 		B = (-h(-1)*h(1)*h(1) - h(0)*h(1)*h(1) - h(-1)*h(1)*h(2) - h(0)*h(1)*h(2))/(h(-1)*h(0)*(h(0) +h(1))*(h(0) + h(1) +h(2)))
+! 		C = (-h(-1)*h(0)*h(1) - h(0)*h(0)*h(1))/(h(2)*(h(1) + h(2))*(h(0) + h(1) + h(2))*(h(-1) + h(0) + h(1) +h(2)))
+! 		D = (h(0)*h(1)*h(1) - h(0)*h(1)*h(2))/(h(-1)*(h(-1) + h(1))*(h(-1) + h(0) + h(1))*(h(-1) + h(0) + h(1) +h(2)))
+! 		partial_c4_non = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
+
+! 	end function
 
 
 

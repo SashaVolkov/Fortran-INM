@@ -71,8 +71,6 @@ CONTAINS
 		do i = 1, 4
 			if(metr.grid_type == 1) then
 				if(paral.Neighbours_face(2, i) /= 2) this.interp_factor(i) = 1
-! 			else
-! 				this.interp_factor(i) = 0
 			end if
 		end do
 
@@ -152,7 +150,7 @@ CONTAINS
 		pi = 314159265358979323846d-20
 
 		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
-		zero(:) = (/0d0, 5d-1*pi/)
+		zero(:) = (/0d0, 0d-1*pi/)
 
 		do face = 1, 6
 
