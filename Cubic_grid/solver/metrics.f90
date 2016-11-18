@@ -72,7 +72,7 @@ CONTAINS
 		if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
 			call this.metric_tensor_conf()
 		else if(grid_type == 1)then
-			call this.metric_tensor_conf()
+			call this.metric_tensor_equiang()
 		end if
 
 
@@ -213,7 +213,7 @@ CONTAINS
 		real(8) :: A(2,2), G(2,2), det, cos_theta
 
 		dim = this.dim
-		call this.transf_matrix_equiang()
+		call this.transf_matrix_conf()
 
 		do y = this.first_y, this.last_y
 			do x = this.first_x, this.last_x
@@ -246,7 +246,7 @@ CONTAINS
 
 	subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), A(2,2), cos_theta, det
+		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), A(2,2), det
 		integer(4) x, y, dim, i, k, face, step
 
 		dim = this.dim;  step = this.step
@@ -257,7 +257,6 @@ CONTAINS
 		do face = 1, 6
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
-					cos_theta = dcos(this.latlon_c(1, x, y, 2))
 					temp = this.latlon_c(2, x-step:x+step, y, face)
 					this.Tr_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
 
@@ -272,7 +271,6 @@ CONTAINS
 		do face = 1, 6
 			do x = this.first_x, this.last_x
 				do y = this.first_y, this.last_y
-					cos_theta = dcos(this.latlon_c(1, x, y, 2))
 					temp = this.latlon_c(2, x, y-step:y+step, face)
 					this.Tr_to_sph(1,2,x,y,face) = this.partial_c4(temp, delta)
 
