@@ -2,6 +2,7 @@ module printer_ncdf
 
 	use func_var, Only: f_var
 	use grid_var, Only: g_var
+	use diagnostic_mod, Only: diagnostic
 	use netcdf
 
 	implicit none
@@ -11,6 +12,9 @@ module printer_ncdf
 	Public :: printer
 
 	Type printer
+
+		integer(4) :: Wid, Courantid
+
 		CONTAINS
 		Procedure, Public :: init => init
 		Procedure, Public :: to_print => to_print
@@ -22,13 +26,13 @@ module printer_ncdf
 
 
 
-	subroutine init(this, dim, Tmax, speedup, time, Wid, grid_id, ncid, ncid_gr, rescale, grid_type)
+	subroutine init(this, dim, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
 
 		Class(printer) :: this
 		integer(4), intent(in) :: dim, Tmax, speedup, rescale, grid_type
-		integer(4), intent(out) :: time, Wid, grid_id, ncid, ncid_gr
+		integer(4), intent(out) :: time, grid_id, ncid, ncid_gr
 
-		integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid
+		integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid, Wid, Courantid
 		character(40) istring
 		character(80) path1, path2
 
@@ -60,7 +64,12 @@ module printer_ncdf
 		status = nf90_def_dim (ncid, "time", Tmax/speedup + 1, time)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "water", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid)
+		status = nf90_def_var (ncid, "Level", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_def_var (ncid, "CFL", NF90_DOUBLE, (/ xid, yid, faceid, time/), Courantid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
@@ -81,18 +90,23 @@ module printer_ncdf
 		status = nf90_enddef (ncid_gr)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
+		this.Courantid = Courantid;  this.Wid = Wid
+
 	end subroutine
 
 
 
-	subroutine to_print(this, var, time, speedup, Wid, ncid, id)
+	subroutine to_print(this, var, diagn, time, speedup, ncid, id)
 
 		Class(printer) :: this
 		Class(f_var) :: var
-		integer(4), intent(in) :: time, speedup, Wid, ncid, id
+		Class(diagnostic) :: diagn
+		integer(4), intent(in) :: time, speedup, ncid, id
 
 		integer(4) x, y, face, ier
-		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize
+		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize, Wid, Courantid
+
+		Courantid = this.Courantid;  Wid = this.Wid
 
 		ns_y = var.ns_y;  nf_y = var.nf_y
 		ns_x = var.ns_x;  nf_x = var.nf_x
@@ -101,7 +115,11 @@ module printer_ncdf
 		t = 1+time/speedup
 
 		do face = 1, 6
-			status = nf90_put_var(ncid, Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
+			status = nf90_put_var(ncid, Wid, var.u_con(ns_x:nf_x, ns_y:nf_y, face),&
+			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
+
+			status = nf90_put_var(ncid, Courantid, diagn.CFL(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 		end do

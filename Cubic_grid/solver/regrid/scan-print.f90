@@ -10,7 +10,7 @@ module scan_print
 
 	Type printer
 
-	integer(4) :: dim, ncid, ncid_gr, ncid_to, grid_id, Wid, Wid_to, lon_max, lat_max, nc_or_dat
+	integer(4) :: dim, ncid, ncid_gr, ncid_to, grid_id, Wid, Wid_to, lon_max, lat_max, nc_or_dat, Courantid, Courantid_to
 	real(8) :: convert_time
 		CONTAINS
 		Procedure, Public :: init => init
@@ -30,7 +30,7 @@ module scan_print
 		Class(printer) :: this
 		integer(4), intent(in) :: dim, all_time, rescale, grid_type
 
-		integer(4) status, face, ncid, ncid_to, ncid_gr, nvars, grid_id(1:1), Wid(1:1), Wid_to, time
+		integer(4) status, face, ncid, ncid_to, ncid_gr, nvars, grid_id(1:1), Wid(1:2), Wid_to, time, Courantid_to
 		integer(4) latid, lonid
 		real(8) convert_time
 		character(40) istring
@@ -95,15 +95,16 @@ module scan_print
 			status = nf90_def_dim (ncid_to, "lon", 2*this.lon_max+1, lonid)
 			status = nf90_def_dim (ncid_to, "lat", 2*this.lat_max+1, latid)
 			status = nf90_def_dim (ncid_to, "time", all_time, time)
-			status = nf90_def_var (ncid_to, "water", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
+			status = nf90_def_var (ncid_to, "Level", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
+			status = nf90_def_var (ncid_to, "Courant", NF90_DOUBLE, (/ lonid, latid, time/), Courantid_to)
 			status = nf90_enddef (ncid_to)
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
-			this.ncid_to = ncid_to;  this.Wid_to = Wid_to
+			this.ncid_to = ncid_to;  this.Wid_to = Wid_to;  this.Courantid_to = Courantid_to
 		else
 			open(15,file=path3,access="direct",recl=(2*this.lat_max+1)*(2*this.lon_max+1))
 		end if
 
-		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1);
+		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1); this.Courantid = Wid(2);
 
 	end subroutine
 
@@ -113,12 +114,15 @@ module scan_print
 
 		Class(printer) :: this
 		integer(4), intent(in) :: time
-		real(8), intent(out) :: surface_off(0:2*this.dim+1, 0:2*this.dim+1, 1:6)
-		integer(4) x, y, face, ier, status, ncid, Wid, dim
+		real(8), intent(out) :: surface_off(0:2*this.dim+1, 0:2*this.dim+1, 1:6, 1:2)
+		integer(4) x, y, face, ier, status, ncid, Wid, dim, Courantid
 
-		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid
+		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid;  Courantid = this.Courantid
 
-		status = nf90_get_var(ncid, Wid, surface_off(1:2*dim, 1:2*dim, 1:6),&
+		status = nf90_get_var(ncid, Wid, surface_off(1:2*dim, 1:2*dim, 1:6, 1),&
+		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
+
+		status = nf90_get_var(ncid, Courantid, surface_off(1:2*dim, 1:2*dim, 1:6, 2),&
 		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status), "scan_surf"
 	end subroutine
@@ -154,18 +158,21 @@ module scan_print
 
 	subroutine print_surf(this, surface_to, time)
 		Class(printer) :: this
-		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
+		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 1:2)
 		integer(4), intent(in) :: time
-		integer(4) x, y, face, ier, status, Wid_to, ncid_to
+		integer(4) x, y, face, ier, status, Wid_to, ncid_to, Courantid_to
 
-		ncid_to = this.ncid_to;  Wid_to = this.Wid_to
+		ncid_to = this.ncid_to;  Wid_to = this.Wid_to;  Courantid_to = this.Courantid_to
 
 		if(this.nc_or_dat == 0) then
-			status = nf90_put_var(ncid_to, Wid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max),&
+			status = nf90_put_var(ncid_to, Wid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 1),&
+			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
+
+			status = nf90_put_var(ncid_to, Courantid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 2),&
 			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		else
-			write(15, rec=time) real(surface_to(:,:),4)
+			write(15, rec=time) real(surface_to(:,:, 1),4)
 		end if
 	end subroutine
 

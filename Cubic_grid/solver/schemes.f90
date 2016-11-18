@@ -278,7 +278,7 @@ Subroutine FRunge(this, grid, metr, var, i)
 	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), coef(0:3), div, h
 	integer(4) x,y, face, step
 
-	coef(0) = 0d0;  coef(1) = 0d5;  coef(2) = 0d5;  coef(3) = 1d0;
+	coef(0) = 0d0;  coef(1) = 5d-1;  coef(2) = 5d-1;  coef(3) = 1d0;
 
 	dt = grid.dt;  g = grid.g; height = var.height
 	h = this.h

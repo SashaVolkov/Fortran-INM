@@ -13,8 +13,8 @@ implicit none
 		Real(8), Allocatable :: latlon_c_off(:, :, :, :)
 		Real(8), Allocatable :: latlon_c_to(:, :, :)
 		Real(8), Allocatable :: weight(:, :, :)
-		Real(8), Allocatable :: surface_off(:, :, :)
-		Real(8), Allocatable :: surface_to(:, :)
+		Real(8), Allocatable :: surface_off(:, :, :, :)
+		Real(8), Allocatable :: surface_to(:, :, :)
 		integer(4), Allocatable :: indexes_xyface(:, :, :, :)
 		integer(4), Allocatable :: closest_xyface(:, :, :)
 
@@ -56,8 +56,8 @@ CONTAINS
 		lon = this.lon_max; lat = this.lat_max
 
 		Allocate(this.latlon_c_off(1:2, f:l, f:l, 1:6))
-		Allocate(this.surface_off(f:l, f:l, 1:6))
-		Allocate(this.surface_to(-lon:lon, -lat:lat))
+		Allocate(this.surface_off(f:l, f:l, 1:6, 2))
+		Allocate(this.surface_to(-lon:lon, -lat:lat, 2))
 		Allocate(this.weight(1:4, -lat:lat, -lon:lon))
 		Allocate(this.indexes_xyface(1:3, 1:4, -lat:lat, -lon:lon))
 		Allocate(this.closest_xyface(1:3, -lat:lat, -lon:lon))
@@ -190,16 +190,17 @@ CONTAINS
 		integer(4) dim, f, l, lon, lat, x, y, face, i
 
 		! surf_to = sum(w*surf_off)
-		call this.hem_of_face(this.surface_off)
+		call this.hem_of_face(this.surface_off(:,:,:,1))
+		call this.hem_of_face(this.surface_off(:,:,:,2))
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
-				this.surface_to(lon, lat) = 0d0
+				this.surface_to(lon, lat, :) = 0d0
 				do i = 1, 4
 					x = this.indexes_xyface(1, i, lat, lon)
 					y = this.indexes_xyface(2, i, lat, lon)
 					face = this.closest_xyface(3, lat, lon)
-					this.surface_to(lon, lat) =  this.surface_to(lon, lat) + this.surface_off(x,y,face)*this.weight(i, lat, lon)
+					this.surface_to(lon, lat, :) =  this.surface_to(lon, lat, :) + this.surface_off(x,y,face, :)*this.weight(i, lat, lon)
 				end do
 			end do
 		end do
