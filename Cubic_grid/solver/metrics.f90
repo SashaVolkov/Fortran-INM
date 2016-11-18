@@ -221,7 +221,7 @@ CONTAINS
 			A(:,:) = this.Tr_to_sph(:, :, x, y, 2)
 			cos_theta = dcos(this.latlon_c(1, x, y, 2))
 
-			this.G_tensor(1, 1, x, y) = (A(1, 1)**2)*(cos_theta**2) + (A(2, 1)**2)*(cos_theta**2)
+			this.G_tensor(1, 1, x, y) = (A(1, 1)**2)*(cos_theta**2) + (A(2, 1)**2)
 			this.G_tensor(1, 2, x, y) = (A(1, 1)*A(1,2))*(cos_theta**2) + A(2, 1)*A(2,2)
 			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
 			this.G_tensor(2, 2, x, y) = (A(1, 2)**2)*(cos_theta**2) + A(2, 2)**2
@@ -262,7 +262,7 @@ CONTAINS
 					this.Tr_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
 
 					temp = this.latlon_c(1, x-step:x+step, y, face)
-					this.Tr_to_sph(1,2,x,y,face) = this.partial_c4(temp, delta)
+					this.Tr_to_sph(2,1,x,y,face) = this.partial_c4(temp, delta)
 				end do
 			end do
 		end do
@@ -274,7 +274,7 @@ CONTAINS
 				do y = this.first_y, this.last_y
 					cos_theta = dcos(this.latlon_c(1, x, y, 2))
 					temp = this.latlon_c(2, x, y-step:y+step, face)
-					this.Tr_to_sph(2,1,x,y,face) = this.partial_c4(temp, delta)
+					this.Tr_to_sph(1,2,x,y,face) = this.partial_c4(temp, delta)
 
 					temp = this.latlon_c(1, x, y-step:y+step, face)
 					this.Tr_to_sph(2,2,x,y,face) = this.partial_c4(temp, delta)
