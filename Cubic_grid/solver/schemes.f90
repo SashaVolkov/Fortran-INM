@@ -125,10 +125,16 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 	Type(der) :: d
 
 	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), div, h
-	integer(4) face, x, y, dim, step
+	integer(4) face, x, y, dim, step, i
 
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim;
 	dt = grid.dt;  step = this.space_step;  h = this.h
+
+	this.ku_con(:,:,:,0) = var_pr.u_con(:,:,:)
+	this.kv_con(:,:,:,0) = var_pr.v_con(:,:,:)
+	this.ku_cov(:,:,:,0) = var_pr.u_cov(:,:,:)
+	this.kv_cov(:,:,:,0) = var_pr.v_cov(:,:,:)
+	this.kh(:,:,:,0) = var_pr.h_height(:,:,:)
 
 
 	do face = 1, 6
@@ -152,12 +158,6 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 		end do
 	end do
 
-	this.ku_con(:,:,:,0) = var_pr.u_con(:,:,:)
-	this.kv_con(:,:,:,0) = var_pr.v_con(:,:,:)
-	this.ku_cov(:,:,:,0) = var_pr.u_cov(:,:,:)
-	this.kv_cov(:,:,:,0) = var_pr.v_cov(:,:,:)
-	this.kh(:,:,:,0) = var_pr.h_height(:,:,:)
-
 	call var_pr.equal(var, metr, 1)
 	call var_pr.equal(var, metr, 0)
 	call msg.msg(var_pr, paral, 1)
@@ -165,34 +165,37 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 	call var_pr.interpolate(inter, metr, 1)
 	call var_pr.interpolate(inter, metr, 0)
 
+	do i = 1, 2
 
-	do face = 1, 6
-		do y = var.ns_y, var.nf_y
-			do x = var.ns_x, var.nf_x
+		do face = 1, 6
+			do y = var.ns_y, var.nf_y
+				do x = var.ns_x, var.nf_x
 
-				temp1(:) = (var_pr.h_height(x-step:x+step, y, face) + this.kh(x-step:x+step, y, face, 0))/2d0
-				partial = d.partial_c(temp1, h, step)
-				var.u_cov(x, y, face) = this.ku_cov(x, y, face, 0) - dt*g*partial
+					temp1(:) = (var_pr.h_height(x-step:x+step, y, face) + this.kh(x-step:x+step, y, face, 0))/2d0
+					partial = d.partial_c(temp1, h, step)
+					var.u_cov(x, y, face) = this.ku_cov(x, y, face, 0) - dt*g*partial
 
-				temp1(:) = (var_pr.h_height(x, y-step:y+step, face) + this.kh(x, y-step:y+step, face, 0))/2d0
-				partial = d.partial_c(temp1, h, step)
-				var.v_cov(x, y, face) = this.kv_cov(x, y, face, 0) - dt*g*partial
+					temp1(:) = (var_pr.h_height(x, y-step:y+step, face) + this.kh(x, y-step:y+step, face, 0))/2d0
+					partial = d.partial_c(temp1, h, step)
+					var.v_cov(x, y, face) = this.kv_cov(x, y, face, 0) - dt*g*partial
 
-				temp1(:) = (var_pr.u_con(x-step:x+step, y, face) + this.ku_con(x-step:x+step, y, face, 0))/2d0
-				temp2(:) = (var_pr.v_con(x, y-step:y+step, face) + this.kv_con(x, y-step:y+step, face, 0))/2d0
-				div = d.div(metr, temp1, temp2, h, x, y, step)
-				var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*height*div
+					temp1(:) = (var_pr.u_con(x-step:x+step, y, face) + this.ku_con(x-step:x+step, y, face, 0))/2d0
+					temp2(:) = (var_pr.v_con(x, y-step:y+step, face) + this.kv_con(x, y-step:y+step, face, 0))/2d0
+					div = d.div(metr, temp1, temp2, h, x, y, step)
+					var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*height*div
 
+				end do
 			end do
 		end do
-	end do
 
-	call var_pr.equal(var, metr, 1)
-	call var_pr.equal(var, metr, 0)
-	call msg.msg(var_pr, paral, 1)
-	call msg.msg(var_pr, paral, 0)
-	call var_pr.interpolate(inter, metr, 1)
-	call var_pr.interpolate(inter, metr, 0)
+		call var_pr.equal(var, metr, 1)
+		call var_pr.equal(var, metr, 0)
+		call msg.msg(var_pr, paral, 1)
+		call msg.msg(var_pr, paral, 0)
+		call var_pr.interpolate(inter, metr, 1)
+		call var_pr.interpolate(inter, metr, 0)
+
+	end do
 
 end subroutine
 

@@ -150,7 +150,7 @@ CONTAINS
 		pi = 314159265358979323846d-20
 
 		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
-		zero(:) = (/0d0, 5d-1*pi/)
+		zero(:) = (/0d0, -5d-1*pi/)
 
 		do face = 1, 6
 

@@ -72,7 +72,7 @@ CONTAINS
 		if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
 			call this.metric_tensor_conf()
 		else if(grid_type == 1)then
-			call this.metric_tensor_equiang()
+			call this.metric_tensor_conf()
 		end if
 
 
@@ -213,18 +213,18 @@ CONTAINS
 		real(8) :: A(2,2), G(2,2), det, cos_theta
 
 		dim = this.dim
-		call this.transf_matrix_conf()
+		call this.transf_matrix_equiang()
 
 		do y = this.first_y, this.last_y
 			do x = this.first_x, this.last_x
 
-			A(:,:) = this.Tr_to_cube(:, :, x, y, 2)
+			A(:,:) = this.Tr_to_sph(:, :, x, y, 2)
 			cos_theta = dcos(this.latlon_c(1, x, y, 2))
 
-			this.G_tensor(1, 1, x, y) = (A(1, 1)**2) + A(1, 2)**2
-			this.G_tensor(1, 2, x, y) = (A(1, 1)*A(2,1)) + A(1, 2)*A(2,2)
+			this.G_tensor(1, 1, x, y) = (A(1, 1)**2)*(cos_theta**2) + (A(2, 1)**2)*(cos_theta**2)
+			this.G_tensor(1, 2, x, y) = (A(1, 1)*A(1,2))*(cos_theta**2) + A(2, 1)*A(2,2)
 			this.G_tensor(2, 1, x, y) = this.G_tensor(1, 2, x, y)
-			this.G_tensor(2, 2, x, y) = (A(2, 1)**2) + A(2, 2)**2
+			this.G_tensor(2, 2, x, y) = (A(1, 2)**2)*(cos_theta**2) + A(2, 2)**2
 
 			G(:,:) = this.G_tensor(:, :, x, y)
 			det = G(1,1)*G(2,2) - G(2,1)*G(1,2)
@@ -259,10 +259,10 @@ CONTAINS
 				do x = this.first_x, this.last_x
 					cos_theta = dcos(this.latlon_c(1, x, y, 2))
 					temp = this.latlon_c(2, x-step:x+step, y, face)
-					this.Tr_to_cube(1,1,x,y,face) = this.partial_c4(temp, delta)*cos_theta
+					this.Tr_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
 
 					temp = this.latlon_c(1, x-step:x+step, y, face)
-					this.Tr_to_cube(1,2,x,y,face) = this.partial_c4(temp, delta)
+					this.Tr_to_sph(1,2,x,y,face) = this.partial_c4(temp, delta)
 				end do
 			end do
 		end do
@@ -274,18 +274,18 @@ CONTAINS
 				do y = this.first_y, this.last_y
 					cos_theta = dcos(this.latlon_c(1, x, y, 2))
 					temp = this.latlon_c(2, x, y-step:y+step, face)
-					this.Tr_to_cube(2,1,x,y,face) = this.partial_c4(temp, delta)*cos_theta
+					this.Tr_to_sph(2,1,x,y,face) = this.partial_c4(temp, delta)
 
 					temp = this.latlon_c(1, x, y-step:y+step, face)
-					this.Tr_to_cube(2,2,x,y,face) = this.partial_c4(temp, delta)
+					this.Tr_to_sph(2,2,x,y,face) = this.partial_c4(temp, delta)
 
-					A = this.Tr_to_cube(:,:,x,y,face)
+					A = this.Tr_to_sph(:,:,x,y,face)
 					det = A(1,1)*A(2,2) - A(2,1)*A(1,2)
 
-					this.Tr_to_sph(1,1,x,y,face) = A(2,2)/det
-					this.Tr_to_sph(1,2,x,y,face) = -A(1,2)/det
-					this.Tr_to_sph(2,1,x,y,face) = -A(2,1)/det
-					this.Tr_to_sph(2,2,x,y,face) = A(1,1)/det
+					this.Tr_to_cube(1,1,x,y,face) = A(2,2)/det
+					this.Tr_to_cube(1,2,x,y,face) = -A(1,2)/det
+					this.Tr_to_cube(2,1,x,y,face) = -A(2,1)/det
+					this.Tr_to_cube(2,2,x,y,face) = A(1,1)/det
 
 				end do
 			end do
