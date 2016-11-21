@@ -24,20 +24,20 @@ program regrid
 
 	call inter.init(dim)
 	call scan.init(dim, all_time, convert_time, rescale, grid_type)
-! 	call d.init(convert_time, grid_type, rescale)
+	call d.init(convert_time, grid_type, rescale)
 
 	call scan.scan_grid(inter.latlon_c_off)
-	call inter.weight_find(geom)
+	call inter.weight_find(geom, scan)
 	do time = 1, all_time
 		call scan.scan_surf(time, inter.surface_off)
 		call inter.interpolate()
-! 		call scan.scan_precise(time, d.surface_precise)
-! 		call d.L_norm((time-1)*speedup, inter.surface_to)
+		call scan.scan_precise(time, d.surface_precise)
+		call d.L_norm((time-1)*speedup, inter.surface_to)
 		call scan.print_surf(inter.surface_to, time)
 	end do
 
 	call inter.deinit()
 	call scan.deinit()
-! 	call d.deinit()
+	call d.deinit()
 
 end program

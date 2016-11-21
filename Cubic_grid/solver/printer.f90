@@ -115,7 +115,7 @@ module printer_ncdf
 		t = 1+time/speedup
 
 		do face = 1, 6
-			status = nf90_put_var(ncid, Wid, var.u_con(ns_x:nf_x, ns_y:nf_y, face),&
+			status = nf90_put_var(ncid, Wid, var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 

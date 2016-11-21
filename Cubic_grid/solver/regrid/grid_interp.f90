@@ -60,7 +60,7 @@ CONTAINS
 		Allocate(this.surface_to(-lon:lon, -lat:lat, 2))
 		Allocate(this.weight(1:4, -lat:lat, -lon:lon))
 		Allocate(this.indexes_xyface(1:3, 1:4, -lat:lat, -lon:lon))
-		Allocate(this.closest_xyface(1:3, -lat:lat, -lon:lon))
+		Allocate(this.closest_xyface(1:3, -lon:lon, -lat:lat))
 
 	end subroutine
 
@@ -77,18 +77,24 @@ CONTAINS
 
 
 
-	subroutine weight_find(this, g)
+	subroutine weight_find(this, g, printer_scaner)
 		Class(interp) :: this
+		Class(printer) :: printer_scaner
 		Class(geometry) :: g
-		integer(4) lon, lat, x(4), y(4), face
+		integer(4) lon, lat, x(4), y(4), face(4)
 		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2)
 		real(8), parameter :: pi = 314159265358979323846d-20
 
 		call this.hem_of_face(this.latlon_c_off(1, :, :, :))
 		call this.hem_of_face(this.latlon_c_off(2, :, :, :))
-		call this.nearest_point_search(g)
-		call this.cell_search(g)
+		if(printer_scaner.point_find == 0) then
+			call printer_scaner.scan_point(this.closest_xyface)
+		else if(printer_scaner.point_find == 1) then
+			call this.nearest_point_search(g)
+			call printer_scaner.print_point(this.closest_xyface)
+		end if
 
+		call this.cell_search(g)
 
 
 		do lon = -this.lon_max, this.lon_max
@@ -96,26 +102,26 @@ CONTAINS
 
 				latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0
 
-				face = this.indexes_xyface(3, 1, lat, lon)
+				face(:) = this.indexes_xyface(3, :, lat, lon)
 
 				x(:) = this.indexes_xyface(1, :, lat, lon)
 				y(:) = this.indexes_xyface(2, :, lat, lon)
 				
 
-				latlon1(:) = this.latlon_c_off(:, x(1), y(1), face)
-				latlon2(:) = this.latlon_c_off(:, x(2), y(2), face)
+				latlon1(:) = this.latlon_c_off(:, x(1), y(1), face(1))
+				latlon2(:) = this.latlon_c_off(:, x(2), y(2), face(2))
 				call g.triangle(latlon1, latlon2, latlon, S(1))
 
-				latlon1(:) = this.latlon_c_off(:, x(2), y(2), face)
-				latlon2(:) = this.latlon_c_off(:, x(3), y(3), face)
+				latlon1(:) = this.latlon_c_off(:, x(2), y(2), face(2))
+				latlon2(:) = this.latlon_c_off(:, x(3), y(3), face(3))
 				call g.triangle(latlon1, latlon2, latlon, S(2))
 
-				latlon1(:) = this.latlon_c_off(:, x(3), y(3), face)
-				latlon2(:) = this.latlon_c_off(:, x(4), y(4), face)
+				latlon1(:) = this.latlon_c_off(:, x(3), y(3), face(3))
+				latlon2(:) = this.latlon_c_off(:, x(4), y(4), face(4))
 				call g.triangle(latlon1, latlon2, latlon, S(3))
 				
-				latlon1(:) = this.latlon_c_off(:, x(4), y(4), face)
-				latlon2(:) = this.latlon_c_off(:, x(1), y(1), face)
+				latlon1(:) = this.latlon_c_off(:, x(4), y(4), face(4))
+				latlon2(:) = this.latlon_c_off(:, x(1), y(1), face(1))
 				call g.triangle(latlon1, latlon2, latlon, S(4))
 
 				Big_S = (S(1) + S(3))*(S(2) + S(4))
@@ -150,12 +156,12 @@ CONTAINS
 							if(lat < -50)then
 								angle = g.angle(this.latlon_c_off(1:2, x, y, 1), latlon)
 								if(angle < min) then
-									min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,1/)
+									min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,1/)
 								end if
 							else if(lat > 50)then
 								angle = g.angle(this.latlon_c_off(1:2, x, y, 6), latlon)
 								if(angle < min) then
-									min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,6/)
+									min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,6/)
 								end if
 							else
 
@@ -170,10 +176,10 @@ CONTAINS
 					end if
 
 								do i = 1, 3
-									if( (this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0.3 .and. (this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0.3 ) then
+									if( (this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0.5 .and. (this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0.5 ) then
 										angle = g.angle(this.latlon_c_off(1:2, x, y, face(i)), latlon)
 										if(angle < min .and. angle >= 0d0) then
-											min = angle;  this.closest_xyface(1:3, lat, lon) = (/x,y,face(i)/)
+											min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,face(i)/)
 										end if
 									end if
 								end do
@@ -199,7 +205,7 @@ CONTAINS
 				do i = 1, 4
 					x = this.indexes_xyface(1, i, lat, lon)
 					y = this.indexes_xyface(2, i, lat, lon)
-					face = this.closest_xyface(3, lat, lon)
+					face = this.closest_xyface(3, lon, lat)
 					this.surface_to(lon, lat, :) =  this.surface_to(lon, lat, :) + this.surface_off(x,y,face, :)*this.weight(i, lat, lon)
 				end do
 			end do
@@ -286,9 +292,10 @@ CONTAINS
 
 				latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0; min = 10000.0
 
-				x = this.closest_xyface(1, lat, lon)
-				y = this.closest_xyface(2, lat, lon)
-				face = this.closest_xyface(3, lat, lon)
+				x = this.closest_xyface(1, lon, lat)
+				y = this.closest_xyface(2, lon, lat)
+				face = this.closest_xyface(3, lon, lat)
+
 
 				x_cell(1) = x - 1; y_cell(1) = y + 1
 				x_cell(2) = x + 1; y_cell(2) = y + 1
@@ -305,6 +312,7 @@ CONTAINS
 					y_cell(2) = 1
 				end if
 
+						! print *, "Hui", lat, x, y, face
 
 					do i = 1, 4
 						angle = g.angle(this.latlon_c_off(:, x_cell(i), y_cell(i), face), latlon)

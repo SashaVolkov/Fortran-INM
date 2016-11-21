@@ -10,14 +10,16 @@ module scan_print
 
 	Type printer
 
-	integer(4) :: dim, ncid, ncid_gr, ncid_to, grid_id, Wid, Wid_to, lon_max, lat_max, nc_or_dat, Courantid, Courantid_to
+	integer(4) :: dim, ncid, ncid_gr, ncid_to, grid_id, Wid, Wid_to, lon_max, lat_max, nc_or_dat, Courantid, Courantid_to, point_id, ncid_point, point_find
 	real(8) :: convert_time
 		CONTAINS
 		Procedure, Public :: init => init
 		Procedure, Public :: scan_surf => scan_surf
 		Procedure, Public :: scan_precise => scan_precise
 		Procedure, Public :: scan_grid => scan_grid
+		Procedure, Public :: scan_point => scan_point
 		Procedure, Public :: print_surf => print_surf
+		Procedure, Public :: print_point => print_point
 		Procedure, Public :: deinit => deinit
 	End Type
 
@@ -30,8 +32,9 @@ module scan_print
 		Class(printer) :: this
 		integer(4), intent(in) :: dim, all_time, rescale, grid_type
 
-		integer(4) status, face, ncid, ncid_to, ncid_gr, nvars, grid_id(1:1), Wid(1:2), Wid_to, time, Courantid_to
-		integer(4) latid, lonid
+		integer(4) status, face, ncid, ncid_to, ncid_gr, nvars, grid_id(1:1), Wid(1:2), Wid_to, time, Courantid_to, point_id(1:1), ncid_point, point_find
+		logical file_exist
+		integer(4) latid, lonid, coord
 		real(8) convert_time
 		character(40) istring
 		character(80) path1, path2, path3, path4
@@ -43,42 +46,40 @@ module scan_print
 
 		if(grid_type == 0) then
 			if(rescale == 0) then
-				path1 = trim('../datFiles/simple/'//"surface_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/simple/'//"grid_C"//trim(adjustl(istring))//".nc")
+
+				path1 = trim('../datFiles/simple/surface_C'//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/simple/grid_C'//trim(adjustl(istring))//".nc")
 				if(this.nc_or_dat == 0) then
-					path3 = trim('../datFiles/simple/'//"surface_ll_C"//trim(adjustl(istring))//".nc")
+					path3 = trim('../datFiles/simple/surface_ll_C'//trim(adjustl(istring))//".nc")
 				else
-					path3 = trim('../datFiles/simple/'//"surface_ll_C"//trim(adjustl(istring))//".dat")
+					path3 = trim('../datFiles/simple/surface_ll_C'//trim(adjustl(istring))//".dat")
 				end if
-				path4 = trim('../datFiles/simple/')
+				path4 = trim('../datFiles/simple/closest_point_ll_C'//trim(adjustl(istring))//".dat")
+
 			else if(rescale == 1) then
-				path1 = trim('../datFiles/tan/'//"surface_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/tan/'//"grid_C"//trim(adjustl(istring))//".nc")
+
+				path1 = trim('../datFiles/tan/surface_C'//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/tan/grid_C'//trim(adjustl(istring))//".nc")
 				if(this.nc_or_dat == 0) then
-					path3 = trim('../datFiles/tan/'//"surface_ll_C"//trim(adjustl(istring))//".nc")
+					path3 = trim('../datFiles/tan/surface_ll_C'//trim(adjustl(istring))//".nc")
 				else
-					path3 = trim('../datFiles/tan/'//"surface_ll_C"//trim(adjustl(istring))//".dat")
+					path3 = trim('../datFiles/tan/surface_ll_C'//trim(adjustl(istring))//".dat")
 				end if
-				path4 = trim('../datFiles/tan/')
-			else if(rescale == 2) then
-				path1 = trim('../datFiles/'//"surface_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/'//"grid_C"//trim(adjustl(istring))//".nc")
-				if(this.nc_or_dat == 0) then
-					path3 = trim('../datFiles/'//"surface_conf_exp_ll_C"//trim(adjustl(istring))//".nc")
-				else
-					path3 = trim('../datFiles/exp/'//"surface_ll_C"//trim(adjustl(istring))//".dat")
-				end if
-				path4 = trim('../datFiles/exp/')
+				path4 = trim('../datFiles/tan/closest_point_ll_C'//trim(adjustl(istring))//".dat")
+
 			end if
+
 		else if(grid_type == 1) then
-				path1 = trim('../datFiles/equiang/'//"surface_C"//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/equiang/'//"grid_C"//trim(adjustl(istring))//".nc")
+
+				path1 = trim('../datFiles/equiang/surface_C'//trim(adjustl(istring))//".nc")
+				path2 = trim('../datFiles/equiang/grid_C'//trim(adjustl(istring))//".nc")
 				if(this.nc_or_dat == 0) then
-					path3 = trim('../datFiles/equiang/'//"surface_ll_C"//trim(adjustl(istring))//".nc")
+					path3 = trim('../datFiles/equiang/surface_ll_C'//trim(adjustl(istring))//".nc")
 				else
-					path3 = trim('../datFiles/equiang/'//"surface_ll_C"//trim(adjustl(istring))//".dat")
+					path3 = trim('../datFiles/equiang/surface_ll_C'//trim(adjustl(istring))//".dat")
 				end if
-				path4 = trim('../datFiles/equiang/')
+				path4 = trim('../datFiles/equiang/closest_point_ll_C'//trim(adjustl(istring))//".dat")
+
 		end if
 
 
@@ -104,7 +105,17 @@ module scan_print
 			open(15,file=path3,access="direct",recl=(2*this.lat_max+1)*(2*this.lon_max+1))
 		end if
 
-		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1); this.Courantid = Wid(2);
+			inquire(file=path4,exist=file_exist)
+			if(file_exist) then
+				point_find = 0
+				open(UNIT=16,file=path4,FORM="FORMATTED",STATUS="OLD",ACTION="READ")
+			else
+				point_find = 1
+				open(UNIT=16,file=path4,FORM="FORMATTED",STATUS="NEW",ACTION="WRITE")
+			end if
+
+		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1); this.Courantid = Wid(2);  this.point_find = point_find
+		this.ncid_point = ncid_point;  this.point_id = point_id(1)
 
 	end subroutine
 
@@ -156,11 +167,19 @@ module scan_print
 
 
 
+	subroutine scan_point(this, point)
+		Class(printer) :: this
+		integer(4), intent(out) :: point(1:3, -this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
+		read(16, *) point(1:3, -this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
+	end subroutine
+
+
+
 	subroutine print_surf(this, surface_to, time)
 		Class(printer) :: this
 		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 1:2)
 		integer(4), intent(in) :: time
-		integer(4) x, y, face, ier, status, Wid_to, ncid_to, Courantid_to
+		integer(4) status, Wid_to, ncid_to, Courantid_to
 
 		ncid_to = this.ncid_to;  Wid_to = this.Wid_to;  Courantid_to = this.Courantid_to
 
@@ -174,6 +193,13 @@ module scan_print
 		else
 			write(15, rec=time) real(surface_to(:,:, 1),4)
 		end if
+	end subroutine
+
+
+	subroutine print_point(this, point)
+		Class(printer) :: this
+		integer(4), intent(in) :: point(1:3, -this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
+			write(16, *) point(1:3, -this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
 	end subroutine
 
 
