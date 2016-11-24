@@ -20,7 +20,7 @@ program regrid
 	close(9)
 
 	all_time = Tmax/speedup + 1
-	convert_time = dt/3600d0/24d0
+	convert_time = dt
 
 	call inter.init(dim)
 	call scan.init(dim, all_time, convert_time, rescale, grid_type)
@@ -33,7 +33,7 @@ program regrid
 		call inter.interpolate()
 		call scan.scan_precise(time, d.surface_precise)
 		call d.L_norm((time-1)*speedup, inter.surface_to)
-		call scan.print_surf(inter.surface_to, time)
+		call scan.print_surf(real(inter.surface_to(:,:,1),4), time)
 	end do
 
 	call inter.deinit()

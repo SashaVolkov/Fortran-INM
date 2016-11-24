@@ -15,7 +15,7 @@ module diagnostic_mod
 	Type diagnostic
 
 		Real(8), Allocatable :: CFL(:,:,:)
-		integer(4) Tmax, dim, step
+		integer(4) Tmax, dim, step, flag
 		real(8) convert_time, L10, L20, L_inf0
 
 
@@ -46,6 +46,7 @@ CONTAINS
 
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
 		this.convert_time = grid.dt/3600d0/24d0
+		this.flag = 1
 
 
 		call this.alloc(paral)
@@ -73,7 +74,7 @@ CONTAINS
 			open(9,file='datFiles/'//trim(istring)//'CFL.dat')
 			! open(11,file='datFiles/'//trim(istring)//'L1.dat')
 			! open(12,file='datFiles/'//trim(istring)//'L2.dat')
-			! open(13,file='datFiles/'//trim(istring)//'L_inf.dat')
+			open(13,file='datFiles/'//trim(istring)//'L_inf_cube.dat')
 
 		end if
 
@@ -103,7 +104,7 @@ CONTAINS
 			close(9)
 			! close(11)
 			! close(12)
-			! close(13)
+			close(13)
 		end if
 
 	end subroutine
@@ -125,8 +126,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.u_cov(x, y, face)*grid.dt/(grid.real_dist(x,y))) +&
-					 abs(func.v_cov(x, y, face)*grid.dt/(grid.real_dist(x,y)))
+					this.CFL(x, y, face) = abs(func.u_cov(x, y, face)*grid.dt/(grid.delta_on_cube)) +&
+					 abs(func.v_cov(x, y, face)*grid.dt/(grid.delta_on_cube))
 
 				end do
 			end do
@@ -145,52 +146,20 @@ CONTAINS
 		Class(diagnostic) :: this
 		Class(g_var) :: grid
 		Class(f_var) :: func
-! 		real(8), intent(in) :: func(-this.dim:this.dim, -this.dim:this.dim, 1:6)
 		integer(4), intent(in) :: time
 
 		integer(4) face, x, y, id, ier
 		real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square
 
-		L1 = 0d0;  L2 = 0d0;  L_inf = 0d0
-		if(time == 1) then
-			this.L10 = 0d0;  this.L20 = 0d0;  this.L_inf0 = 0d0
-		end if
-
-		do face = 1, 6
-			do y = func.ns_y, func.nf_y
-				do x = func.ns_x, func.nf_x
-
-					if(time == 1) then
-						F1 = func.h_starter(x, y, face)
-					else
-						F1 = (func.h_height(x, y, face) - func.h_starter(x, y, face))
-					end if
-
-					square = grid.triangle_area(1, x, y) + grid.triangle_area(2, x, y)
-					L1 = abs(F1)*square + L1
-					L2 = F1*F1*square + L2
-
-				end do
-			end do
-		end do
-
 		L_inf = MAXVAL(abs(func.h_height))
-
 		call MPI_Allreduce(L_inf, L_inf_all, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-		call MPI_Allreduce(L1, L1_all, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
-		call MPI_Allreduce(L2, L2_all, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
-		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 
-		L2_all = dsqrt(L2_all)
-
-		if(time == 1) then
-			this.L10 = L1_all;  this.L20 = L2_all; this.L_inf0 = L_inf_all
-		end if
-
-		if (id == 0 .and. time > 1) then
-			write(11, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs(L1_all/this.L10)
-			write(12, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs(L2_all/this.L20)
-			write(13, FMT = "(f40.6, f40.6)"),time*this.convert_time, abs((L_inf_all - this.L_inf0)/this.L_inf0)
+		if (id == 0 ) then
+			if ( this.flag == 1 ) then
+				write(13, FMT = *), 100
+				this.flag = 0
+			end if
+			write(13, FMT = *), abs(L_inf_all)
 		end if
 
 

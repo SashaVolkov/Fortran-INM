@@ -32,7 +32,7 @@ CONTAINS
 		character(16) istring
 
 		this.lon_max = 180;  this.lat_max = 90
-		this.convert_time = convert_time
+		this.convert_time = convert_time/(644d0*4000d0)
 
 		if (grid_type == 1) then
 			istring = 'equiang/'
@@ -51,6 +51,7 @@ CONTAINS
 		open(11,file='../datFiles/'//trim(istring)//'L1.dat')
 		open(12,file='../datFiles/'//trim(istring)//'L2.dat')
 		open(13,file='../datFiles/'//trim(istring)//'L_inf.dat')
+		open(14,file='../datFiles/'//trim(istring)//'L_inf_cube.dat', FORM="FORMATTED",STATUS="OLD",ACTION="READ")
 
 	end subroutine
 
@@ -74,6 +75,7 @@ CONTAINS
 		close(11)
 		close(12)
 		close(13)
+		close(14)
 	end subroutine
 
 
@@ -110,14 +112,14 @@ CONTAINS
 
 
 		L2 = sqrt(L2)
-		L_inf = MAXVAL(abs(this.surface_precise(-this.lon_max+1:this.lon_max-1, -this.lat_max+1:this.lat_max-1) - surface_to(-this.lon_max+1:this.lon_max-1, -this.lat_max+1:this.lat_max-1)))
+		read(14, *), L_inf
 
 		L2_prec = sqrt(L2_prec)
 		L_inf_prec = MAXVAL(abs(this.surface_precise(-this.lon_max+1:this.lon_max-1, -this.lat_max+1:this.lat_max-1)))
 
 			write(11, *),time*this.convert_time, abs(L1/L1_prec)
 			write(12, *),time*this.convert_time, abs(L2/L2_prec)
-			write(13, *),time*this.convert_time, abs(L_inf/L_inf_prec)
+			write(13, *),time*this.convert_time, abs(L_inf/abs(L_inf_prec) - 1)
 
 
 	end subroutine

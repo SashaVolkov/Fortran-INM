@@ -250,7 +250,7 @@ CONTAINS
 		integer(4) x, y, dim, i, k, face, step
 
 		dim = this.dim;  step = this.step
-		delta = (1d0/dble(dim + 5d-1))
+		delta = (1d0/dble(dim))
 
 		call this.hem_of_face(this.latlon_c(:, :, :, 1:6), 1)
 
@@ -383,15 +383,15 @@ CONTAINS
 
 
 
-	! real(8) function partial_c4(this, fun, h)
-	! 	Class(metric) :: this
-	! 	real(8), intent(in) :: fun(-3:3), h
-	! 	real(8) A , B, C, D, E, F
+! 	real(8) function partial_c4(this, fun, h)
+! 		Class(metric) :: this
+! 		real(8), intent(in) :: fun(-3:3), h
+! 		real(8) A , B, C, D, E, F
 
-	! 	A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h);  E = 1d0/(60d0*h);  F = - 1d0/(60d0*h)
-	! 	partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
+! 		A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h);  E = 1d0/(60d0*h);  F = - 1d0/(60d0*h)
+! 		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
 
-	! end function
+! 	end function
 
 
 end module

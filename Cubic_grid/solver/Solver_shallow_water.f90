@@ -77,9 +77,11 @@ implicit none
 		! call sch.Linear(var, var_prev, grid, metr, inter, paral, msg)
 		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
 ! 		call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
-		call diagn.L_norm(var_prev, grid, time)
 		call diagn.Courant(var_prev, grid, metr, time)
-			if(mod(time, speedup) == 0) call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
+			if(mod(time, speedup) == 0) then
+				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
+				call diagn.L_norm(var_prev, grid, time)
+			end if
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
@@ -96,7 +98,7 @@ implicit none
 ! 		print '(" Y max step = ", f10.2, " m")', grid.dy_max
 ! 		print '(" Y min step = ", f10.2, " m")', grid.dy_min
 ! 		print '(" Y min/max = ", f6.4)', grid.dy_min/grid.dy_max
-! 		print '(" X max/min = ", f6.4)', grid.dx_max/grid.dx_min
+		print '(" max/min = ", f10.2)', grid.max_to_min
 		! print '(" latlon = ", f8.3, f8.3)', grid.latlon(1, 1, 1, 2) * 180.0/pi
 		! print '(" latlon = ", f8.3, f8.3)', grid.latlon(1, 0, 1, 2) * 180.0/pi
 		print '(" np = ", I5)', np

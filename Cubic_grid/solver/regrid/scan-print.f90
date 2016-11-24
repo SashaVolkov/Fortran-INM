@@ -177,21 +177,21 @@ module scan_print
 
 	subroutine print_surf(this, surface_to, time)
 		Class(printer) :: this
-		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 1:2)
+		real(4), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
 		integer(4), intent(in) :: time
 		integer(4) status, Wid_to, ncid_to, Courantid_to
 
 		ncid_to = this.ncid_to;  Wid_to = this.Wid_to;  Courantid_to = this.Courantid_to
 
 		if(this.nc_or_dat == 0) then
-			status = nf90_put_var(ncid_to, Wid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 1),&
+			status = nf90_put_var(ncid_to, Wid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max),&
 			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
 
-			status = nf90_put_var(ncid_to, Courantid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 2),&
-			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
-			if(status /= nf90_NoErr) print *, nf90_strerror(status)
+! 			status = nf90_put_var(ncid_to, Courantid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 2),&
+! 			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
+! 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		else
-			write(15, rec=time) real(surface_to(:,:, 1),4)
+! 			write(15, rec=time) real(surface_to(:,:, 1),4)
 		end if
 	end subroutine
 

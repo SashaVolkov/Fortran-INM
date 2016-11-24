@@ -312,7 +312,6 @@ CONTAINS
 					y_cell(2) = 1
 				end if
 
-						! print *, "Hui", lat, x, y, face
 
 					do i = 1, 4
 						angle = g.angle(this.latlon_c_off(:, x_cell(i), y_cell(i), face), latlon)

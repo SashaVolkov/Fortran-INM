@@ -35,7 +35,7 @@ implicit none
 		Real(8), Allocatable :: square_angles(:, :, :)
 
 		Real(8) :: four_order_const(5)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
-		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube
+		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube, max_to_min
 		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type
 		integer(4) first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
@@ -100,7 +100,7 @@ CONTAINS
 		Allocate(this.latlon(2, f:l+1 , f:l+1, 6))
 
 		Allocate(this.square(1:2*dim, 1:2*dim))
-		Allocate(this.real_dist(this.ns_xy(1):this.nf_xy(1), this.ns_xy(2):this.nf_xy(2)))
+		Allocate(this.real_dist(1:2*dim, 1:2*dim))
 		Allocate(this.triangle_area(1:2, 1:2*dim, 1:2*dim))
 		Allocate(this.triangle_angles(1:6, 1:2*dim, 1:2*dim))
 		Allocate(this.square_angles(1:4, 1:2*dim, 1:2*dim))
@@ -193,11 +193,13 @@ CONTAINS
 			end do
 		end do
 
-		do x = this.ns_xy(1), this.nf_xy(1)
-			do y = this.ns_xy(2), this.nf_xy(2)
+		do x = 2, 2*dim
+			do y = 1, 2*dim
 				this.real_dist(x,y) = g.dist(this.latlon_c(:, y, x, 2), this.latlon_c(:, y, x-1, 2))
 			end do
 		end do
+
+		this.max_to_min = maxval(this.real_dist(2:2*dim, 1:2*dim))/minval(this.real_dist(2:2*dim, 1:2*dim))
 
 	end subroutine
 
