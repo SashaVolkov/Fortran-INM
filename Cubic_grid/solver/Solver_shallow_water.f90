@@ -75,8 +75,8 @@ implicit none
 
 	do time = 1, Tmax
 		! call sch.Linear(var, var_prev, grid, metr, inter, paral, msg)
-		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
-! 		call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
+		! call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
+		call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
 		call diagn.Courant(var_prev, grid, metr, time)
 			if(mod(time, speedup) == 0) then
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)

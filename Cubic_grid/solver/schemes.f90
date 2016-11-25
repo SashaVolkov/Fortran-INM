@@ -106,8 +106,9 @@ subroutine Linear(this, var, var_pr, grid, metr, inter, paral, msg)
 		end do
 	end do
 
-	call var_pr.equal(var, metr, 0)
-	call var_pr.equal(var, metr, 1)
+	call var_pr.equal(var, metr)
+	call msg.msg(var_pr, paral)
+	call var_pr.interpolate(inter, metr)
 
 end subroutine
 
@@ -158,12 +159,9 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 		end do
 	end do
 
-	call var_pr.equal(var, metr, 1)
-	call var_pr.equal(var, metr, 0)
-	call msg.msg(var_pr, paral, 1)
-	call msg.msg(var_pr, paral, 0)
-	call var_pr.interpolate(inter, metr, 1)
-	call var_pr.interpolate(inter, metr, 0)
+	call var_pr.equal(var, metr)
+	call msg.msg(var_pr, paral)
+	call var_pr.interpolate(inter, metr)
 
 	do i = 1, 2
 
@@ -188,12 +186,9 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 			end do
 		end do
 
-		call var_pr.equal(var, metr, 1)
-		call var_pr.equal(var, metr, 0)
-		call msg.msg(var_pr, paral, 1)
-		call msg.msg(var_pr, paral, 0)
-		call var_pr.interpolate(inter, metr, 1)
-		call var_pr.interpolate(inter, metr, 0)
+		call var_pr.equal(var, metr)
+		call msg.msg(var_pr, paral)
+		call var_pr.interpolate(inter, metr)
 
 	end do
 
@@ -232,12 +227,9 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr, inter, paral, msg)
 			var_pr.u_cov(:, :, :) = this.ku_cov(:, :, :, iteration)
 			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
-			call var_pr.equal(var_pr, metr, scalar)
-			call var_pr.equal(var_pr, metr, vector)
-			call msg.msg(var_pr, paral, scalar)
-			call msg.msg(var_pr, paral, vector)
-			call var_pr.interpolate(inter, metr, scalar)
-			call var_pr.interpolate(inter, metr, vector)
+			call var_pr.equal(var_pr, metr)
+			call msg.msg(var_pr, paral)
+			call var_pr.interpolate(inter, metr)
 			this.ku_cov(:, :, :, iteration) = var_pr.u_cov(:, :, :)
 			this.kv_cov(:, :, :, iteration) = var_pr.v_cov(:, :, :)
 			this.ku_con(:, :, :, iteration) = var_pr.u_con(:, :, :)
@@ -256,12 +248,9 @@ var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2.
 		end do
 	end do
 
-	call var_pr.equal(var, metr, scalar)
-	call var_pr.equal(var, metr, vector)
-	call msg.msg(var_pr, paral, scalar)
-	call msg.msg(var_pr, paral, vector)
-	call var_pr.interpolate(inter, metr, scalar)
-	call var_pr.interpolate(inter, metr, vector)
+	call var_pr.equal(var, metr)
+	call msg.msg(var_pr, paral)
+	call var_pr.interpolate(inter, metr)
 
 End Subroutine
 
