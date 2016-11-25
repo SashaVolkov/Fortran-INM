@@ -97,8 +97,8 @@ subroutine Waiter(this, paral)
 	Class(message) :: this
 	Class(parallel) :: paral
 
-		call MPI_Waitall(6*4*2, this.rcv_req(:, :, :), this.rcv_stat, this.ier)
-		call MPI_Waitall(6*4*2, this.snd_req(:, :, :), this.snd_stat, this.ier)
+		call MPI_Waitall(6*4*3, this.rcv_req(:, :, :), this.rcv_stat, this.ier)
+		call MPI_Waitall(6*4*3, this.snd_req(:, :, :), this.snd_stat, this.ier)
 
 end subroutine
 

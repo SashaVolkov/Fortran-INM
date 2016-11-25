@@ -118,11 +118,13 @@ CONTAINS
 		Class(f_var) :: var_pr, var
 		Class(metric) :: metr
 
+
 		var_pr.h_height(:, :, :)=var.h_height(:, :, :)
 		var_pr.u_cov(:, :, :)=var.u_cov(:, :, :)
 		var_pr.v_cov(:, :, :)=var.v_cov(:, :, :)
 
 		call var_pr.Velocity_to_spherical_border(metr)
+
 
 	end subroutine
 
@@ -199,7 +201,6 @@ CONTAINS
 		call i.Lagrange(this.lon_vel, this.interp_factor)
 		call this.Velocity_from_spherical_border(metr)
 		call this.cov_to_con(metr)
-
 
 	end subroutine
 
