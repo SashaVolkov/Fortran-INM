@@ -176,7 +176,7 @@ CONTAINS
 					end if
 
 								do i = 1, 3
-									if( (this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0.5 .and. (this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0.5 ) then
+									if( abs(this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0.5 .and. abs(this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0.5 ) then
 										angle = g.angle(this.latlon_c_off(1:2, x, y, face(i)), latlon)
 										if(angle < min .and. angle >= 0d0) then
 											min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,face(i)/)
@@ -295,6 +295,11 @@ CONTAINS
 				x = this.closest_xyface(1, lon, lat)
 				y = this.closest_xyface(2, lon, lat)
 				face = this.closest_xyface(3, lon, lat)
+
+				if(x == 1 .and. y == 1) y = 2
+				if(x == 1 .and. y == 2*dim) x = 2
+				if(x == 2*dim .and. y == 1) x = 2*dim-1
+				if(x == 2*dim .and. y == 2*dim) y = 2*dim-1
 
 
 				x_cell(1) = x - 1; y_cell(1) = y + 1
