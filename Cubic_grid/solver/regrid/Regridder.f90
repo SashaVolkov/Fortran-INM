@@ -33,7 +33,7 @@ program regrid
 		call inter.interpolate()
 		call scan.scan_precise(time, d.surface_precise)
 		call d.L_norm((time-1)*speedup, inter.surface_to)
-		call scan.print_surf(real(inter.surface_to(:,:,1),4), time)
+		call scan.print_surf(real(inter.surface_to,4), time)
 	end do
 
 	call inter.deinit()

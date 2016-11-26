@@ -35,7 +35,7 @@ implicit none
 		Procedure, Private :: metric_tensor_conf => metric_tensor_conf
 
 		Procedure, Private :: hem_of_face => hem_of_face
-		Procedure, Private :: partial_c4 => partial_c4
+		Procedure, Private :: partial => partial
 ! 		Procedure, Private :: partial_c4_non => partial_c4_non
 
 
@@ -258,10 +258,10 @@ CONTAINS
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					temp = this.latlon_c(2, x-step:x+step, y, face)
-					this.Tr_to_sph(1,1,x,y,face) = this.partial_c4(temp, delta)
+					this.Tr_to_sph(1,1,x,y,face) = this.partial(temp, delta)
 
 					temp = this.latlon_c(1, x-step:x+step, y, face)
-					this.Tr_to_sph(2,1,x,y,face) = this.partial_c4(temp, delta)
+					this.Tr_to_sph(2,1,x,y,face) = this.partial(temp, delta)
 				end do
 			end do
 		end do
@@ -272,10 +272,10 @@ CONTAINS
 			do x = this.first_x, this.last_x
 				do y = this.first_y, this.last_y
 					temp = this.latlon_c(2, x, y-step:y+step, face)
-					this.Tr_to_sph(1,2,x,y,face) = this.partial_c4(temp, delta)
+					this.Tr_to_sph(1,2,x,y,face) = this.partial(temp, delta)
 
 					temp = this.latlon_c(1, x, y-step:y+step, face)
-					this.Tr_to_sph(2,2,x,y,face) = this.partial_c4(temp, delta)
+					this.Tr_to_sph(2,2,x,y,face) = this.partial(temp, delta)
 
 					A = this.Tr_to_sph(:,:,x,y,face)
 					det = A(1,1)*A(2,2) - A(2,1)*A(1,2)
@@ -371,27 +371,21 @@ CONTAINS
 
 
 
-	real(8) function partial_c4(this, fun, h)
+	real(8) function partial(this, fun, h)
 		Class(metric) :: this
-		real(8), intent(in) :: fun(-2:2), h
-		real(8) A , B, C, D, E
+		real(8), intent(in) :: fun(-this.step:this.step), h
+		real(8) A , B, C, D, E, F
 
-		A = 2.0/(3.0*h);  B = - 2.0/(3.0*h);  C = - 1.0/(12.0*h);  D = 1.0/(12.0*h);  E = 0.0
-		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
+		if(this.step == 2) then
+			A = 2.0/(3.0*h);  B = - 2.0/(3.0*h);  C = - 1.0/(12.0*h);  D = 1.0/(12.0*h);  E = 0.0
+			partial = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) +  E*fun(0)
+		else if(this.step == 3) then
+			A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h);  E = 1d0/(60d0*h);  F = - 1d0/(60d0*h)
+			partial = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
+		end if
 
 	end function
 
-
-
-! 	real(8) function partial_c4(this, fun, h)
-! 		Class(metric) :: this
-! 		real(8), intent(in) :: fun(-3:3), h
-! 		real(8) A , B, C, D, E, F
-
-! 		A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h);  E = 1d0/(60d0*h);  F = - 1d0/(60d0*h)
-! 		partial_c4 = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
-
-! 	end function
 
 
 end module

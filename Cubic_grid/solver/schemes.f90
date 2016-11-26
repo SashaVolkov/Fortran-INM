@@ -8,6 +8,7 @@ module schemes
 	use parallel_cubic, Only: parallel
 	use messenger, Only: message
 	use mpi
+	use omp_lib
 
 	implicit none
 
@@ -137,6 +138,8 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 	this.kv_cov(:,:,:,0) = var_pr.v_cov(:,:,:)
 	this.kh(:,:,:,0) = var_pr.h_height(:,:,:)
 
+	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
+	!$OMP DO
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
@@ -159,11 +162,17 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 		end do
 	end do
 
+		!$OMP END DO
+		!$OMP END PARALLEL
+
 	call var_pr.equal(var, metr)
 	call msg.msg(var_pr, paral)
 	call var_pr.interpolate(inter, metr)
 
 	do i = 1, 2
+
+		!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
+		!$OMP DO
 
 		do face = 1, 6
 			do y = var.ns_y, var.nf_y
@@ -185,6 +194,9 @@ subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
 				end do
 			end do
 		end do
+
+		!$OMP END DO
+		!$OMP END PARALLEL
 
 		call var_pr.equal(var, metr)
 		call msg.msg(var_pr, paral)
@@ -237,6 +249,8 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr, inter, paral, msg)
 			this.kh(:, :, :, iteration) = var_pr.h_height(:, :, :)
 		end do
 
+	!$OMP PARALLEL PRIVATE(face, y, x)
+	!$OMP DO
 
 	do face = 1, 6
 		do y = ns_y, nf_y
@@ -247,6 +261,10 @@ var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2.
 			end do
 		end do
 	end do
+
+	!$OMP END DO
+	!$OMP END PARALLEL
+
 
 	call var_pr.equal(var, metr)
 	call msg.msg(var_pr, paral)
@@ -273,6 +291,9 @@ Subroutine FRunge(this, grid, metr, var, i)
 	h = this.h
 	step = this.space_step
 
+	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
+	!$OMP DO
+
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
 			do x = var.ns_x, var.nf_x
@@ -293,6 +314,9 @@ Subroutine FRunge(this, grid, metr, var, i)
 			end do
 		end do
 	end do
+
+	!$OMP END DO
+	!$OMP END PARALLEL
 
 end Subroutine
 

@@ -1,6 +1,6 @@
 module parallel_cubic
 
-! 	use omp_lib
+	use omp_lib
 	use mpi
 
 implicit none
@@ -53,9 +53,11 @@ Subroutine parallel_init(this, dim, step, np, id)
 
 	this.up = 1; this.right=2; this.down=3; this.left=4
 
-	!$OMP PARALLEL
-	!$OMP END PARALLEL
-	call MPI_DIMS_CREATE(np, 2, dims, ier)
+
+	! call MPI_DIMS_CREATE(np, 2, dims, ier)
+	! print *, ier
+	dims(1) = sqrt(dble(np))
+	dims(2) = dims(1)
 
 	this.Ydim_block = dims(1); this.Xdim_block = dims(2)
 

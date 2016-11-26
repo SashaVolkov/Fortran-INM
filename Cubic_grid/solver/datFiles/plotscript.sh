@@ -4,7 +4,7 @@ gnuplot <<EOF
 set term png
 set output "pic/CFL.png"
 set xlabel "Days"
-plot "tan/CFL.dat" w l ti "CFL_tan", "equiang/CFL.dat" w l ti "CFL_equiang"
+plot "simple/CFL.dat" w l ti "CFL_simple", "tan/CFL.dat" w l ti "CFL_tan", "equiang/CFL.dat" w l ti "CFL_equiang"
 EOF
 
 # gnuplot <<EOF
@@ -55,7 +55,7 @@ gnuplot <<EOF
 set term png
 set output "pic/L2.png"
 set xlabel "Cycles"
-plot  "tan/L2.dat" w l ti "L2_tan", "equiang/L2.dat" w l ti "L2_equiang"
+plot "simple/L2.dat" w l ti "L2_simple", "tan/L2.dat" w l ti "L2_tan", "equiang/L2.dat" w l ti "L2_equiang"
 EOF
 
 

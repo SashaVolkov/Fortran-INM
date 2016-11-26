@@ -2,6 +2,7 @@ module grid_interp
 
 	use scan_print, Only: printer
 	use sphere_geometry, Only: geometry
+	use omp_lib
 
 implicit none
 
@@ -147,6 +148,9 @@ CONTAINS
 		dim = this.dim
 		! lon = this.lon_max; lat = this.lat_max
 
+		!$OMP PARALLEL PRIVATE(i, y, x, lon, lat, angle, latlon, min, face)
+		!$OMP DO
+
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
 			latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0; min = 10000.0
@@ -188,6 +192,10 @@ CONTAINS
 				end do
 			end do
 		end do
+
+		!$OMP END DO
+		!$OMP END PARALLEL
+
 	end subroutine
 
 
@@ -198,6 +206,9 @@ CONTAINS
 		! surf_to = sum(w*surf_off)
 		call this.hem_of_face(this.surface_off(:,:,:,1))
 		call this.hem_of_face(this.surface_off(:,:,:,2))
+
+		!$OMP PARALLEL PRIVATE(i, lon, lat, face)
+		!$OMP DO
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
@@ -210,6 +221,9 @@ CONTAINS
 				end do
 			end do
 		end do
+
+		!$OMP END DO
+		!$OMP END PARALLEL
 
 	end subroutine
 

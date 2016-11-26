@@ -42,8 +42,8 @@ module interpolation
 		this.snd_xy(:,:,:) = g.snd_xy(:,:,:)
 		this.rcv_xy(:,:,:) = g.rcv_xy(:,:,:)
 
-		Allocate(this.x0_mass(1: 2*dim, 1: g.step))
-		Allocate(this.weight(n, 1: 2*dim, 1: 2*dim, 1: g.step))
+		Allocate(this.x0_mass(2*dim, g.step))
+		Allocate(this.weight(n, 2*dim, 2*dim, g.step))
 
 		do i = 1, g.step
 			do x = 1, 2*dim
@@ -87,7 +87,7 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(x, i);  n=this.n
-					if((x == 1 .or. x == 2*dim) .and. i == 1) n = 2
+					if(i == 1 .and. (x==this.ns_x .or. x==this.nf_x)) n = 2
 					x_int(1) = x0 - n/2 + 1
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
@@ -111,7 +111,7 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(y, i);  n=this.n
-					if((y == 1 .or. y == 2*dim) .and. i == 1) n = 2
+					if(i == 1 .and. (y==this.ns_y .or. y==this.nf_y)) n = 2
 					x_int(1) = x0 - n/2 + 1
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
@@ -134,7 +134,7 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(x, i);  n=this.n
-					if((x == 1 .or. x == 2*dim) .and. i == 1) n = 2
+					if(i == 1 .and. (x==this.ns_x .or. x==this.nf_x)) n = 2
 					x_int(1) = x0 - n/2 + 1
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
@@ -157,7 +157,7 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(y, i);  n=this.n
-					if((y == 1 .or. y == 2*dim) .and. i == 1) n = 2
+					if(i == 1 .and. (y==this.ns_y .or. y==this.nf_y)) n = 2
 					x_int(1) = x0 - n/2 + 1
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
@@ -209,29 +209,31 @@ module interpolation
 		Integer(4), intent(in) :: step, x, x0
 		Real(8), intent(out) :: weight(1:this.n)
 		Integer(4) :: n, y(1:this.n), i, j, dim
-		Real(8) :: s, numenator, denominator
+		Real(8) :: s, numen, k(4, 4), h(1:4), latlon_y(this.n), latlon_x
 
-		n = this.n;  dim = this.dim
-		if((x == 1 .or. x == 2*dim) .and. step == 1) n = 2
-		y(1) = x0 - n/2 + 1;  weight(:) = 1d0
+		n = this.n;  dim = this.dim; weight(:) = 1d0
+		if(step == 1 .and. (x==this.ns_y .or. x==this.nf_y .or. x==this.ns_x .or. x==this.nf_x)) n = 2
+		latlon_x = g.latlon_c(1,1-step,x,2)
+
+		y(1) = x0 - n/2 + 1
+		latlon_y(1) = g.latlon_c(1,2*g.dim+1-step,y(1),5)
+		h(1) = abs(latlon_x - latlon_y(1))
+
 		do i = 2, n
 			y(i) = y(i-1)+1
-		end do
-
-
-		do j = 1, n
-			do i = 1, n
-				if(j /= i) then
-					s = sign(1d0,(g.latlon_c(1,1-step,x,2) - g.latlon_c(1,2*g.dim+1-step,y(i),5))*(g.latlon_c(1,2*g.dim+1-step,y(j),5) - g.latlon_c(1,2*g.dim+1-step,y(i),5)))
-
-					numenator = g.latlon_c(1,1-step,x,2) - g.latlon_c(1,2*g.dim+1-step,y(i),5)
-					denominator = g.latlon_c(1,2*g.dim+1-step,y(j),5) - g.latlon_c(1,2*g.dim+1-step,y(i),5)
-					weight(j) = s*weight(j)*numenator/denominator
-				end if
+			latlon_y(i) = g.latlon_c(1,2*g.dim+1-step,y(i),5)
+			h(i) = latlon_x - latlon_y(i)
+			do j = 1, n
+				if(j /= i) k(i, j) = h(i)/(latlon_y(j) - latlon_y(i))
+				if(j /= i) k(j, i) = h(j)/(latlon_y(i) - latlon_y(j))
 			end do
-			! print *, weight(j), j, x, x0
 		end do
-		! print *, ""
+
+		do i = 1, n
+			do j = 1, n
+				if(j /= i) weight(i) = weight(i)*k(j,i)
+			end do
+		end do
 
 	end Subroutine
 
