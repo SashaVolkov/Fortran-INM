@@ -85,6 +85,8 @@ subroutine Linear(this, var, var_pr, grid, metr, inter, paral, msg)
 	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
 	dt = grid.dt;  step = this.space_step
 
+	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
+	!$OMP DO
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
@@ -106,6 +108,9 @@ subroutine Linear(this, var, var_pr, grid, metr, inter, paral, msg)
 			end do
 		end do
 	end do
+
+	!$OMP END DO
+	!$OMP END PARALLEL
 
 	call var_pr.equal(var, metr)
 	call msg.msg(var_pr, paral)

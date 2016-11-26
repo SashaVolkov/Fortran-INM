@@ -1,69 +1,56 @@
 #/bin/bash
 
+cd 40
+
 gnuplot <<EOF
 set term png
 set output "pic/CFL.png"
 set xlabel "Days"
-plot "simple/CFL.dat" w l ti "CFL_simple", "tan/CFL.dat" w l ti "CFL_tan", "equiang/CFL.dat" w l ti "CFL_equiang"
+plot "tan/CFL.dat" w l ti "CFL_tan", "simple/CFL.dat" w l ti "CFL_simple", "equiang/CFL.dat" w l ti "CFL_equiang"
 EOF
-
-# gnuplot <<EOF
-# set term png
-# set output "CFL.png"
-# set xlabel "Days"
-# "CFL_conf_simple.dat" w l ti "CFL_simple", "CFL_equiang.dat" w l ti "CFL_equiang"
-# EOF
-
-# gnuplot <<EOF
-# set term png
-# set output "CFL.png"
-# set xlabel "Days"
-# "CFL_equiang.dat" w l ti "CFL_equiang"
-# EOF
 
 gnuplot <<EOF
 set term png
 set output "pic/L_conf_simple.png"
-set xlabel "Cycles"
-plot "simple/L1.dat" w l ti "L1", "simple/L2.dat" w l ti "L2", "simple/L_inf.dat" w l ti "L_inf"
+set xlabel "Days"
+plot "simple/L1.dat" w l ti "L1", "simple/L2.dat" w l ti "L2", "simple/C.dat" w l ti "C"
 EOF
 
 
 gnuplot <<EOF
 set term png
 set output "pic/L_conf_tan.png"
-set xlabel "Cycles"
-plot "tan/L1.dat" w l ti "L1", "tan/L2.dat" w l ti "L2", "tan/L_inf.dat" w l ti "L_inf"
+set xlabel "Days"
+plot "tan/L1.dat" w l ti "L1", "tan/L2.dat" w l ti "L2", "tan/C.dat" w l ti "C"
 EOF
 
 gnuplot <<EOF
 set term png
 set output "pic/L_equiang.png"
-set xlabel "Cycles"
-plot "equiang/L1.dat" w l ti "L1", "equiang/L2.dat" w l ti "L2", "equiang/L_inf.dat" w l ti "L_inf"
+set xlabel "Days"
+plot "equiang/L1.dat" w l ti "L1", "equiang/L2.dat" w l ti "L2", "equiang/C.dat" w l ti "C"
 EOF
 
 
 gnuplot <<EOF
 set term png
 set output "pic/L1.png"
-set xlabel "Cycles"
+set xlabel "Days"
 plot "simple/L1.dat" w l ti "L1_simple", "tan/L1.dat" w l ti "L1_tan", "equiang/L1.dat" w l ti "L1_equiang"
 EOF
 
 gnuplot <<EOF
 set term png
 set output "pic/L2.png"
-set xlabel "Cycles"
+set xlabel "Days"
 plot "simple/L2.dat" w l ti "L2_simple", "tan/L2.dat" w l ti "L2_tan", "equiang/L2.dat" w l ti "L2_equiang"
 EOF
-
 
 gnuplot <<EOF
 set term png
 set output "pic/L_inf.png"
-set xlabel "Cycles"
-plot "tan/L_inf.dat" w l ti "C_tan", "equiang/L_inf.dat" w l ti "C_equiang"
+set xlabel "Days"
+plot "simple/C.dat" w l ti "C_simple", "tan/C.dat" w l ti "C_tan", "equiang/C.dat" w l ti "C_equiang"
 EOF
 
 # gnuplot <<EOF

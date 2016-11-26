@@ -32,7 +32,7 @@ else
 		cd regrid
 		./run_intel_reg.sh
 
-		cd ../datFiles
+		cd ..
 		./plotscript.sh
 	fi
 

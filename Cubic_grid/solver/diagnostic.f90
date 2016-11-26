@@ -41,25 +41,26 @@ CONTAINS
 		Class(parallel) :: paral
 
 		integer(4), intent(in) :: Tmax, id
-		character(16) istring
+		character(32) istring
 
 
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
 		this.convert_time = grid.dt/3600d0/24d0
 		this.flag = 1
 
+		write(istring, *) 2*this.dim
 
 		call this.alloc(paral)
 
 		if (grid.grid_type == 1) then
-			istring = 'equiang/'
+			istring = trim(adjustl(istring))//'/equiang/'
 		else if (grid.grid_type == 0) then
 			if (grid.rescale == 1) then
-				istring = 'tan/'
+				istring = trim(adjustl(istring))//'/tan/'
 			else if (grid.rescale == 0) then
-				istring = 'simple/'
+				istring = trim(adjustl(istring))//'/simple/'
 			else if (grid.rescale == 2) then
-				istring = 'exp/'
+				istring = trim(adjustl(istring))//'/exp/'
 			end if
 		end if
 
@@ -71,10 +72,10 @@ CONTAINS
 ! 			call this.histogram(16*grid.dim*grid.dim, 'datFiles/dist'//trim(istring)//'.dat', 'datFiles/dist_distribution'//trim(istring)//'.dat')
 ! 			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
 
-			open(9,file='datFiles/'//trim(istring)//'CFL.dat')
+			open(9,file='datFiles/'//trim(istring)//'/CFL.dat')
 			! open(11,file='datFiles/'//trim(istring)//'L1.dat')
 			! open(12,file='datFiles/'//trim(istring)//'L2.dat')
-			open(13,file='datFiles/'//trim(istring)//'L_inf_cube.dat')
+			open(13,file='datFiles/'//trim(istring)//'/L_inf_cube.dat')
 
 		end if
 

@@ -47,38 +47,38 @@ module scan_print
 		if(grid_type == 0) then
 			if(rescale == 0) then
 
-				path1 = trim('../datFiles/simple/surface_C'//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/simple/grid_C'//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//trim(adjustl(istring))//'/simple/surface.nc')
+				path2 = trim('../datFiles/'//trim(adjustl(istring))//'/simple/grid.nc')
 				if(this.nc_or_dat == 0) then
-					path3 = trim('../datFiles/simple/surface_ll_C'//trim(adjustl(istring))//".nc")
+					path3 = trim('../datFiles/'//trim(adjustl(istring))//'/simple/surface_ll.nc')
 				else
-					path3 = trim('../datFiles/simple/surface_ll_C'//trim(adjustl(istring))//".dat")
+					path3 = trim('../datFiles/'//trim(adjustl(istring))//'/simple/surface_ll.dat')
 				end if
-				path4 = trim('../datFiles/simple/closest_point_ll_C'//trim(adjustl(istring))//".dat")
+				path4 = trim('../datFiles/'//trim(adjustl(istring))//'/simple/closest_point_ll_C.dat')
 
 			else if(rescale == 1) then
 
-				path1 = trim('../datFiles/tan/surface_C'//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/tan/grid_C'//trim(adjustl(istring))//".nc")
+				path1 = trim('../datFiles/'//trim(adjustl(istring))//'/tan/surface.nc')
+				path2 = trim('../datFiles/'//trim(adjustl(istring))//'/tan/grid.nc')
 				if(this.nc_or_dat == 0) then
-					path3 = trim('../datFiles/tan/surface_ll_C'//trim(adjustl(istring))//".nc")
+					path3 = trim('../datFiles/'//trim(adjustl(istring))//'/tan/surface_ll.nc')
 				else
-					path3 = trim('../datFiles/tan/surface_ll_C'//trim(adjustl(istring))//".dat")
+					path3 = trim('../datFiles/'//trim(adjustl(istring))//'/tan/surface_ll.dat')
 				end if
-				path4 = trim('../datFiles/tan/closest_point_ll_C'//trim(adjustl(istring))//".dat")
+				path4 = trim('../datFiles/'//trim(adjustl(istring))//'/tan/closest_point_ll_C.dat')
 
 			end if
 
 		else if(grid_type == 1) then
 
-				path1 = trim('../datFiles/equiang/surface_C'//trim(adjustl(istring))//".nc")
-				path2 = trim('../datFiles/equiang/grid_C'//trim(adjustl(istring))//".nc")
-				if(this.nc_or_dat == 0) then
-					path3 = trim('../datFiles/equiang/surface_ll_C'//trim(adjustl(istring))//".nc")
-				else
-					path3 = trim('../datFiles/equiang/surface_ll_C'//trim(adjustl(istring))//".dat")
-				end if
-				path4 = trim('../datFiles/equiang/closest_point_ll_C'//trim(adjustl(istring))//".dat")
+			path1 = trim('../datFiles/'//trim(adjustl(istring))//'/equiang/surface.nc')
+			path2 = trim('../datFiles/'//trim(adjustl(istring))//'/equiang/grid.nc')
+			if(this.nc_or_dat == 0) then
+				path3 = trim('../datFiles/'//trim(adjustl(istring))//'/equiang/surface_ll.nc')
+			else
+				path3 = trim('../datFiles/'//trim(adjustl(istring))//'/equiang/surface_ll.dat')
+			end if
+			path4 = trim('../datFiles/'//trim(adjustl(istring))//'/equiang/closest_point_ll_C.dat')
 
 		end if
 

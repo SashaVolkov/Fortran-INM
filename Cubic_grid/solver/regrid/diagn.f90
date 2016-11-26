@@ -23,26 +23,28 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, convert_time, grid_type, rescale)
+	subroutine init(this, dim, convert_time, grid_type, rescale)
 
 		Class(diagnostic) :: this
-		integer(4), intent(in) ::  grid_type, rescale
+		integer(4), intent(in) :: dim, grid_type, rescale
 		real(8), intent(in) :: convert_time
 
-		character(16) istring
+		character(32) istring
 
 		this.lon_max = 180;  this.lat_max = 90
 		this.convert_time = convert_time/(644d0*4000d0)
 
+		write(istring, *) 2*dim
+
 		if (grid_type == 1) then
-			istring = 'equiang/'
+			istring = trim(adjustl(istring))//'/equiang/'
 		else if (grid_type == 0) then
 			if (rescale == 1) then
-				istring = 'tan/'
+				istring = trim(adjustl(istring))//'/tan/'
 			else if (rescale == 0) then
-				istring = 'simple/'
+				istring = trim(adjustl(istring))//'/simple/'
 			else if (rescale == 2) then
-				istring = 'exp/'
+				istring = trim(adjustl(istring))//'/exp/'
 			end if
 		end if
 
@@ -50,7 +52,7 @@ CONTAINS
 
 		open(11,file='../datFiles/'//trim(istring)//'L1.dat')
 		open(12,file='../datFiles/'//trim(istring)//'L2.dat')
-		open(13,file='../datFiles/'//trim(istring)//'L_inf.dat')
+		open(13,file='../datFiles/'//trim(istring)//'C.dat')
 		open(14,file='../datFiles/'//trim(istring)//'L_inf_cube.dat', FORM="FORMATTED",STATUS="OLD",ACTION="READ")
 
 	end subroutine

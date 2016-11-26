@@ -3,6 +3,7 @@ module interpolation
 	use grid_var, Only: g_var
 	use sphere_geometry, Only: geometry
 	use mpi
+	use omp_lib
 
 	implicit none
 
@@ -70,8 +71,8 @@ module interpolation
 
 		Real(8), Intent(inout) :: Mass(this.first_x:this.last_x, this.first_y:this.last_y, 6)
 		Integer(4), Intent(in) :: interp_factor(1:4)
-		Real(8) :: temp(1:6), Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6)
-		Integer(4) xj, xk, k, j, n, x0, set_x, x, s, y, yk, i, face, x_fin(4), y_fin(4), x_int(1:this.n), dim
+		Real(8) :: Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6)
+		Integer(4) k, n, x0, x, y, i, face, x_fin(4), y_fin(4), x_int(1:this.n), dim
 
 		x_fin(:) = this.last_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step
 		y_fin(:) = this.last_y;  y_fin(3) = this.rcv_xy(2, 3, 2) + this.step

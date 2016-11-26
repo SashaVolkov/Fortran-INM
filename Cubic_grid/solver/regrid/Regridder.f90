@@ -24,7 +24,7 @@ program regrid
 
 	call inter.init(dim)
 	call scan.init(dim, all_time, convert_time, rescale, grid_type)
-	call d.init(convert_time, grid_type, rescale)
+	call d.init(dim, convert_time, grid_type, rescale)
 
 	call scan.scan_grid(inter.latlon_c_off)
 	call inter.weight_find(geom, scan)
