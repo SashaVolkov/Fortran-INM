@@ -1,6 +1,11 @@
 #/bin/bash
 
-cd datFiles/20
+line=$(cat init | sed 's/ //g')
+args=(${line//,/ })
+x="${args[0]}"
+
+cd datFiles/"$(( 2*$x ))"
+pwd
 
 gnuplot <<EOF
 set term png

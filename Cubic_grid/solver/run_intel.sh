@@ -32,6 +32,7 @@ else
 		cd regrid
 		./run_intel_reg.sh
 
+		echo "Plotting"
 		cd ..
 		./plotscript.sh
 	fi
