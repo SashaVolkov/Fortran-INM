@@ -121,7 +121,7 @@ module interpolation
 					Mass_temp(x+i, y, face) = 0d0
 					do k = 1, n
 						M = Mass(x+i, x_int(k), face)
-						if(x_int(k) < 1) M = (Mass(1, 2*dim+1, face) + Mass(1, 2*dim+2, face))/2d0
+						if(x_int(k) < 1) M = (Mass(2*dim, -1, face) + Mass(2*dim, 0, face))/2d0
 						if(x_int(k) > 2*dim) M = (Mass(2*dim, 2*dim+1, face) + Mass(2*dim, 2*dim+2, face))/2d0
 						Mass_temp(x+i, y, face) = M*this.weight(k, x0, y, i) + Mass_temp(x+i, y, face)
 					end do
