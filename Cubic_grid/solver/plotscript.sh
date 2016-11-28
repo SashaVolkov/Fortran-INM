@@ -1,6 +1,6 @@
 #/bin/bash
 
-cd datFiles/40
+cd datFiles/20
 
 gnuplot <<EOF
 set term png

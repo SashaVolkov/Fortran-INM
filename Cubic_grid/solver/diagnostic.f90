@@ -5,6 +5,7 @@ module diagnostic_mod
 	use func_var, Only: f_var
 	use parallel_cubic, Only: parallel
 	use mpi
+	use omp_lib
 
 
 	implicit none
@@ -123,6 +124,9 @@ CONTAINS
 
 		dim = this.dim
 
+		!$OMP PARALLEL PRIVATE(y, x, face)
+		!$OMP DO
+
 		do face = 1, 6
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
@@ -133,6 +137,9 @@ CONTAINS
 				end do
 			end do
 		end do
+
+		!$OMP END DO
+		!$OMP END PARALLEL
 
 		Courant_number = MAXVAL(this.CFL)
 		call MPI_Allreduce(Courant_number, Courant_max, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)

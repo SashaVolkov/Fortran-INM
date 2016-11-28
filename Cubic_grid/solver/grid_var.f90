@@ -15,6 +15,7 @@ module grid_var
 	use grid_generator_solver, Only: generator
 	use parallel_cubic, Only: parallel
 	use metrics, Only: metric
+	use omp_lib
 
 implicit none
 
@@ -173,6 +174,9 @@ CONTAINS
 			this.delta_on_cube = (this.cube_coord_c(1, dim, dim) - this.cube_coord_c(1, dim-1, dim))*this.r_sphere
 		end if
 
+		!$OMP PARALLEL PRIVATE(y, x, sphere_area)
+		!$OMP DO
+
 		do x = 1, 2*dim
 			do y = 1, 2*dim
 
@@ -193,11 +197,17 @@ CONTAINS
 			end do
 		end do
 
+		!$OMP END DO
+		!$OMP DO
+
 		do x = 2, 2*dim
 			do y = 1, 2*dim
 				this.real_dist(x,y) = g.dist(this.latlon_c(:, y, x, 2), this.latlon_c(:, y, x-1, 2))
 			end do
 		end do
+
+		!$OMP END DO
+		!$OMP END PARALLEL
 
 		this.max_to_min = maxval(this.real_dist(2:2*dim, 1:2*dim))/minval(this.real_dist(2:2*dim, 1:2*dim))
 
