@@ -71,7 +71,7 @@ module interpolation
 
 		Real(8), Intent(inout) :: Mass(this.first_x:this.last_x, this.first_y:this.last_y, 6)
 		Integer(4), Intent(in) :: interp_factor(1:4)
-		Real(8) :: Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6)
+		Real(8) :: Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6), M
 		Integer(4) k, n, x0, x, y, i, face, x_fin(4), y_fin(4), x_int(1:this.n), dim
 
 		x_fin(:) = this.last_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step
@@ -88,7 +88,6 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(x, i);  n=this.n
-					if(i == 1 .and. (x==this.ns_x .or. x==this.nf_x)) n = 2
 					x_int(1) = x0 - n/2 + 1
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
@@ -96,7 +95,10 @@ module interpolation
 
 					Mass_temp(x, y+i, face) = 0d0
 					do k = 1, n
-						Mass_temp(x, y+i, face) = Mass(x_int(k), y+i, face)*this.weight(k, x0, x, i) + Mass_temp(x, y+i, face)
+						M = Mass(x_int(k), y+i, face)
+						if(x_int(k) < 1) M = (Mass(0, 2*dim, face) + Mass(-1, 2*dim, face))/2d0
+						if(x_int(k) > 2*dim) M = (Mass(2*dim+1, 2*dim, face) + Mass(2*dim+2, 2*dim, face))/2d0
+						Mass_temp(x, y+i, face) = M*this.weight(k, x0, x, i) + Mass_temp(x, y+i, face)
 					end do
 
 				end do
@@ -112,14 +114,16 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(y, i);  n=this.n
-					if(i == 1 .and. (y==this.ns_y .or. y==this.nf_y)) n = 2
 					x_int(1) = x0 - n/2 + 1
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
 					end do
 					Mass_temp(x+i, y, face) = 0d0
 					do k = 1, n
-						Mass_temp(x+i, y, face) = Mass(x+i, x_int(k), face)*this.weight(k, x0, y, i) + Mass_temp(x+i, y, face)
+						M = Mass(x+i, x_int(k), face)
+						if(x_int(k) < 1) M = (Mass(1, 2*dim+1, face) + Mass(1, 2*dim+2, face))/2d0
+						if(x_int(k) > 2*dim) M = (Mass(2*dim, 2*dim+1, face) + Mass(2*dim, 2*dim+2, face))/2d0
+						Mass_temp(x+i, y, face) = M*this.weight(k, x0, y, i) + Mass_temp(x+i, y, face)
 					end do
 
 				end do
@@ -135,7 +139,6 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(x, i);  n=this.n
-					if(i == 1 .and. (x==this.ns_x .or. x==this.nf_x)) n = 2
 					x_int(1) = x0 - n/2 + 1
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
@@ -143,7 +146,10 @@ module interpolation
 
 					Mass_temp(x, y-i, face) = 0d0
 					do k = 1, n
-						Mass_temp(x, y-i, face) = Mass(x_int(k), y-i, face)*this.weight(k, x0, x, i) + Mass_temp(x, y-i, face)
+						M = Mass(x_int(k), y-i, face)
+						if(x_int(k) < 1) M = (Mass(0, 1, face) + Mass(-1, 1, face))/2d0
+						if(x_int(k) > 2*dim) M = (Mass(2*dim+1, 1, face) + Mass(2*dim+2, 1, face))/2d0
+						Mass_temp(x, y-i, face) = M*this.weight(k, x0, x, i) + Mass_temp(x, y-i, face)
 					end do
 				end do
 			end do
@@ -158,14 +164,16 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(y, i);  n=this.n
-					if(i == 1 .and. (y==this.ns_y .or. y==this.nf_y)) n = 2
 					x_int(1) = x0 - n/2 + 1
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
 					end do
 					Mass_temp(x-i, y, face) = 0d0
 					do k = 1, n
-						Mass_temp(x-i, y, face) = Mass(x-i, x_int(k), face)*this.weight(k, x0, y, i) + Mass_temp(x-i, y, face)
+						M = Mass(x-i, x_int(k), face)
+						if(x_int(k) < 1) M = (Mass(1, 0, face) + Mass(1, -1, face))/2d0
+						if(x_int(k) > 2*dim) M = (Mass(1, 2*dim+1, face) + Mass(1, 2*dim+2, face))/2d0
+						Mass_temp(x-i, y, face) = M*this.weight(k, x0, y, i) + Mass_temp(x-i, y, face)
 					end do
 				end do
 			end do
@@ -213,7 +221,6 @@ module interpolation
 		Real(8) :: s, numen, k(4, 4), h(1:4), latlon_y(this.n), latlon_x
 
 		n = this.n;  dim = this.dim; weight(:) = 1d0
-		if(step == 1 .and. (x==this.ns_y .or. x==this.nf_y .or. x==this.ns_x .or. x==this.nf_x)) n = 2
 		latlon_x = g.latlon_c(1,1-step,x,2)
 
 		y(1) = x0 - n/2 + 1

@@ -17,7 +17,7 @@ module diagnostic_mod
 
 		Real(8), Allocatable :: CFL(:,:,:)
 		integer(4) Tmax, dim, step, flag
-		real(8) convert_time, L10, L20, L_inf0
+		real(8) convert_time, L10, L20, L_inf0, dh, dt
 
 
 		CONTAINS
@@ -47,6 +47,7 @@ CONTAINS
 
 		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
 		this.convert_time = grid.dt/3600d0/24d0
+		this.dt = grid.dt;  this.dh = grid.delta_on_cube
 		this.flag = 1
 
 		write(istring, *) 2*this.dim
@@ -113,10 +114,9 @@ CONTAINS
 
 
 
-	subroutine Courant(this, func, grid, metr, time)
+	subroutine Courant(this, func, metr, time)
 		Class(diagnostic) :: this
 		Class(f_var) :: func
-		Class(g_var) :: grid
 		Class(metric) :: metr
 		integer(4), intent(in) :: time
 		integer(4) face, x, y, dim, ier, id
@@ -131,8 +131,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.u_cov(x, y, face)*grid.dt/(grid.delta_on_cube)) +&
-					 abs(func.v_cov(x, y, face)*grid.dt/(grid.delta_on_cube))
+					this.CFL(x, y, face) = abs(func.u_cov(x, y, face)*this.dt/(this.dh)) +&
+					 abs(func.v_cov(x, y, face)*this.dt/(this.dh))
 
 				end do
 			end do

@@ -55,7 +55,7 @@ implicit none
 
 	start_init = MPI_Wtime()
 
-	call paral.init(dim, space_step, np, id)
+	call paral.init(dim, space_step+1, np, id) ! Yep, that's right step+1 is correct, interpolation and transformation matrix need more than step points
 	call geom.init(r_sphere, pi)
 	call metr.init(paral)
 	call grid.init(geom, paral, metr, omega_cor, g, dt, rescale, grid_type)
@@ -78,7 +78,7 @@ implicit none
 		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
 		! call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
 			if(mod(time, speedup) == 0) then
-				call diagn.Courant(var_prev, grid, metr, time)
+				call diagn.Courant(var_prev, metr, time)
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
 				call diagn.L_norm(var_prev, grid, time)
 			end if
