@@ -55,7 +55,7 @@ implicit none
 
 	start_init = MPI_Wtime()
 
-	call paral.init(dim, space_step, np, id) ! Yep, that's right step+1 is correct, interpolation and transformation matrix need more than step points
+	call paral.init(dim, space_step+1, np, id) ! Yep, that's right step+1 is correct, interpolation and transformation matrix need more than step points
 	call geom.init(r_sphere, pi)
 	call metr.init(paral)
 	call grid.init(geom, paral, metr, omega_cor, g, dt, rescale, grid_type)

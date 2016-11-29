@@ -71,7 +71,7 @@ module interpolation
 
 		Real(8), Intent(inout) :: Mass(this.first_x:this.last_x, this.first_y:this.last_y, 6)
 		Integer(4), Intent(in) :: interp_factor(1:4)
-		Real(8) :: Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6), M
+		Real(8) :: Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6), M, M1, M2
 		Integer(4) k, n, x0, x, y, i, face, x_fin(4), y_fin(4), x_int(1:this.n), dim
 
 		x_fin(:) = this.last_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step
@@ -96,8 +96,19 @@ module interpolation
 					Mass_temp(x, y+i, face) = 0d0
 					do k = 1, n
 						M = Mass(x_int(k), y+i, face)
-						if(x_int(k) < 1) M = (Mass(0, 2*dim, face) + Mass(-1, 2*dim, face))/2d0
-						if(x_int(k) > 2*dim) M = (Mass(2*dim+1, 2*dim, face) + Mass(2*dim+2, 2*dim, face))/2d0
+
+						! if(x_int(k) < 1 .and. i==1) M = (Mass(0, 2*dim, face) + Mass(-1, 2*dim, face))/2d0
+						if(x_int(k) < 1 .and. i==1) then
+							M1 = (Mass(1, 2*dim, face) + Mass(2, 2*dim, face))/2d0
+							M = M1*this.weight(1,1,1,1) + Mass(0,2*dim,face)*this.weight(2,1,1,1) + Mass(-1,2*dim,face)*this.weight(3,1,1,1) + Mass(-2,2*dim,face)*this.weight(4,1,1,1)
+						end if
+
+						! if(x_int(k) > 2*dim .and. i==1) M = (Mass(2*dim+1, 2*dim, face) + Mass(2*dim+2, 2*dim, face))/2d0
+						if(x_int(k) > 2*dim .and. i==1) then
+							M1 = (Mass(2*dim, 2*dim-1, face) + Mass(2*dim, 2*dim, face))/2d0
+							M = M1*this.weight(1,1,1,1) + Mass(2*dim+1,2*dim,face)*this.weight(2,1,1,1) + Mass(2*dim+2,2*dim,face)*this.weight(3,1,1,1) + Mass(2*dim+3,2*dim,face)*this.weight(4,1,1,1)
+						end if
+
 						Mass_temp(x, y+i, face) = M*this.weight(k, x0, x, i) + Mass_temp(x, y+i, face)
 					end do
 
@@ -121,8 +132,18 @@ module interpolation
 					Mass_temp(x+i, y, face) = 0d0
 					do k = 1, n
 						M = Mass(x+i, x_int(k), face)
-						if(x_int(k) < 1) M = (Mass(2*dim, -1, face) + Mass(2*dim, 0, face))/2d0
-						if(x_int(k) > 2*dim) M = (Mass(2*dim, 2*dim+1, face) + Mass(2*dim, 2*dim+2, face))/2d0
+						! if(x_int(k) < 1 .and. i==1) M = (Mass(2*dim, -1, face) + Mass(2*dim, 0, face))/2d0
+						if(x_int(k) < 1 .and. i==1) then
+							M1 = (Mass(2*dim, 1, face) + Mass(2*dim-1, 1, face))/2d0
+							M = M1*this.weight(1,1,1,1) + Mass(2*dim,0,face)*this.weight(2,1,1,1) + Mass(2*dim,-1,face)*this.weight(3,1,1,1) + Mass(2*dim,-2,face)*this.weight(4,1,1,1)
+						end if
+
+						! if(x_int(k) > 2*dim .and. i==1) M = (Mass(2*dim, 2*dim+1, face) + Mass(2*dim, 2*dim+2, face))/2d0
+						if(x_int(k) > 2*dim .and. i==1) then
+							M1 = (Mass(2*dim-1, 2*dim, face) + Mass(2*dim, 2*dim, face))/2d0
+							M = M1*this.weight(1,1,1,1) + Mass(2*dim,2*dim+1,face)*this.weight(2,1,1,1) + Mass(2*dim,2*dim+2,face)*this.weight(3,1,1,1) + Mass(2*dim,2*dim+3,face)*this.weight(4,1,1,1)
+						end if
+
 						Mass_temp(x+i, y, face) = M*this.weight(k, x0, y, i) + Mass_temp(x+i, y, face)
 					end do
 
@@ -147,8 +168,19 @@ module interpolation
 					Mass_temp(x, y-i, face) = 0d0
 					do k = 1, n
 						M = Mass(x_int(k), y-i, face)
-						if(x_int(k) < 1) M = (Mass(0, 1, face) + Mass(-1, 1, face))/2d0
-						if(x_int(k) > 2*dim) M = (Mass(2*dim+1, 1, face) + Mass(2*dim+2, 1, face))/2d0
+
+						! if(x_int(k) < 1 .and. i==1) M = (Mass(0, 1, face) + Mass(-1, 1, face))/2d0
+						if(x_int(k) < 1 .and. i==1) then
+							M1 = (Mass(1, 1, face) + Mass(1, 2, face))/2d0
+							M = M1*this.weight(1,1,1,1) + Mass(0,1,face)*this.weight(2,1,1,1) + Mass(-1,1,face)*this.weight(3,1,1,1) + Mass(-2,1,face)*this.weight(4,1,1,1)
+						end if
+
+						! if(x_int(k) > 2*dim .and. i==1) M = (Mass(2*dim+1, 1, face) + Mass(2*dim+2, 1, face))/2d0
+						if(x_int(k) > 2*dim .and. i==1) then
+							M1 = (Mass(2*dim, 1, face) + Mass(2*dim, 2, face))/2d0
+							M = M1*this.weight(1,1,1,1) + Mass(2*dim+1,1,face)*this.weight(2,1,1,1) + Mass(2*dim+2,1,face)*this.weight(3,1,1,1) + Mass(2*dim+3,1,face)*this.weight(4,1,1,1)
+						end if
+
 						Mass_temp(x, y-i, face) = M*this.weight(k, x0, x, i) + Mass_temp(x, y-i, face)
 					end do
 				end do
@@ -171,8 +203,19 @@ module interpolation
 					Mass_temp(x-i, y, face) = 0d0
 					do k = 1, n
 						M = Mass(x-i, x_int(k), face)
-						if(x_int(k) < 1) M = (Mass(1, 0, face) + Mass(1, -1, face))/2d0
-						if(x_int(k) > 2*dim) M = (Mass(1, 2*dim+1, face) + Mass(1, 2*dim+2, face))/2d0
+
+						! if(x_int(k) < 1 .and. i==1) M = (Mass(1, 0, face) + Mass(1, -1, face))/2d0
+						if(x_int(k) < 1 .and. i==1) then
+							M1 = (Mass(1, 1, face) + Mass(2, 1, face))/2d0
+							M = M1*this.weight(1,1,1,1) + Mass(1,0,face)*this.weight(2,1,1,1) + Mass(1,-1,face)*this.weight(3,1,1,1) + Mass(1,-2,face)*this.weight(4,1,1,1)
+						end if
+
+						! if(x_int(k) > 2*dim .and. i==1) M = (Mass(1, 2*dim+1, face) + Mass(1, 2*dim+2, face))/2d0
+						if(x_int(k) > 2*dim .and. i==1) then
+							M1 = (Mass(1, 2*dim, face) + Mass(2, 2*dim, face))/2d0
+							M = M1*this.weight(1,1,1,1) + Mass(1,2*dim+1,face)*this.weight(2,1,1,1) + Mass(1,2*dim+2,face)*this.weight(3,1,1,1) + Mass(1,2*dim+3,face)*this.weight(4,1,1,1)
+						end if
+
 						Mass_temp(x-i, y, face) = M*this.weight(k, x0, y, i) + Mass_temp(x-i, y, face)
 					end do
 				end do

@@ -375,7 +375,7 @@ CONTAINS
 	real(8) function partial(this, fun, h)
 		Class(metric) :: this
 		real(8), intent(in) :: fun(-this.step:this.step), h
-		real(8) A , B, C, D, E, F
+		real(8) A , B, C, D, E, F, G, I
 
 		if(this.step == 2) then
 			A = 2.0/(3.0*h);  B = - 2.0/(3.0*h);  C = - 1.0/(12.0*h);  D = 1.0/(12.0*h);  E = 0.0
@@ -383,6 +383,11 @@ CONTAINS
 		else if(this.step == 3) then
 			A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h);  E = 1d0/(60d0*h);  F = - 1d0/(60d0*h)
 			partial = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
+		else if(this.step == 4) then
+			A = 4d0/(5d0*h);  B = - 4d0/(5d0*h);  C = - 1d0/(5d0*h);  D = 1d0/(5d0*h)
+			E = 4d0/(105d0*h);  F = - 4d0/(105d0*h); G = - 1d0/(280d0*h); I = 1d0/(280d0*h)
+
+			partial = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3) + G*fun(4) + I*fun(-4)
 		end if
 
 	end function
