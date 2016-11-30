@@ -1,17 +1,18 @@
 #/bin/bash
 
-rm -rf *.o *.mod *.out *.file analyze *~ 2>/dev/null
+rm -rf *.o mod_files/*.mod *.out *.file analyze *~ 2>/dev/null
 
-Files="geometry.f90 matmul.f90 simple_rotations.f90 spherical.f90"
-Files=$Files" projections.f90 matrix_rotation.f90"
-Files=$Files" parallel_cubic.f90 grid_generator.f90 metrics.f90 grid_var.f90 derivatives.f90 interpolation.f90 func_var.f90 messenger.f90 diagnostic.f90 printer.f90 schemes.f90"
+Files="geometry.f90 grid_generation/matmul.f90 grid_generation/simple_rotations.f90 grid_generation/spherical.f90"
+Files=$Files" grid_generation/projections.f90 grid_generation/matrix_rotation.f90 grid_generation/grid_generator.f90"
+Files=$Files" parallel_cubic.f90 metrics.f90 grid_var.f90 derivatives.f90 interpolation.f90 func_var.f90 messenger.f90 diagnostic.f90 printer.f90 schemes.f90"
 Files=$Files" Solver_shallow_water.f90"
 
 netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
 netcdf="/home/sasha/netcdf"
 
+
  # -check all -traceback -ftrapuv
-mpiifort -openmp -O3 $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+mpiifort -openmp -O3 $Files -module mod_files -I grid_generation -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	CompStatus=$?
 	echo "compilation status" $CompStatus

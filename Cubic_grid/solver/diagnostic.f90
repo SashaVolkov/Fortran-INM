@@ -163,10 +163,10 @@ CONTAINS
 		call MPI_Allreduce(L_inf, L_inf_all, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
 
 		if (id == 0 ) then
-			if ( this.flag == 1 ) then
-				write(13, FMT = *), 100
-				this.flag = 0
-			end if
+			! if ( this.flag == 1 ) then
+			! 	write(13, FMT = *), 99d0
+			! 	this.flag = 0
+			! end if
 			write(13, FMT = *), abs(L_inf_all)
 		end if
 

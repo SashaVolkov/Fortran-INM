@@ -119,9 +119,9 @@ CONTAINS
 		L2_prec = sqrt(L2_prec)
 		L_inf_prec = MAXVAL(abs(this.surface_precise(-this.lon_max+1:this.lon_max-1, -this.lat_max+1:this.lat_max-1)))
 
-			write(11, *),time*this.convert_time, abs(L1/L1_prec)
-			write(12, *),time*this.convert_time, abs(L2/L2_prec)
-			write(13, *),time*this.convert_time, abs(L_inf/abs(L_inf_prec) - 1)
+			write(11, *),time*this.convert_time,"	", abs(L1/L1_prec)
+			write(12, *),time*this.convert_time,"	", abs(L2/L2_prec)
+			write(13, *),time*this.convert_time,"	", abs(L_inf/abs(L_inf_prec) - 1)
 
 
 	end subroutine
