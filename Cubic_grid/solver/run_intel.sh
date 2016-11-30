@@ -1,5 +1,11 @@
 #/bin/bash
 
+line=$(cat init | sed 's/ //g')
+args=(${line//,/ })
+dim="${args[0]}"
+rescale="${args[4]}"
+grid_type="${args[5]}"
+
 rm -rf *.o mod_files/*.mod *.out *.file analyze *~ 2>/dev/null
 
 Files="geometry.f90 grid_generation/matmul.f90 grid_generation/simple_rotations.f90 grid_generation/spherical.f90"
@@ -10,6 +16,26 @@ Files=$Files" Solver_shallow_water.f90"
 netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
 netcdf="/home/sasha/netcdf"
 
+if [[ $grid_type == 1 ]]; then
+	grid="equiang"
+elif [ $grid_type == 0 ]&&[ $rescale == 0 ]; then
+	grid="simple"
+elif [ $grid_type == 0 ] && [ $rescale == 1 ]; then
+	grid="tan"
+fi
+
+DIRECTORY="datFiles/$(( 2*$dim ))/$grid"
+PIC="datFiles/$(( 2*$dim ))/pic"
+
+if [ ! -d "$DIRECTORY" ]; then
+	mkdir $DIRECTORY
+fi
+if [ ! -d "$PIC" ]; then
+	mkdir $PIC
+fi
+if [ -d "$DIRECTORY" ]; then
+	echo $DIRECTORY
+fi
 
  # -check all -traceback -ftrapuv
 mpiifort -openmp -O3 $Files -module mod_files -I grid_generation -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
