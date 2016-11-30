@@ -42,7 +42,7 @@ if [ -d "$DIRECTORY" ]; then
 fi
 
  # -check all -traceback -ftrapuv
-mpiifort -openmp -O3 $Files -module mod_files -I grid_generation -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+mpiifort -qopenmp -O3 $Files -module mod_files -I grid_generation -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	CompStatus=$?
 	echo "compilation status" $CompStatus
@@ -54,6 +54,7 @@ else
 
 	echo `grep -c error err.file` "errors"
 	echo `grep -c warning err.file` "warnings"
+	echo `grep -c ifort err.file` "ifort"
 
 	if [[ $1 != "compile" ]]; then
 		export OMP_NUM_THREADS=4
