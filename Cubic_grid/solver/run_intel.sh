@@ -17,7 +17,7 @@ gg=grid_generation
 Files="$gg/matmul.f90 $gg/simple_rotations.f90 $gg/spherical.f90"
 Files=$Files" $gg/projections.f90 $gg/matrix_rotation.f90 $gg/grid_generator.f90"
 Files=$Files" geometry.f90 parallel_cubic.f90 metrics.f90 grid_var.f90 derivatives.f90 interpolation.f90 func_var.f90"
-Files=$Files" messenger.f90 diagnostic.f90 printer.f90 schemes.f90 Solver_shallow_water.f90"
+Files=$Files" messenger.f90 diagnostic.f90 printer.f90 methods.f90 Solver_shallow_water.f90"
 
 netcdf="/home/sasha/netcdf"
 if [ ! -d "$netcdf" ]; then

@@ -6,7 +6,7 @@ program solver
 	use parallel_cubic, Only: parallel
 	use func_var, Only: f_var
 	use printer_ncdf, Only: printer
-	use schemes, Only: schema
+	use methods, Only: method
 	use diagnostic_mod, Only: diagnostic
 	use messenger, Only: message
 	use interpolation, Only: interp
@@ -28,7 +28,7 @@ implicit none
 	Type(metric) :: metr
 	Type(parallel) :: paral
 	Type(printer) :: printer_nc
-	Type(schema) :: sch
+	Type(method) :: met
 	Type(diagnostic) :: diagn
 	Type(message) :: msg
 	Type(interp) :: inter
@@ -63,7 +63,7 @@ implicit none
 	call var_prev.init(paral, metr, height)
 	call var_prev.start_conditions(metr, geom)
 	call diagn.init( grid, paral, Tmax, id)
-	call sch.init(var_prev, grid, space_step)
+	call met.init(var_prev, grid, space_step)
 	call msg.init(grid_type)
 	call inter.init(grid, 4)
 
@@ -75,9 +75,9 @@ implicit none
 
 
 	do time = 1, Tmax
-		! call sch.Linear(var, var_prev, grid, metr, inter, paral, msg)
-		! call sch.INM_sch(var, var_prev, grid, metr, inter, paral, msg)
-		call sch.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
+		! call met.Euler(var, var_prev, grid, metr, inter, paral, msg)
+		! call met.Predictor_corrector(var, var_prev, grid, metr, inter, paral, msg)
+		call met.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
 			if(mod(time, speedup) == 0) then
 				call diagn.Courant(var_prev, metr, time)
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
@@ -112,7 +112,7 @@ implicit none
 	call var_prev.deinit()
 	call printer_nc.deinit(ncid, ncid_gr)
 	call diagn.deinit()
-	call sch.deinit()
+	call met.deinit()
 	call metr.deinit()
 
 

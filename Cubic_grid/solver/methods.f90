@@ -1,4 +1,4 @@
-module schemes
+module methods
 
 	use grid_var, Only: g_var
 	use derivatives, Only: der
@@ -14,9 +14,9 @@ module schemes
 
 
 	Private
-	Public :: schema
+	Public :: method
 
-	Type schema
+	Type method
 
 		integer(4) first_x, first_y, last_x, last_y, space_step, dt, h, g
 
@@ -28,8 +28,8 @@ module schemes
 
 		CONTAINS
 		Procedure, Public :: init => init
-		Procedure, Public :: Linear => Linear
-		Procedure, Public :: INM_sch => INM_sch
+		Procedure, Public :: Euler => Euler
+		Procedure, Public :: Predictor_corrector => Predictor_corrector
 		Procedure, Public ::  RungeKutta=> RungeKutta
 		Procedure, Private ::  FRunge=> FRunge
 		Procedure, Public :: deinit => deinit
@@ -42,7 +42,7 @@ Subroutine init(this, f, g, space_step)
 
 	Class(g_var) :: g
 	Class(f_var) :: f
-	Class(schema) :: this
+	Class(method) :: this
 	integer(4), intent(in) :: space_step
 
 	integer(4) f_x, f_y, l_x, l_y
@@ -68,9 +68,9 @@ End Subroutine
 
 
 
-subroutine Linear(this, var, var_pr, grid, metr, inter, paral, msg)
+subroutine Euler(this, var, var_pr, grid, metr, inter, paral, msg)
 
-	Class(schema) :: this
+	Class(method) :: this
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
 	Class(metric) :: metr
@@ -120,9 +120,9 @@ end subroutine
 
 
 
-subroutine INM_sch(this, var, var_pr, grid, metr, inter, paral, msg)
+subroutine Predictor_corrector(this, var, var_pr, grid, metr, inter, paral, msg)
 
-	Class(schema) :: this
+	Class(method) :: this
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
 	Class(metric) :: metr
@@ -216,7 +216,7 @@ end subroutine
 
 Subroutine RungeKutta(this, var, var_pr, grid, metr, inter, paral, msg)
 
-	Class(schema) :: this
+	Class(method) :: this
 	Class(f_var) :: var, var_pr
 	Class(g_var) :: grid
 	Class(metric) :: metr
@@ -280,7 +280,7 @@ End Subroutine
 
 
 Subroutine FRunge(this, grid, metr, var, i)
-	Class(schema) :: this
+	Class(method) :: this
 	Class(f_var) :: var
 	Class(g_var) :: grid
 	Class(metric) :: metr
@@ -329,7 +329,7 @@ end Subroutine
 
 
 Subroutine deinit(this)
-	Class(schema) :: this
+	Class(method) :: this
 
 	if (Allocated(this.ku_cov)) Deallocate(this.ku_cov)
 	if (Allocated(this.kv_cov)) Deallocate(this.kv_cov)
