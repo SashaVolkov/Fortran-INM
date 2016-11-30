@@ -17,8 +17,10 @@ Files=$Files" grid_generation/projections.f90 grid_generation/matrix_rotation.f9
 Files=$Files" parallel_cubic.f90 metrics.f90 grid_var.f90 derivatives.f90 interpolation.f90 func_var.f90 messenger.f90 diagnostic.f90 printer.f90 schemes.f90"
 Files=$Files" Solver_shallow_water.f90"
 
-netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
 netcdf="/home/sasha/netcdf"
+if [ ! -d "$netcdf" ]; then
+	netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
+fi
 
 if [[ $grid_type == 1 ]]; then
 	grid="equiang"
@@ -41,8 +43,11 @@ if [ -d "$DIRECTORY" ]; then
 	echo $DIRECTORY
 fi
 
- # -check all -traceback -ftrapuv
+if [[ $1 == "compile" ]]; then
+mpiifort -check all -traceback -ftrapuv -qopenmp $Files -module mod_files -I grid_generation -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+elif [[ $1 != "compile" ]] ; then
 mpiifort -qopenmp -O3 $Files -module mod_files -I grid_generation -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+fi
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	CompStatus=$?
 	echo "compilation status" $CompStatus
@@ -50,6 +55,7 @@ mpiifort -qopenmp -O3 $Files -module mod_files -I grid_generation -I $netcdf/inc
 if [[ `grep -c error err.file` > 0 ]]; then
 	echo "Look for" `grep -c error err.file` "errors in err.file"
 	echo `grep -c warning err.file` "warnings"
+	echo `grep -c ifort err.file` "ifort"
 else
 
 	echo `grep -c error err.file` "errors"
@@ -57,7 +63,7 @@ else
 	echo `grep -c ifort err.file` "ifort"
 
 	if [[ $1 != "compile" ]]; then
-		export OMP_NUM_THREADS=4
+		export OMP_NUM_THREADS=$2
 		mpirun -n $1 ./a.out
 
 		echo "Regridding"
