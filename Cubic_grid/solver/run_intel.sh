@@ -6,6 +6,10 @@ dim="${args[0]}"
 rescale="${args[4]}"
 grid_type="${args[5]}"
 
+if [ ! -d mod_files ]; then
+	mkdir mod_files
+fi
+
 rm -rf *.o mod_files/*.mod *.out *.file analyze *~ 2>/dev/null
 
 Files="geometry.f90 grid_generation/matmul.f90 grid_generation/simple_rotations.f90 grid_generation/spherical.f90"
