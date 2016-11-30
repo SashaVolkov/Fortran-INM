@@ -12,10 +12,12 @@ fi
 
 rm -rf *.o mod_files/*.mod *.out *.file analyze *~ 2>/dev/null
 
-Files="geometry.f90 grid_generation/matmul.f90 grid_generation/simple_rotations.f90 grid_generation/spherical.f90"
-Files=$Files" grid_generation/projections.f90 grid_generation/matrix_rotation.f90 grid_generation/grid_generator.f90"
-Files=$Files" parallel_cubic.f90 metrics.f90 grid_var.f90 derivatives.f90 interpolation.f90 func_var.f90 messenger.f90 diagnostic.f90 printer.f90 schemes.f90"
-Files=$Files" Solver_shallow_water.f90"
+gg=grid_generation
+
+Files="$gg/matmul.f90 $gg/simple_rotations.f90 $gg/spherical.f90"
+Files=$Files" $gg/projections.f90 $gg/matrix_rotation.f90 $gg/grid_generator.f90"
+Files=$Files" geometry.f90 parallel_cubic.f90 metrics.f90 grid_var.f90 derivatives.f90 interpolation.f90 func_var.f90"
+Files=$Files" messenger.f90 diagnostic.f90 printer.f90 schemes.f90 Solver_shallow_water.f90"
 
 netcdf="/home/sasha/netcdf"
 if [ ! -d "$netcdf" ]; then
@@ -44,9 +46,9 @@ if [ -d "$DIRECTORY" ]; then
 fi
 
 if [[ $1 == "compile" ]]; then
-mpiifort -check all -traceback -ftrapuv -qopenmp $Files -module mod_files -I grid_generation -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+mpiifort -check all -traceback -ftrapuv -qopenmp $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 elif [[ $1 != "compile" ]] ; then
-mpiifort -qopenmp -O3 $Files -module mod_files -I grid_generation -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+mpiifort -qopenmp -O3 $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 fi
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	CompStatus=$?
