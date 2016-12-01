@@ -75,9 +75,9 @@ implicit none
 
 
 	do time = 1, Tmax
-		! call met.Euler(var, var_prev, grid, metr, inter, paral, msg)
-		! call met.Predictor_corrector(var, var_prev, grid, metr, inter, paral, msg)
-		call met.RungeKutta(var, var_prev, grid, metr, inter, paral, msg)
+		! call met.Euler(var, var_prev, metr, inter, paral, msg)
+		! call met.Predictor_corrector(var, var_prev, metr, inter, paral, msg)
+		call met.RungeKutta(var, var_prev, metr, inter, paral, msg)
 			if(mod(time, speedup) == 0) then
 				call diagn.Courant(var_prev, metr, time)
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
@@ -96,12 +96,7 @@ implicit none
 	if(id == 0) then
 		print '(" Grid step =  ", f10.2, " m")', step
 		print '(" Grid step =  ", f10.2, " m")', grid.delta_on_cube
-! 		print '(" Y max step = ", f10.2, " m")', grid.dy_max
-! 		print '(" Y min step = ", f10.2, " m")', grid.dy_min
-! 		print '(" Y min/max = ", f6.4)', grid.dy_min/grid.dy_max
 		print '(" max/min = ", f10.2)', grid.max_to_min
-		! print '(" latlon = ", f8.3, f8.3)', grid.latlon(1, 1, 1, 2) * 180.0/pi
-		! print '(" latlon = ", f8.3, f8.3)', grid.latlon(1, 0, 1, 2) * 180.0/pi
 		print '(" np = ", I5)', np
 		print '(" time = ", f10.2, " sec")', end_init - start_init
 	end if

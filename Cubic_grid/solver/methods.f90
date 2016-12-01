@@ -18,7 +18,8 @@ module methods
 
 	Type method
 
-		integer(4) first_x, first_y, last_x, last_y, space_step, dt, h, g
+		integer(4) first_x, first_y, last_x, last_y, space_step
+		Real(8) :: g, dt, h
 
 		Real(8), Allocatable :: ku_cov(:, :, :, :)
 		Real(8), Allocatable :: kv_cov(:, :, :, :)
@@ -68,11 +69,10 @@ End Subroutine
 
 
 
-subroutine Euler(this, var, var_pr, grid, metr, inter, paral, msg)
+subroutine Euler(this, var, var_pr, metr, inter, paral, msg)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
-	Class(g_var) :: grid
 	Class(metric) :: metr
 	Class(parallel) :: paral
 	Class(interp) :: inter
@@ -82,8 +82,8 @@ subroutine Euler(this, var, var_pr, grid, metr, inter, paral, msg)
 	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), div, h
 	integer(4) face, x, y, dim, step
 
-	g = grid.g;  height = var_pr.height;  dim = var_pr.dim
-	dt = grid.dt;  step = this.space_step
+	g = this.g;  height = var_pr.height;  dim = var_pr.dim
+	dt = this.dt;  step = this.space_step
 
 	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
 	!$OMP DO
@@ -120,11 +120,10 @@ end subroutine
 
 
 
-subroutine Predictor_corrector(this, var, var_pr, grid, metr, inter, paral, msg)
+subroutine Predictor_corrector(this, var, var_pr, metr, inter, paral, msg)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
-	Class(g_var) :: grid
 	Class(metric) :: metr
 	Class(parallel) :: paral
 	Class(interp) :: inter
@@ -134,8 +133,8 @@ subroutine Predictor_corrector(this, var, var_pr, grid, metr, inter, paral, msg)
 	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), div, h
 	integer(4) face, x, y, dim, step, i
 
-	g = grid.g;  height = var_pr.height;  dim = var_pr.dim;
-	dt = grid.dt;  step = this.space_step;  h = this.h
+	g = this.g;  height = var_pr.height;  dim = var_pr.dim;
+	dt = this.dt;  step = this.space_step;  h = this.h
 
 	this.ku_con(:,:,:,0) = var_pr.u_con(:,:,:)
 	this.kv_con(:,:,:,0) = var_pr.v_con(:,:,:)
@@ -214,11 +213,10 @@ end subroutine
 
 
 
-Subroutine RungeKutta(this, var, var_pr, grid, metr, inter, paral, msg)
+Subroutine RungeKutta(this, var, var_pr, metr, inter, paral, msg)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
-	Class(g_var) :: grid
 	Class(metric) :: metr
 	Class(interp) :: inter
 	Class(parallel) :: paral
@@ -240,7 +238,7 @@ Subroutine RungeKutta(this, var, var_pr, grid, metr, inter, paral, msg)
 	this.kh(:, :, :, 0) = var_pr.h_height(:, :, :)
 
 		do iteration = 1, 4
-			call this.FRunge(grid, metr, var_pr, iteration)
+			call this.FRunge(metr, var_pr, iteration)
 			var_pr.u_cov(:, :, :) = this.ku_cov(:, :, :, iteration)
 			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
@@ -279,10 +277,9 @@ End Subroutine
 
 
 
-Subroutine FRunge(this, grid, metr, var, i)
+Subroutine FRunge(this, metr, var, i)
 	Class(method) :: this
 	Class(f_var) :: var
-	Class(g_var) :: grid
 	Class(metric) :: metr
 	Type(der) :: d
 
@@ -292,7 +289,7 @@ Subroutine FRunge(this, grid, metr, var, i)
 
 	coef(0) = 0d0;  coef(1) = 5d-1;  coef(2) = 5d-1;  coef(3) = 1d0;
 
-	dt = grid.dt;  g = grid.g; height = var.height
+	dt = this.dt;  g = this.g; height = var.height
 	h = this.h
 	step = this.space_step
 

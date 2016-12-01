@@ -32,17 +32,24 @@ elif [ $grid_type == 0 ] && [ $rescale == 1 ]; then
 	grid="tan"
 fi
 
-DIRECTORY="datFiles/$(( 2*$dim ))/$grid"
+DIRECTORY="datFiles/$(( 2*$dim ))"
+SubDIRECTORY="datFiles/$(( 2*$dim ))/$grid"
 PIC="datFiles/$(( 2*$dim ))/pic"
 
+if [ ! -d datFiles ]; then
+	mkdir datFiles
+fi
 if [ ! -d "$DIRECTORY" ]; then
 	mkdir $DIRECTORY
+fi
+if [ ! -d "$SubDIRECTORY" ]; then
+	mkdir $SubDIRECTORY
 fi
 if [ ! -d "$PIC" ]; then
 	mkdir $PIC
 fi
-if [ -d "$DIRECTORY" ]; then
-	echo $DIRECTORY
+if [ -d "$SubDIRECTORY" ]; then
+	echo $SubDIRECTORY
 fi
 
 if [[ $1 == "compile" ]]; then
