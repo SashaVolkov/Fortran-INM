@@ -1,7 +1,6 @@
 module metrics
 
 	use parallel_cubic, Only: parallel
-	use omp_lib
 
 implicit none
 

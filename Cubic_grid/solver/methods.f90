@@ -83,7 +83,7 @@ subroutine Euler(this, var, var_pr, metr, inter, paral, msg)
 	integer(4) face, x, y, dim, step
 
 	g = this.g;  height = var_pr.height;  dim = var_pr.dim
-	dt = this.dt;  step = this.space_step
+	dt = this.dt;  step = this.space_step;  h = this.h
 
 	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
 	!$OMP DO
@@ -92,7 +92,6 @@ subroutine Euler(this, var, var_pr, metr, inter, paral, msg)
 		do y = var.ns_y, var.nf_y
 			do x = var.ns_x, var.nf_x
 
-				h = this.h
 				temp1(:) = var_pr.h_height(x-step:x+step, y, face)
 				partial = d.partial_c(temp1, h, step)
 				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
@@ -142,38 +141,9 @@ subroutine Predictor_corrector(this, var, var_pr, metr, inter, paral, msg)
 	this.kv_cov(:,:,:,0) = var_pr.v_cov(:,:,:)
 	this.kh(:,:,:,0) = var_pr.h_height(:,:,:)
 
-	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
-	!$OMP DO
+	call this.Euler(var, var_pr, metr, inter, paral, msg) ! Predictor
 
-	do face = 1, 6
-		do y = var.ns_y, var.nf_y
-			do x = var.ns_x, var.nf_x
-
-				temp1(:) = var_pr.h_height(x-step:x+step, y, face)
-				partial = d.partial_c(temp1, h, step)
-				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
-
-				temp1(:) = var_pr.h_height(x, y-step:y+step, face)
-				partial = d.partial_c(temp1, h, step)
-				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial
-
-				temp1(:) = var_pr.u_con(x-step:x+step, y, face)
-				temp2(:) = var_pr.v_con(x, y-step:y+step, face)
-				div = d.div(metr, temp1, temp2, h, x, y, step)
-				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*div
-
-			end do
-		end do
-	end do
-
-		!$OMP END DO
-		!$OMP END PARALLEL
-
-	call var_pr.equal(var, metr)
-	call msg.msg(var_pr, paral)
-	call var_pr.interpolate(inter, metr)
-
-	do i = 1, 2
+	do i = 1, 2 ! Corrector
 
 		!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
 		!$OMP DO
