@@ -107,7 +107,7 @@ subroutine Euler(this, var, var_pr, metr, inter, msg)
 	!$OMP END PARALLEL
 
 	call var_pr.equal(var, metr)
-	call msg.msg(var_pr)
+	call msg.msg(var_pr.h_height, var_pr.lon_vel, var_pr.lat_vel)
 	call var_pr.interpolate(inter, metr)
 
 end subroutine
@@ -167,7 +167,7 @@ subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
 		!$OMP END PARALLEL
 
 		call var_pr.equal(var, metr)
-		call msg.msg(var_pr)
+		call msg.msg(var_pr.h_height, var_pr.lon_vel, var_pr.lat_vel)
 		call var_pr.interpolate(inter, metr)
 
 	end do
@@ -206,7 +206,7 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg)
 			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
 			call var_pr.equal(var_pr, metr)
-			call msg.msg(var_pr)
+			call msg.msg(var_pr.h_height, var_pr.lon_vel, var_pr.lat_vel)
 			call var_pr.interpolate(inter, metr)
 			this.ku_cov(:, :, :, iteration) = var_pr.u_cov(:, :, :)
 			this.kv_cov(:, :, :, iteration) = var_pr.v_cov(:, :, :)
@@ -233,7 +233,7 @@ var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2.
 
 
 	call var_pr.equal(var, metr)
-	call msg.msg(var_pr)
+	call msg.msg(var_pr.h_height, var_pr.lon_vel, var_pr.lat_vel)
 	call var_pr.interpolate(inter, metr)
 
 End Subroutine

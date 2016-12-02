@@ -11,10 +11,10 @@ implicit none
 
 		CONTAINS
 		Procedure, Public :: partial_c => partial_c
-		Procedure, Public :: partial_c2 => partial_c2
-		Procedure, Public :: partial_c4 => partial_c4
-		Procedure, Public :: partial_c6 => partial_c6
-		Procedure, Public :: partial_c_fg => partial_c_fg
+		Procedure, Private :: partial_c2 => partial_c2
+		Procedure, Private :: partial_c4 => partial_c4
+		Procedure, Private :: partial_c6 => partial_c6
+		Procedure, Private :: partial_c_fg => partial_c_fg
 		Procedure, Public :: div => div
 	End Type
 
@@ -91,16 +91,8 @@ CONTAINS
 		real(8) J_1(-step:step), J_2(-step:step), G(2,2)
 
 		do i = -step, step
-! 			do j = -step, step
 			J_1(i) = metr.G_sqr(x+i, y)
 			J_2(i) = metr.G_sqr(x, y+i)
-! 			G(1,1) = metr.G_inverse(1, 1, x+i, y+j)
-! 			G(1,2) = metr.G_inverse(1, 2, x+i, y+j)
-! 			G(2,1) = metr.G_inverse(2, 1, x+i, y+j)
-! 			G(2,2) = metr.G_inverse(2, 2, x+i, y+j)
-! 			u1_con(i) = G(1,1)*u1_cov(i) + G(1,2)*u2_cov(i)
-! 			u2_con(i) = G(2,2)*u2_cov(i) + G(2,1)*u1_cov(i)
-! 			end do
 		end do
 
 		div = ( this.partial_c_fg(u1_con, J_1, h, step) + this.partial_c_fg(u2_con, J_2, h, step))/J_1(0)

@@ -115,9 +115,9 @@ CONTAINS
 		Class(metric) :: metr
 
 
-		var_pr.h_height(:, :, :)=var.h_height(:, :, :)
-		var_pr.u_cov(:, :, :)=var.u_cov(:, :, :)
-		var_pr.v_cov(:, :, :)=var.v_cov(:, :, :)
+		var_pr.h_height = var.h_height
+		var_pr.u_cov = var.u_cov
+		var_pr.v_cov = var.v_cov
 
 		call var_pr.Velocity_to_spherical_border(metr)
 
