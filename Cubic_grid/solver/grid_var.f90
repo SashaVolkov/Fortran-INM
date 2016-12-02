@@ -14,7 +14,6 @@ module grid_var
 	use sphere_geometry, Only: geometry
 	use grid_generator_solver, Only: generator
 	use parallel_cubic, Only: parallel
-	use metrics, Only: metric
 	use omp_lib
 
 implicit none
@@ -37,7 +36,7 @@ implicit none
 
 		Real(8) :: four_order_const(5)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
 		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube, max_to_min
-		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type
+		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type, Neighbours_face(6, 4)
 		integer(4) first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
@@ -52,12 +51,11 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, geom, paral, metr, omega_cor, g, dt, rescale,grid_type)
+	subroutine init(this, geom, paral, omega_cor, g, dt, rescale,grid_type)
 
 		Class(g_var) :: this
 		Class(geometry) :: geom
 		Class(parallel) :: paral
-		Class(metric) :: metr
 		integer(4), intent(in) :: rescale, grid_type
 		real(8), intent(in) :: omega_cor, g, dt
 		integer(4) x, y
@@ -72,8 +70,8 @@ CONTAINS
 		this.first_x = paral.first_x;  this.first_y = paral.first_y
 		this.last_x = paral.last_x;  this.last_y = paral.last_y
 
-		this.snd_xy(:,:,:) = paral.snd_xy(:,:,:)
-		this.rcv_xy(:,:,:) = paral.rcv_xy(:,:,:)
+		this.snd_xy = paral.snd_xy;  this.rcv_xy = paral.rcv_xy
+		this.Neighbours_face = paral.Neighbours_face
 
 
 		call this.alloc()
@@ -82,7 +80,7 @@ CONTAINS
 		else if(grid_type == 1)then
 			call generate.equiangular_cubed_sphere(this.dim, this.step, this.cube_coord_c, this.latlon_c, this.latlon)
 		end if
-		call this.const_def(geom, metr)
+		call this.const_def(geom)
 
 	end subroutine
 
@@ -125,10 +123,9 @@ CONTAINS
 
 
 
-	subroutine const_def(this, g, metr)
+	subroutine const_def(this, g)
 		Class(g_var) :: this
 		Class(geometry) :: g
-		Class(metric) :: metr
 		real(8) dist, omega_cor, h(-1:2)
 		integer(4) face, x, y, dim
 		integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
@@ -145,11 +142,6 @@ CONTAINS
 		end do
 
 		call this.tiles_prop(g)
-
-		metr.r_sphere = this.r_sphere
-		metr.cube_coord_c = this.cube_coord_c
-		metr.latlon_c = this.latlon_c
-		call metr.define(this.grid_type)
 
 	end subroutine
 

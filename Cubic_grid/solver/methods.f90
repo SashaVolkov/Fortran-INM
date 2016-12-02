@@ -1,11 +1,9 @@
 module methods
 
-	use grid_var, Only: g_var
 	use derivatives, Only: der
 	use metrics, Only: metric
 	use func_var, Only: f_var
 	use interpolation, Only: interp
-	use parallel_cubic, Only: parallel
 	use messenger, Only: message
 	use mpi
 	use omp_lib
@@ -18,7 +16,7 @@ module methods
 
 	Type method
 
-		integer(4) first_x, first_y, last_x, last_y, space_step
+		integer(4) first_x, first_y, last_x, last_y, step
 		Real(8) :: g, dt, h
 
 		Real(8), Allocatable :: ku_cov(:, :, :, :)
@@ -39,12 +37,10 @@ module methods
 	CONTAINS
 
 
-Subroutine init(this, f, g, space_step)
+Subroutine init(this, f)
 
-	Class(g_var) :: g
 	Class(f_var) :: f
 	Class(method) :: this
-	integer(4), intent(in) :: space_step
 
 	integer(4) f_x, f_y, l_x, l_y
 
@@ -54,9 +50,9 @@ Subroutine init(this, f, g, space_step)
 	this.first_x = f_x;  this.first_y = f_y
 	this.last_x = l_x;  this.last_y = l_y
 
-	this.space_step = space_step
+	this.step = f.step
 
-	this.dt = g.dt;  this.g = g.g;  this.h = g.delta_on_cube
+	this.dt = f.dt;  this.g = f.g;  this.h = f.delta_on_cube
 
 	Allocate(this.ku_cov(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kv_cov(f_x: l_x, f_y : l_y, 6, 0:4))
@@ -69,21 +65,20 @@ End Subroutine
 
 
 
-subroutine Euler(this, var, var_pr, metr, inter, paral, msg)
+subroutine Euler(this, var, var_pr, metr, inter, msg)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
 	Class(metric) :: metr
-	Class(parallel) :: paral
 	Class(interp) :: inter
 	Class(message) :: msg
 	Type(der) :: d
 
-	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), div, h
+	real(8) g, height, dt, partial, temp1(-this.step:this.step), temp2(-this.step:this.step), div, h
 	integer(4) face, x, y, dim, step
 
 	g = this.g;  height = var_pr.height;  dim = var_pr.dim
-	dt = this.dt;  step = this.space_step;  h = this.h
+	dt = this.dt;  step = this.step;  h = this.h
 
 	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
 	!$OMP DO
@@ -112,28 +107,27 @@ subroutine Euler(this, var, var_pr, metr, inter, paral, msg)
 	!$OMP END PARALLEL
 
 	call var_pr.equal(var, metr)
-	call msg.msg(var_pr, paral)
+	call msg.msg(var_pr)
 	call var_pr.interpolate(inter, metr)
 
 end subroutine
 
 
 
-subroutine Predictor_corrector(this, var, var_pr, metr, inter, paral, msg)
+subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
 	Class(metric) :: metr
-	Class(parallel) :: paral
 	Class(interp) :: inter
 	Class(message) :: msg
 	Type(der) :: d
 
-	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), div, h
+	real(8) g, height, dt, partial, temp1(-this.step:this.step), temp2(-this.step:this.step), div, h
 	integer(4) face, x, y, dim, step, i
 
 	g = this.g;  height = var_pr.height;  dim = var_pr.dim;
-	dt = this.dt;  step = this.space_step;  h = this.h
+	dt = this.dt;  step = this.step;  h = this.h
 
 	this.ku_con(:,:,:,0) = var_pr.u_con(:,:,:)
 	this.kv_con(:,:,:,0) = var_pr.v_con(:,:,:)
@@ -141,7 +135,7 @@ subroutine Predictor_corrector(this, var, var_pr, metr, inter, paral, msg)
 	this.kv_cov(:,:,:,0) = var_pr.v_cov(:,:,:)
 	this.kh(:,:,:,0) = var_pr.h_height(:,:,:)
 
-	call this.Euler(var, var_pr, metr, inter, paral, msg) ! Predictor
+	call this.Euler(var, var_pr, metr, inter, msg) ! Predictor
 
 	do i = 1, 2 ! Corrector
 
@@ -173,7 +167,7 @@ subroutine Predictor_corrector(this, var, var_pr, metr, inter, paral, msg)
 		!$OMP END PARALLEL
 
 		call var_pr.equal(var, metr)
-		call msg.msg(var_pr, paral)
+		call msg.msg(var_pr)
 		call var_pr.interpolate(inter, metr)
 
 	end do
@@ -183,13 +177,12 @@ end subroutine
 
 
 
-Subroutine RungeKutta(this, var, var_pr, metr, inter, paral, msg)
+Subroutine RungeKutta(this, var, var_pr, metr, inter, msg)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
 	Class(metric) :: metr
 	Class(interp) :: inter
-	Class(parallel) :: paral
 	Class(message) :: msg
 
 	integer(4) face, x, y, dim, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier, iteration, vector, scalar
@@ -213,7 +206,7 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, paral, msg)
 			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
 			call var_pr.equal(var_pr, metr)
-			call msg.msg(var_pr, paral)
+			call msg.msg(var_pr)
 			call var_pr.interpolate(inter, metr)
 			this.ku_cov(:, :, :, iteration) = var_pr.u_cov(:, :, :)
 			this.kv_cov(:, :, :, iteration) = var_pr.v_cov(:, :, :)
@@ -240,7 +233,7 @@ var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2.
 
 
 	call var_pr.equal(var, metr)
-	call msg.msg(var_pr, paral)
+	call msg.msg(var_pr)
 	call var_pr.interpolate(inter, metr)
 
 End Subroutine
@@ -254,14 +247,14 @@ Subroutine FRunge(this, metr, var, i)
 	Type(der) :: d
 
 	integer(4), intent(in) :: i
-	real(8) g, height, dt, partial, temp1(-this.space_step:this.space_step), temp2(-this.space_step:this.space_step), coef(0:3), div, h
+	real(8) g, height, dt, partial, temp1(-this.step:this.step), temp2(-this.step:this.step), coef(0:3), div, h
 	integer(4) x,y, face, step
 
 	coef(0) = 0d0;  coef(1) = 5d-1;  coef(2) = 5d-1;  coef(3) = 1d0;
 
 	dt = this.dt;  g = this.g; height = var.height
 	h = this.h
-	step = this.space_step
+	step = this.step
 
 	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
 	!$OMP DO

@@ -56,18 +56,18 @@ implicit none
 	start_init = MPI_Wtime()
 
 	call paral.init(dim, space_step+1, np, id) ! Yep, that's right step+1 is correct, interpolation and transformation matrix need more than step points
+	call msg.init(grid_type, paral)
 	call geom.init(r_sphere, pi)
-	call metr.init(paral)
-	call grid.init(geom, paral, metr, omega_cor, g, dt, rescale, grid_type)
-	call var.init(paral, metr, height)
-	call var_prev.init(paral, metr, height)
+	call grid.init(geom, paral, omega_cor, g, dt, rescale, grid_type)
+	call metr.init(grid)
+	call var.init(metr, height)
+	call var_prev.init(metr, height)
 	call var_prev.start_conditions(metr, geom)
-	call diagn.init( grid, paral, Tmax, id)
-	call met.init(var_prev, grid, space_step)
-	call msg.init(grid_type)
-	call inter.init(grid, 4)
+	call diagn.init(var_prev, Tmax, id)
+	call met.init(var_prev)
+	call inter.init(metr, 4)
 
-	call diagn.L_norm(var_prev, grid, time)
+	call diagn.L_norm(var_prev, time)
 
 	call printer_nc.init(dim, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
 	call printer_nc.to_print(var_prev, diagn, 0, speedup, ncid, id)
@@ -75,13 +75,13 @@ implicit none
 
 
 	do time = 1, Tmax
-		! call met.Euler(var, var_prev, metr, inter, paral, msg)
-		! call met.Predictor_corrector(var, var_prev, metr, inter, paral, msg)
-		call met.RungeKutta(var, var_prev, metr, inter, paral, msg)
+		! call met.Euler(var, var_prev, metr, inter, msg)
+		! call met.Predictor_corrector(var, var_prev, metr, inter, msg)
+		call met.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
-				call diagn.Courant(var_prev, metr, time)
+				call diagn.Courant(var_prev, time)
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
-				call diagn.L_norm(var_prev, grid, time)
+				call diagn.L_norm(var_prev, time)
 			end if
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()

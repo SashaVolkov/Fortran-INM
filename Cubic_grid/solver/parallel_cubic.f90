@@ -1,6 +1,5 @@
 module parallel_cubic
 
-	use omp_lib
 	use mpi
 
 implicit none

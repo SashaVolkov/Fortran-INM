@@ -1,6 +1,5 @@
 module func_var
 
-	use parallel_cubic, Only: parallel
 	use sphere_geometry, Only: geometry
 	use interpolation, Only: interp
 	use metrics, Only: metric
@@ -20,8 +19,8 @@ implicit none
 		Real(8), Allocatable :: v_con(:, :, :)
 		Real(8), Allocatable :: lon_vel(:, :, :)
 		Real(8), Allocatable :: lat_vel(:, :, :)
-		real(8) height
-		integer(4) step, dim, Xsize, Ysize, interp_factor(1:4), Neighbours_face(6, 4)
+		Real(8) height,  g, dt, delta_on_cube
+		integer(4) step, dim, interp_factor(1:4), Neighbours_face(6, 4), grid_type, rescale
 		integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
@@ -44,33 +43,30 @@ CONTAINS
 
 
 
-	subroutine init(this, paral, metr, height)
+	subroutine init(this, metr, height)
 
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Class(parallel) :: paral
 		real(8), intent(in) :: height
 		integer(4) :: i
 
-		this.ns_x = paral.ns_xy(1);  this.ns_y = paral.ns_xy(2)
-		this.nf_x = paral.nf_xy(1);  this.nf_y = paral.nf_xy(2)
+		this.ns_x = metr.ns_xy(1);  this.ns_y = metr.ns_xy(2)
+		this.nf_x = metr.nf_xy(1);  this.nf_y = metr.nf_xy(2)
 
-		this.first_x = paral.first_x;  this.first_y = paral.first_y
-		this.last_x = paral.last_x;  this.last_y = paral.last_y
+		this.first_x = metr.first_x;  this.first_y = metr.first_y
+		this.last_x = metr.last_x;  this.last_y = metr.last_y
 
-		this.Xsize = paral.Xsize;  this.Ysize = paral.Ysize
-		this.step = paral.step;  this.height = height;  this.dim = paral.dim
+		this.step = metr.step;  this.height = height;  this.dim = metr.dim
+		this.Neighbours_face = metr.Neighbours_face;  this.grid_type = metr.grid_type
 
-		this.Neighbours_face = paral.Neighbours_face
-
-		this.snd_xy(:,:,:) = paral.snd_xy(:,:,:)
-		this.rcv_xy(:,:,:) = paral.rcv_xy(:,:,:)
-
-		this.interp_factor(:) = 0
+		this.snd_xy = metr.snd_xy;  this.rcv_xy = metr.rcv_xy
+		this.interp_factor(:) = 0;  this.rescale = metr.rescale
+		this.delta_on_cube = metr.delta_on_cube
+		this.dt = metr.dt;  this.g = metr.g
 
 		do i = 1, 4
-			if(metr.grid_type == 1) then
-				if(paral.Neighbours_face(2, i) /= 2) this.interp_factor(i) = 1
+			if(this.grid_type == 1) then
+				if(this.Neighbours_face(2, i) /= 2) this.interp_factor(i) = 1
 			end if
 		end do
 

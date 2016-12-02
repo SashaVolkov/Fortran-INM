@@ -1,6 +1,6 @@
 module metrics
 
-	use parallel_cubic, Only: parallel
+	use grid_var, Only: g_var
 
 implicit none
 
@@ -18,9 +18,9 @@ implicit none
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: cube_coord_c(:, :, :)
 
-		real(8) :: r_sphere
-		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2)
-		integer(4) first_x, first_y, last_x, last_y, grid_type
+		real(8) :: r_sphere, delta_on_cube, dt, g
+		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
+		integer(4) first_x, first_y, last_x, last_y, grid_type, Neighbours_face(6, 4)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -36,7 +36,6 @@ implicit none
 
 		Procedure, Private :: hem_of_face => hem_of_face
 		Procedure, Private :: partial => partial
-! 		Procedure, Private :: partial_c4_non => partial_c4_non
 
 
 	End Type
@@ -45,33 +44,39 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, paral)
+	subroutine init(this, grid)
 
 		Class(metric) :: this
-		Class(parallel) :: paral
+		Class(g_var) :: grid
 
 
-		this.dim = paral.dim;  this.step = paral.step
+		this.dim = grid.dim;  this.step = grid.step;  this.g = grid.g
+		this.delta_on_cube = grid.delta_on_cube;  this.dt = grid.dt
 
-		this.ns_xy(:) = paral.ns_xy(:);  this.nf_xy(:) = paral.nf_xy(:);
-		this.first_x = paral.first_x;  this.first_y = paral.first_y
-		this.last_x = paral.last_x;  this.last_y = paral.last_y
+		this.ns_xy(:) = grid.ns_xy(:);  this.nf_xy(:) = grid.nf_xy(:);
+		this.first_x = grid.first_x;  this.first_y = grid.first_y
+		this.last_x = grid.last_x;  this.last_y = grid.last_y
 
 		call this.alloc()
+
+		this.r_sphere = grid.r_sphere;  this.grid_type = grid.grid_type
+		this.snd_xy = grid.snd_xy;  this.rcv_xy = grid.rcv_xy
+		this.Neighbours_face = grid.Neighbours_face;  this.rescale = grid.rescale
+
+		this.cube_coord_c = grid.cube_coord_c
+		this.latlon_c = grid.latlon_c
+		call this.define()
 
 	end subroutine
 
 
-	subroutine define(this, grid_type)
+	subroutine define(this)
 
 		Class(metric) :: this
-		integer(4), intent(in) :: grid_type
 
-		this.grid_type = grid_type
-
-		if(grid_type == 0) then ! 0 - conformal, 1 - equiangular
+		if(this.grid_type == 0) then ! 0 - conformal, 1 - equiangular
 			call this.metric_tensor_conf()
-		else if(grid_type == 1)then
+		else if(this.grid_type == 1)then
 			call this.metric_tensor_equiang()
 		end if
 

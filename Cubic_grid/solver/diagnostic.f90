@@ -1,9 +1,6 @@
 module diagnostic_mod
 
-	use grid_var, Only: g_var
-	use metrics, Only: metric
 	use func_var, Only: f_var
-	use parallel_cubic, Only: parallel
 	use mpi
 	use omp_lib
 
@@ -35,33 +32,31 @@ CONTAINS
 
 
 
-	subroutine init(this, grid, paral, Tmax, id)
+	subroutine init(this, func, Tmax, id)
 
 		Class(diagnostic) :: this
-		Class(g_var) :: grid
-		Class(parallel) :: paral
+		Class(f_var) :: func
 
 		integer(4), intent(in) :: Tmax, id
 		character(32) istring
 
-
-		this.Tmax = Tmax;  this.dim = grid.dim;  this.step = grid.step
-		this.convert_time = grid.dt/3600d0/24d0
-		this.dt = grid.dt;  this.dh = grid.delta_on_cube
+		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step
+		this.dt = func.dt;  this.dh = func.delta_on_cube
+		this.convert_time = this.dt/3600d0/24d0
 		this.flag = 1
 
 		write(istring, *) 2*this.dim
 
-		call this.alloc(paral)
+		call this.alloc(func)
 
-		if (grid.grid_type == 1) then
+		if (func.grid_type == 1) then
 			istring = trim(adjustl(istring))//'/equiang/'
-		else if (grid.grid_type == 0) then
-			if (grid.rescale == 1) then
+		else if (func.grid_type == 0) then
+			if (func.rescale == 1) then
 				istring = trim(adjustl(istring))//'/tan/'
-			else if (grid.rescale == 0) then
+			else if (func.rescale == 0) then
 				istring = trim(adjustl(istring))//'/simple/'
-			else if (grid.rescale == 2) then
+			else if (func.rescale == 2) then
 				istring = trim(adjustl(istring))//'/exp/'
 			end if
 		end if
@@ -85,12 +80,12 @@ CONTAINS
 
 
 
-	subroutine alloc(this, paral)
+	subroutine alloc(this, func)
 
 		Class(diagnostic) :: this
-		Class(parallel) :: paral
+		Class(f_var) :: func
 
-		Allocate(this.CFL(paral.first_x:paral.last_x, paral.first_y:paral.last_y, 1:6))
+		Allocate(this.CFL(func.first_x:func.last_x, func.first_y:func.last_y, 1:6))
 
 	end subroutine
 
@@ -114,10 +109,9 @@ CONTAINS
 
 
 
-	subroutine Courant(this, func, metr, time)
+	subroutine Courant(this, func, time)
 		Class(diagnostic) :: this
 		Class(f_var) :: func
-		Class(metric) :: metr
 		integer(4), intent(in) :: time
 		integer(4) face, x, y, dim, ier, id
 		real(8) :: Courant_number, Courant_max
@@ -150,9 +144,8 @@ CONTAINS
 	end subroutine
 
 
-	subroutine L_norm(this, func, grid, time)
+	subroutine L_norm(this, func, time)
 		Class(diagnostic) :: this
-		Class(g_var) :: grid
 		Class(f_var) :: func
 		integer(4), intent(in) :: time
 

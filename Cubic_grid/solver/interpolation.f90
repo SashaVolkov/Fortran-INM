@@ -1,6 +1,6 @@
 module interpolation
 
-	use grid_var, Only: g_var
+	use metrics, Only: metric
 	use sphere_geometry, Only: geometry
 	use mpi
 	use omp_lib
@@ -27,36 +27,35 @@ module interpolation
 	CONTAINS
 
 
-	Subroutine init(this, g, n)
+	Subroutine init(this, metr, n)
 
 		Class(interp) :: this
-		Class(g_var) :: g
+		Class(metric) :: metr
 		Integer(4) :: n
-		Integer(4) :: k, i, j, xk, x, x0, dim
+		Integer(4) :: k, i, j, xk, x, x0, dim, step
 
-		this.ns_x = g.ns_xy(1);  this.nf_x = g.nf_xy(1);  this.ns_y = g.ns_xy(2);  this.nf_y = g.nf_xy(2)
-		this.n = n;  this.dim = g.dim;  dim = this.dim; this.step = g.step
+		this.ns_x = metr.ns_xy(1);  this.nf_x = metr.nf_xy(1);  this.ns_y = metr.ns_xy(2);  this.nf_y = metr.nf_xy(2)
+		this.n = n;  this.dim = metr.dim;  dim = this.dim;  this.step = metr.step;  step = this.step
 
-		this.first_x = g.first_x;  this.first_y = g.first_y
-		this.last_x = g.last_x;  this.last_y = g.last_y
+		this.first_x = metr.first_x;  this.first_y = metr.first_y
+		this.last_x = metr.last_x;  this.last_y = metr.last_y
 
-		this.snd_xy(:,:,:) = g.snd_xy(:,:,:)
-		this.rcv_xy(:,:,:) = g.rcv_xy(:,:,:)
+		this.snd_xy = metr.snd_xy;  this.rcv_xy = metr.rcv_xy
 
-		Allocate(this.x0_mass(2*dim, g.step))
-		Allocate(this.weight(n, 2*dim, 2*dim, g.step))
+		Allocate(this.x0_mass(2*dim, step))
+		Allocate(this.weight(n, 2*dim, 2*dim, step))
 
-		do i = 1, g.step
+		do i = 1, step
 			do x = 1, 2*dim
-				call this.X0_find(g, x, i, x0)
+				call this.X0_find(metr, x, i, x0)
 				this.x0_mass(x, i) = x0
 			end do
 		end do
 
-		do i = 1, g.step
+		do i = 1, step
 			do x = 1, 2*dim
 				x0 = this.x0_mass(x, i)
-				call this.weight_find(g, x0, x, i, this.weight(:, x0, x, i))
+				call this.weight_find(metr, x0, x, i, this.weight(:, x0, x, i))
 				! print *, i, x, x0, real(this.weight(:, x0, x, i),4)
 			end do
 		end do
@@ -231,10 +230,10 @@ module interpolation
 
 
 
-	Subroutine X0_find(this, g, x, step, x0)
+	Subroutine X0_find(this, metr, x, step, x0)
 
 		Class(interp) :: this
-		Class(g_var) :: g
+		Class(metric) :: metr
 		Integer(4), intent(in) :: x, step
 		Integer(4), intent(out) :: x0
 		Integer(4) :: xk
@@ -242,7 +241,7 @@ module interpolation
 
 		do xk = 1, 2*this.dim
 
-			gap = (g.latlon_c(1, 1 - step, x, 2)) - (g.latlon_c(1, step, xk, 2))
+			gap = (metr.latlon_c(1, 1 - step, x, 2)) - (metr.latlon_c(1, step, xk, 2))
 			if(gap >= 0.0) then
 				x0 = xk
 			end if
@@ -253,10 +252,10 @@ module interpolation
 
 
 
-	Subroutine weight_find(this, g, x0, x, step, weight)
+	Subroutine weight_find(this, metr, x0, x, step, weight)
 
 		Class(interp) :: this
-		Class(g_var) :: g
+		Class(metric) :: metr
 		Type(geometry) :: geom
 		Integer(4), intent(in) :: step, x, x0
 		Real(8), intent(out) :: weight(1:this.n)
@@ -264,15 +263,15 @@ module interpolation
 		Real(8) :: s, numen, k(4, 4), h(1:4), latlon_y(this.n), latlon_x
 
 		n = this.n;  dim = this.dim; weight(:) = 1d0
-		latlon_x = g.latlon_c(1,1-step,x,2)
+		latlon_x = metr.latlon_c(1,1-step,x,2)
 
 		y(1) = x0 - n/2 + 1
-		latlon_y(1) = g.latlon_c(1,2*g.dim+1-step,y(1),5)
+		latlon_y(1) = metr.latlon_c(1,2*dim+1-step,y(1),5)
 		h(1) = abs(latlon_x - latlon_y(1))
 
 		do i = 2, n
 			y(i) = y(i-1)+1
-			latlon_y(i) = g.latlon_c(1,2*g.dim+1-step,y(i),5)
+			latlon_y(i) = metr.latlon_c(1,2*dim+1-step,y(i),5)
 			h(i) = latlon_x - latlon_y(i)
 			do j = 1, n
 				if(j /= i) k(i, j) = h(i)/(latlon_y(j) - latlon_y(i))

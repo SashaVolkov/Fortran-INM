@@ -110,7 +110,7 @@ module printer_ncdf
 
 		ns_y = var.ns_y;  nf_y = var.nf_y
 		ns_x = var.ns_x;  nf_x = var.nf_x
-		Ysize = var.Ysize; Xsize = var.Xsize
+		Ysize = 1 + nf_y - ns_y; Xsize = 1 + nf_x - ns_x
 
 		t = 1+time/speedup
 
