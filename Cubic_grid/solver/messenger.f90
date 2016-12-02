@@ -11,11 +11,11 @@ module messenger
 
 	Type message
 
-	integer(4) :: var_count = 3
-	integer(4) snd_stat(MPI_STATUS_SIZE, 4, 6, 3), rcv_stat(MPI_STATUS_SIZE, 4, 6, 3)
-	integer(4) ier, np, snd_req(4, 6, 3), rcv_req(4, 6, 3), comm(3), grid_type, vec_only
-	integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2), halo(6, 4), first_x, first_y, last_x, last_y
-	integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
+	Integer(4) :: var_count = 3
+	Integer(4) snd_stat(MPI_STATUS_SIZE, 4, 6, 3), rcv_stat(MPI_STATUS_SIZE, 4, 6, 3)
+	Integer(4) ier, np, snd_req(4, 6, 3), rcv_req(4, 6, 3), comm(3), grid_type, vec_only
+	Integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2), halo(6, 4), first_x, first_y, last_x, last_y
+	Integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
 
 		CONTAINS
 		Procedure, Public :: msg => msg
@@ -29,12 +29,12 @@ module messenger
 
 
 
-subroutine init(this, grid_type, paral)
+Subroutine init(this, grid_type, paral)
 
 	Class(message) :: this
 	Class(parallel) :: paral
-	integer(4), intent(in) :: grid_type
-	integer(4) i
+	Integer(4), intent(in) :: grid_type
+	Integer(4) i
 
 	this.grid_type = grid_type;  this.id = paral.id
 	this.halo(:,:) = paral.halo(:,:);  this.Neighbours_face(:,:) = paral.Neighbours_face(:,:)
@@ -50,11 +50,11 @@ subroutine init(this, grid_type, paral)
 		call MPI_COMM_DUP(MPI_COMM_WORLD, this.comm(i), this.ier)
 	end do
 
-end subroutine
+end Subroutine
 
 
 
-subroutine msg(this, level, lon_vel, lat_vel)
+Subroutine msg(this, level, lon_vel, lat_vel)
 	Class(message) :: this
 	Real(8), Intent(in) :: level(this.first_x:this.last_x, this.first_y:this.last_y, 6), lon_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6), lat_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6)
 
@@ -62,17 +62,17 @@ subroutine msg(this, level, lon_vel, lat_vel)
 	call this.Waiter()
 
 
-end subroutine
+end Subroutine
 
 
 
 
-subroutine Simple_msg(this, level, lon_vel, lat_vel)
+Subroutine Simple_msg(this, level, lon_vel, lat_vel)
 
 	Class(message) :: this
 	Real(8), Intent(in) :: level(this.first_x:this.last_x, this.first_y:this.last_y, 6), lon_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6), lat_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6)
-	integer(4) i, face, rcv_tag, snd_tag
-	integer(4) rx, ry, sx, sy, neib_id
+	Integer(4) i, face, rcv_tag, snd_tag
+	Integer(4) rx, ry, sx, sy, neib_id
 
 
 	do face = 1, 6
@@ -94,18 +94,18 @@ subroutine Simple_msg(this, level, lon_vel, lat_vel)
 		end do
 	end do
 
-end subroutine
+end Subroutine
 
 
 
-subroutine Waiter(this)
+Subroutine Waiter(this)
 
 	Class(message) :: this
 
 		call MPI_Waitall(6*4*3, this.rcv_req(:, :, :), this.rcv_stat, this.ier)
 		call MPI_Waitall(6*4*3, this.snd_req(:, :, :), this.snd_stat, this.ier)
 
-end subroutine
+end Subroutine
 
 
 

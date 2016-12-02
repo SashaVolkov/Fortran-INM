@@ -9,10 +9,10 @@ implicit none
 	Public :: parallel
 
 	Type parallel
-		integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim, first_x, first_y, last_x, last_y
-		integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), rot(6, 4)
-		integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
-		integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
+		Integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim, first_x, first_y, last_x, last_y
+		Integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), rot(6, 4)
+		Integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
+		Integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
 		CONTAINS
 			Procedure, Public :: init => parallel_init
 			Procedure, Private :: halo_zone => halo_zone
@@ -37,9 +37,9 @@ Subroutine parallel_init(this, dim, step, np, id)
 
 	Class(parallel) :: this
 
-	integer, Intent(In) :: dim, step, np, id
-	integer k, i, j, rc, p, ier, face
-	integer dims(2)
+	Integer, Intent(In) :: dim, step, np, id
+	Integer k, i, j, rc, p, ier, face
+	Integer dims(2)
 
 ! 	call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 ! 	call MPI_Comm_size(MPI_COMM_WORLD,np,ier)
@@ -96,9 +96,9 @@ End Subroutine
 Subroutine halo_zone(this, face)
 
 	Class(parallel) :: this
-	integer(4), intent(in) :: face
-	integer(4) x, y, mp_dp, ier, i, k, n
-	integer(4) up, right, left, down, displ(1:this.step*this.Xsize), blocklen(1:this.step*this.Ysize)
+	Integer(4), intent(in) :: face
+	Integer(4) x, y, mp_dp, ier, i, k, n
+	Integer(4) up, right, left, down, displ(1:this.step*this.Xsize), blocklen(1:this.step*this.Ysize)
 
 	up = 1; right=2; down=3; left=4
 	x=this.Xsize + 2*this.step
@@ -146,8 +146,8 @@ End Subroutine
 Subroutine Neighbourhood(this, id)
 
 	Class(parallel) :: this
-	integer(4), Intent(In) :: id
-	integer(4) face, up, right, left, down, i
+	Integer(4), Intent(In) :: id
+	Integer(4) face, up, right, left, down, i
 	
 	up = 1; right=2; down=3; left=4
 
@@ -295,9 +295,9 @@ End Subroutine
 
 Subroutine Displacement(this, face, dir, displ)
 	Class(parallel) :: this
-	integer(4), intent(in) :: face, dir
-	integer(4), intent(out) :: displ(1:this.step*this.Xsize)
-	integer(4) k, i, n, x
+	Integer(4), intent(in) :: face, dir
+	Integer(4), intent(out) :: displ(1:this.step*this.Xsize)
+	Integer(4) k, i, n, x
 
 	n = this.step*this.Xsize
 	x=this.Xsize + 2*this.step

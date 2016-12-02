@@ -13,8 +13,8 @@ module diagnostic_mod
 	Type diagnostic
 
 		Real(8), Allocatable :: CFL(:,:,:)
-		integer(4) Tmax, dim, step, flag
-		real(8) convert_time, L10, L20, L_inf0, dh, dt
+		Integer(4) Tmax, dim, step, flag
+		Real(8) convert_time, L10, L20, L_inf0, dh, dt
 
 
 		CONTAINS
@@ -32,12 +32,12 @@ CONTAINS
 
 
 
-	subroutine init(this, func, Tmax, id)
+	Subroutine init(this, func, Tmax, id)
 
 		Class(diagnostic) :: this
 		Class(f_var) :: func
 
-		integer(4), intent(in) :: Tmax, id
+		Integer(4), intent(in) :: Tmax, id
 		character(32) istring
 
 		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step
@@ -76,24 +76,24 @@ CONTAINS
 
 		end if
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine alloc(this, func)
+	Subroutine alloc(this, func)
 
 		Class(diagnostic) :: this
 		Class(f_var) :: func
 
 		Allocate(this.CFL(func.first_x:func.last_x, func.first_y:func.last_y, 1:6))
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine deinit(this)
+	Subroutine deinit(this)
 		Class(diagnostic) :: this
-		integer(4) ier, id
+		Integer(4) ier, id
 
 		if (Allocated(this.CFL)) Deallocate(this.CFL)
 		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
@@ -105,16 +105,16 @@ CONTAINS
 			close(13)
 		end if
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine Courant(this, func, time)
+	Subroutine Courant(this, func, time)
 		Class(diagnostic) :: this
 		Class(f_var) :: func
-		integer(4), intent(in) :: time
-		integer(4) face, x, y, dim, ier, id
-		real(8) :: Courant_number, Courant_max
+		Integer(4), intent(in) :: time
+		Integer(4) face, x, y, dim, ier, id
+		Real(8) :: Courant_number, Courant_max
 
 		dim = this.dim
 
@@ -141,16 +141,16 @@ CONTAINS
 
 		if (id == 0) write(9, FMT = "(f40.6, f40.6)"),dble(time)*this.convert_time, Courant_max
 
-	end subroutine
+	end Subroutine
 
 
-	subroutine L_norm(this, func, time)
+	Subroutine L_norm(this, func, time)
 		Class(diagnostic) :: this
 		Class(f_var) :: func
-		integer(4), intent(in) :: time
+		Integer(4), intent(in) :: time
 
-		integer(4) face, x, y, id, ier
-		real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square
+		Integer(4) face, x, y, id, ier
+		Real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square
 
 		L_inf = MAXVAL(abs(func.h_height))
 		call MPI_Allreduce(L_inf, L_inf_all, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
@@ -164,20 +164,20 @@ CONTAINS
 		end if
 
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine hist_generation(this, N, filename_input, filename_output)
+	Subroutine hist_generation(this, N, filename_input, filename_output)
 
 		Class(diagnostic) :: this
-		integer N
+		Integer N
 		character (len=*) filename_input, filename_output
 
-		integer, parameter :: hist_points=1000
-		real(8), allocatable :: dat(:)
-		real(8) max, min, max_val
-		integer(4) distribution(1:hist_points), i, index
+		Integer, parameter :: hist_points=1000
+		Real(8), allocatable :: dat(:)
+		Real(8) max, min, max_val
+		Integer(4) distribution(1:hist_points), i, index
 
 		max=-1d20;min=1d20
 		distribution = 0
@@ -205,7 +205,7 @@ CONTAINS
 		end do
 		close(21)
 		deallocate(dat)
-	end subroutine
+	end Subroutine
 
 
 

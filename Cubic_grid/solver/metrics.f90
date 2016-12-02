@@ -18,9 +18,9 @@ implicit none
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: cube_coord_c(:, :, :)
 
-		real(8) :: r_sphere, delta_on_cube, dt, g
-		integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
-		integer(4) first_x, first_y, last_x, last_y, grid_type, Neighbours_face(6, 4)
+		Real(8) :: r_sphere, delta_on_cube, dt, g
+		Integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
+		Integer(4) first_x, first_y, last_x, last_y, grid_type, Neighbours_face(6, 4)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -44,7 +44,7 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, grid)
+	Subroutine init(this, grid)
 
 		Class(metric) :: this
 		Class(g_var) :: grid
@@ -67,10 +67,10 @@ CONTAINS
 		this.latlon_c = grid.latlon_c
 		call this.define()
 
-	end subroutine
+	end Subroutine
 
 
-	subroutine define(this)
+	Subroutine define(this)
 
 		Class(metric) :: this
 
@@ -81,13 +81,13 @@ CONTAINS
 		end if
 
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine alloc(this)
+	Subroutine alloc(this)
 		Class(metric) :: this
-		integer(4) f_x, f_y, l_x, l_y, dim, step, f, l
+		Integer(4) f_x, f_y, l_x, l_y, dim, step, f, l
 
 		f_x = this.first_x;  l_x = this.last_x;  f_y = this.first_y;  l_y = this.last_y
 		dim = this.dim;  step = this.step;  f = 1-2*step; l = 2*dim + 2*step
@@ -101,11 +101,11 @@ CONTAINS
 		Allocate(this.cube_coord_c(2, f:l , f:l))
 		Allocate(this.latlon_c(2, f:l , f:l, 6))
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine deinit(this)
+	Subroutine deinit(this)
 		Class(metric) :: this
 
 		if (Allocated(this.G_sqr)) Deallocate(this.G_sqr)
@@ -117,14 +117,14 @@ CONTAINS
 		if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
 		if (Allocated(this.cube_coord_c)) Deallocate(this.cube_coord_c)
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine metric_tensor_equiang(this)   ! Ullrich phd thesis Appendices
+	Subroutine metric_tensor_equiang(this)   ! Ullrich phd thesis Appendices
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, g_inv_coef
-		integer(4) x, y, face
+		Real(8) x_1, x_2, g_coef, g_inv_coef
+		Integer(4) x, y, face
 
 		call this.transf_matrix_equiang()
 
@@ -152,14 +152,14 @@ CONTAINS
 			end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine transf_matrix_equiang(this)   ! Ullrich phd thesis Appendix G.4
+	Subroutine transf_matrix_equiang(this)   ! Ullrich phd thesis Appendix G.4
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, s(6), cos_theta, delta
-		integer(4) x, y, face
+		Real(8) x_1, x_2, g_coef, s(6), cos_theta, delta
+		Integer(4) x, y, face
 		s(1) = - 1d0;  s(6) = 1d0
 
 
@@ -208,14 +208,14 @@ CONTAINS
 			end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine metric_tensor_conf(this) ! Tranformation matrix /= Jacobi matrix ! Tranformation matrix == J^T
+	Subroutine metric_tensor_conf(this) ! Tranformation matrix /= Jacobi matrix ! Tranformation matrix == J^T
 		Class(metric) :: this
-		integer(4) x, y, i, k, dim
-		real(8) :: A(2,2), G(2,2), det, cos_theta
+		Integer(4) x, y, i, k, dim
+		Real(8) :: A(2,2), G(2,2), det, cos_theta
 
 		dim = this.dim
 		call this.transf_matrix_conf()
@@ -245,14 +245,14 @@ CONTAINS
 		end do
 
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine transf_matrix_conf(this)
+	Subroutine transf_matrix_conf(this)
 		Class(metric) :: this
-		real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), A(2,2), det
-		integer(4) x, y, dim, i, k, face, step
+		Real(8) x_1, x_2, g_coef, delta, temp(-this.step:this.step), A(2,2), det
+		Integer(4) x, y, dim, i, k, face, step
 
 		dim = this.dim;  step = this.step
 		delta = (1d0/dble(dim))
@@ -296,15 +296,15 @@ CONTAINS
 
 
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine hem_of_face(this, cubic, x_or_y)
+	Subroutine hem_of_face(this, cubic, x_or_y)
 		Class(metric) :: this
 		Real(8), intent(inout) :: cubic(1:2, 1 - 2*this.step:2*this.dim + 2*this.step, 1 - 2*this.step:2*this.dim + 2*this.step, 6)
-		integer(4), intent(in) :: x_or_y
-		integer(4) dim, f, l, x, y, face, i, j, k, step
+		Integer(4), intent(in) :: x_or_y
+		Integer(4) dim, f, l, x, y, face, i, j, k, step
 
 		dim = this.dim;  step = this.step
 		f = 1 - 2*step; l = 2*dim + 2*step
@@ -372,17 +372,17 @@ CONTAINS
 		end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 
-	real(8) function partial(this, fun, h)
+	Real(8) function partial(this, fun, h)
 		Class(metric) :: this
-		real(8), intent(in) :: fun(-this.step:this.step), h
-		real(8) A , B, C, D, E, F, G, I
+		Real(8), intent(in) :: fun(-this.step:this.step), h
+		Real(8) A , B, C, D, E, F, G, I
 
 		if(this.step == 2) then
-			A = 2.0/(3.0*h);  B = - 2.0/(3.0*h);  C = - 1.0/(12.0*h);  D = 1.0/(12.0*h)
+			A = 2d0/(3d0*h);  B = - 2d0/(3d0*h);  C = - 1d0/(12d0*h);  D = 1d0/(12d0*h)
 			partial = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2)
 		else if(this.step == 3) then
 			A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h)

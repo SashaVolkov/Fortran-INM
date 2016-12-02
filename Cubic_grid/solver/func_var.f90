@@ -20,8 +20,8 @@ implicit none
 		Real(8), Allocatable :: lon_vel(:, :, :)
 		Real(8), Allocatable :: lat_vel(:, :, :)
 		Real(8) height,  g, dt, delta_on_cube
-		integer(4) step, dim, interp_factor(1:4), Neighbours_face(6, 4), grid_type, rescale
-		integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
+		Integer(4) step, dim, interp_factor(1:4), Neighbours_face(6, 4), grid_type, rescale
+		Integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -43,12 +43,12 @@ CONTAINS
 
 
 
-	subroutine init(this, metr, height)
+	Subroutine init(this, metr, height)
 
 		Class(f_var) :: this
 		Class(metric) :: metr
-		real(8), intent(in) :: height
-		integer(4) :: i
+		Real(8), intent(in) :: height
+		Integer(4) :: i
 
 		this.ns_x = metr.ns_xy(1);  this.ns_y = metr.ns_xy(2)
 		this.nf_x = metr.nf_xy(1);  this.nf_y = metr.nf_xy(2)
@@ -72,11 +72,11 @@ CONTAINS
 
 		call this.alloc()
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine alloc(this)
+	Subroutine alloc(this)
 
 		Class(f_var) :: this
 
@@ -89,11 +89,11 @@ CONTAINS
 		Allocate(this.lon_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.lat_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine deinit(this)
+	Subroutine deinit(this)
 		Class(f_var) :: this
 
 		if (Allocated(this.h_height)) Deallocate(this.h_height)
@@ -105,11 +105,11 @@ CONTAINS
 		if (Allocated(this.lon_vel)) Deallocate(this.lon_vel)
 		if (Allocated(this.lat_vel)) Deallocate(this.lat_vel)
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine equal(var_pr, var, metr)
+	Subroutine equal(var_pr, var, metr)
 
 		Class(f_var) :: var_pr, var
 		Class(metric) :: metr
@@ -122,18 +122,17 @@ CONTAINS
 		call var_pr.Velocity_to_spherical_border(metr)
 
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine start_conditions(this, metr, geom)
+	Subroutine start_conditions(this, metr, geom)
 
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Class(geometry) :: geom
-		integer(4) dim
-		real(8) h0, r, R_BIG, zero(2), pi
-		integer(4) x, y, face
+		Integer(4) dim, x, y, face
+		Real(8) h0, r, R_BIG, zero(2), pi
 
 		pi = 314159265358979323846d-20
 
@@ -182,12 +181,12 @@ CONTAINS
 
 		this.h_starter(:,:,:) = this.h_height(:,:,:)
 
-	end subroutine
+	end Subroutine
 
 
 
 
-	subroutine interpolate(this, i, metr)
+	Subroutine interpolate(this, i, metr)
 		Class(f_var) :: this
 		Class(interp) :: i
 		Class(metric) :: metr
@@ -198,11 +197,11 @@ CONTAINS
 		call this.Velocity_from_spherical_border(metr)
 		call this.cov_to_con(metr)
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine cov_to_con(this, metr)
+	Subroutine cov_to_con(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Integer(4) :: x, y, face
@@ -218,11 +217,11 @@ this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + m
 			end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine con_to_cov(this, metr)
+	Subroutine con_to_cov(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Integer(4) :: x, y, face
@@ -238,11 +237,11 @@ this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + me
 			end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine Velocity_to_spherical(this, metr)
+	Subroutine Velocity_to_spherical(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Real(8) :: vel_x_contr, vel_y_contr
@@ -259,11 +258,11 @@ this.lat_vel(x, y, face) = metr.Tr_to_sph(2, 2, x, y, face) * this.v_con(x, y, f
 			end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine Velocity_from_spherical(this, metr)
+	Subroutine Velocity_from_spherical(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Integer(4) :: x, y, face
@@ -279,11 +278,11 @@ this.v_con(x, y, face) = metr.Tr_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, 
 			end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine Velocity_to_spherical_border(this, metr)
+	Subroutine Velocity_to_spherical_border(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Real(8) :: G_inv(2,2), A_inv(2,2)
@@ -311,11 +310,11 @@ this.lat_vel(x, y, face) = A_inv(2, 2) * this.v_con(x, y, face) + A_inv(2, 1) * 
 			end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine Velocity_from_spherical_border(this, metr)
+	Subroutine Velocity_from_spherical_border(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Real(8) :: G(2,2), A(2,2)
@@ -343,7 +342,7 @@ this.v_cov(x, y, face) = G(2, 2) * this.v_con(x, y, face) + G(2, 1) * this.u_con
 			end do
 		end do
 
-	end subroutine
+	end Subroutine
 
 
 

@@ -15,7 +15,7 @@ module interpolation
 
 		Real(8), Allocatable :: weight(:, :, :, :)
 		Integer(4), Allocatable :: x0_mass(:, :)
-		integer(4) ns_x, ns_y, nf_x, nf_y, n, dim, step, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
+		Integer(4) ns_x, ns_y, nf_x, nf_y, n, dim, step, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -242,7 +242,7 @@ module interpolation
 		do xk = 1, 2*this.dim
 
 			gap = (metr.latlon_c(1, 1 - step, x, 2)) - (metr.latlon_c(1, step, xk, 2))
-			if(gap >= 0.0) then
+			if(gap >= 0d0) then
 				x0 = xk
 			end if
 

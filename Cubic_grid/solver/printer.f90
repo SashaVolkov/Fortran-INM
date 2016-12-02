@@ -13,7 +13,7 @@ module printer_ncdf
 
 	Type printer
 
-		integer(4) :: Wid, Courantid
+		Integer(4) :: Wid, Courantid
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -26,13 +26,13 @@ module printer_ncdf
 
 
 
-	subroutine init(this, dim, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
+	Subroutine init(this, dim, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
 
 		Class(printer) :: this
-		integer(4), intent(in) :: dim, Tmax, speedup, rescale, grid_type
-		integer(4), intent(out) :: time, grid_id, ncid, ncid_gr
+		Integer(4), intent(in) :: dim, Tmax, speedup, rescale, grid_type
+		Integer(4), intent(out) :: time, grid_id, ncid, ncid_gr
 
-		integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid, Wid, Courantid
+		Integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid, Wid, Courantid
 		character(40) istring
 		character(80) path1, path2
 
@@ -92,19 +92,19 @@ module printer_ncdf
 
 		this.Courantid = Courantid;  this.Wid = Wid
 
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine to_print(this, var, diagn, time, speedup, ncid, id)
+	Subroutine to_print(this, var, diagn, time, speedup, ncid, id)
 
 		Class(printer) :: this
 		Class(f_var) :: var
 		Class(diagnostic) :: diagn
-		integer(4), intent(in) :: time, speedup, ncid, id
+		Integer(4), intent(in) :: time, speedup, ncid, id
 
-		integer(4) x, y, face, ier
-		integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize, Wid, Courantid
+		Integer(4) x, y, face, ier
+		Integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize, Wid, Courantid
 
 		Courantid = this.Courantid;  Wid = this.Wid
 
@@ -123,33 +123,33 @@ module printer_ncdf
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
 		end do
-	end subroutine
+	end Subroutine
 
 
-	subroutine print_grid(this, grid, grid_id, ncid_gr)
+	Subroutine print_grid(this, grid, grid_id, ncid_gr)
 
 		Class(printer) :: this
 		Class(g_var) :: grid
-		integer(4), intent(in) :: grid_id, ncid_gr
-		integer(4) x, y, face, ier, dim, status
+		Integer(4), intent(in) :: grid_id, ncid_gr
+		Integer(4) x, y, face, ier, dim, status
 
 		dim = grid.dim
 
 			status = nf90_put_var(ncid_gr, grid_id, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
 			 start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
-	end subroutine
+	end Subroutine
 
 
 
-	subroutine deinit(this, ncid, ncid_gr)
+	Subroutine deinit(this, ncid, ncid_gr)
 		Class(printer) :: this
-		integer(4), intent(in) :: ncid, ncid_gr
-		integer(4) status
+		Integer(4), intent(in) :: ncid, ncid_gr
+		Integer(4) status
 
 		status = nf90_close (ncid)
 		status = nf90_close (ncid_gr)
-	end subroutine
+	end Subroutine
 
 
 

@@ -17,10 +17,10 @@ implicit none
 
 
 !variables
-	real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	integer(4) dim, space_step, Tmax, time, speedup, Wid, grid_id, xid, yid, faceid, ncid, ncid_gr, rescale, face, grid_type, x, y, flag
+	Real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
+	Integer(4) dim, space_step, Tmax, time, speedup, Wid, grid_id, xid, yid, faceid, ncid, ncid_gr, rescale, face, grid_type, x, y, flag
 
-	integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
+	Integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
 
 	Type(geometry) :: geom
 	Type(f_var) :: var, var_prev
@@ -37,7 +37,7 @@ implicit none
 !definition
 	r_sphere= 6371220d0;  g = 9.80616
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
-	height = 100.0;  dt = 30.0;  flag = 0
+	height = 100d0;  dt = 30d0;  flag = 0
 ! r_sphere= 1d0
 	! rescale  0-simple, 1-tan, 2-pow(4/3)q
 	! grid_type  0 - conformal, 1 - equiangular
