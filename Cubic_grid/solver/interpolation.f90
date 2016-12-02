@@ -111,8 +111,6 @@ module interpolation
 
 				end do
 			end do
-			Mass(:, :, face) = Mass_temp(:, :, face)
-			Mass_temp(:, :, face) = Mass(:, :, face)
 		end if
 
 
@@ -145,8 +143,6 @@ module interpolation
 
 				end do
 			end do
-			Mass(:, :, face) = Mass_temp(:, :, face)
-			Mass_temp(:, :, face) = Mass(:, :, face)
 		end if
 
 
@@ -179,8 +175,6 @@ module interpolation
 					end do
 				end do
 			end do
-			Mass(:, :, face) = Mass_temp(:, :, face)
-			Mass_temp(:, :, face) = Mass(:, :, face)
 		end if
 
 
@@ -212,12 +206,11 @@ module interpolation
 					end do
 				end do
 			end do
-			Mass(:, :, face) = Mass_temp(:, :, face)
-			Mass_temp(:, :, face) = Mass(:, :, face)
 		end if
 
 		end do
 
+		Mass(:, :, :) = Mass_temp(:, :, :)
 
 	End Subroutine
 
