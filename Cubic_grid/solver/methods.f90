@@ -221,9 +221,9 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg)
 	do face = 1, 6
 		do y = ns_y, nf_y
 			do x= ns_x, nf_x
-var.u_cov(x, y, face) = this.ku_cov(x, y, face, 0) + (this.ku_cov(x, y, face, 1) + 2.0*this.ku_cov(x, y, face, 2) + 2.0*this.ku_cov(x, y, face, 3) + this.ku_cov(x, y, face, 4))/6.0
-var.v_cov(x, y, face) = this.kv_cov(x, y, face, 0) + (this.kv_cov(x, y, face, 1) + 2.0*this.kv_cov(x, y, face, 2) + 2.0*this.kv_cov(x, y, face, 3) + this.kv_cov(x, y, face, 4))/6.0
-var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2.0*this.kh(x, y, face, 2) + 2.0*this.kh(x, y, face, 3) + this.kh(x, y, face, 4))/6.0
+var.u_cov(x, y, face) = this.ku_cov(x, y, face, 0) + (this.ku_cov(x, y, face, 1) + 2d0*this.ku_cov(x, y, face, 2) + 2d0*this.ku_cov(x, y, face, 3) + this.ku_cov(x, y, face, 4))/6d0
+var.v_cov(x, y, face) = this.kv_cov(x, y, face, 0) + (this.kv_cov(x, y, face, 1) + 2d0*this.kv_cov(x, y, face, 2) + 2d0*this.kv_cov(x, y, face, 3) + this.kv_cov(x, y, face, 4))/6d0
+var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2d0*this.kh(x, y, face, 2) + 2d0*this.kh(x, y, face, 3) + this.kh(x, y, face, 4))/6d0
 			end do
 		end do
 	end do

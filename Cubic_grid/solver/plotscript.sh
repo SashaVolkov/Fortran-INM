@@ -8,7 +8,7 @@ cd datFiles/"$(( 2*$x ))"
 pwd
 
 gnuplot <<EOF
-set term png
+set term png size 800, 800
 set output "pic/CFL.png"
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
@@ -22,7 +22,7 @@ plot "tan/CFL.dat" w l ti "CFL_tan", "simple/CFL.dat" w l ti "CFL_simple", "equi
 EOF
 
 gnuplot <<EOF
-set term png
+set term png size 800, 800
 set output "pic/L_conf_simple.png"
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
@@ -37,7 +37,7 @@ EOF
 
 
 gnuplot <<EOF
-set term png
+set term png size 800, 800
 set output "pic/L_conf_tan.png"
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
@@ -51,7 +51,7 @@ plot "tan/L1.dat" w l ti "L1", "tan/L2.dat" w l ti "L2", "tan/C.dat" w l ti "C"
 EOF
 
 gnuplot <<EOF
-set term png
+set term png size 800, 800
 set output "pic/L_equiang.png"
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
@@ -66,7 +66,7 @@ EOF
 
 
 gnuplot <<EOF
-set term png
+set term png size 800, 800
 set output "pic/L1.png"
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
@@ -80,7 +80,7 @@ plot "simple/L1.dat" w l ti "L1_simple", "tan/L1.dat" w l ti "L1_tan", "equiang/
 EOF
 
 gnuplot <<EOF
-set term png
+set term png size 800, 800
 set output "pic/L2.png"
 set key inside left top vertical Right noreverse
 set xlabel "Cycles"
@@ -94,7 +94,7 @@ plot "simple/L2.dat" w l ti "L2_simple", "tan/L2.dat" w l ti "L2_tan", "equiang/
 EOF
 
 gnuplot <<EOF
-set term png
+set term png size 800, 800
 set output "pic/L_inf.png"
 set key inside left top vertical Right noreverse
 set xlabel "Cycles"
