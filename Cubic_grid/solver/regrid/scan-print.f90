@@ -96,8 +96,8 @@ module scan_print
 			status = nf90_def_dim (ncid_to, "lon", 2*this.lon_max+1, lonid)
 			status = nf90_def_dim (ncid_to, "lat", 2*this.lat_max+1, latid)
 			status = nf90_def_dim (ncid_to, "time", all_time, time)
-			status = nf90_def_var (ncid_to, "Level", NF90_DOUBLE, (/ lonid, latid, time/), Wid_to)
-			status = nf90_def_var (ncid_to, "Courant", NF90_DOUBLE, (/ lonid, latid, time/), Courantid_to)
+			status = nf90_def_var (ncid_to, "Level", NF90_FLOAT, (/ lonid, latid, time/), Wid_to)
+			status = nf90_def_var (ncid_to, "Courant", NF90_FLOAT, (/ lonid, latid, time/), Courantid_to)
 			status = nf90_enddef (ncid_to)
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 			this.ncid_to = ncid_to;  this.Wid_to = Wid_to;  this.Courantid_to = Courantid_to
@@ -115,7 +115,7 @@ module scan_print
 			end if
 
 		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1); this.Courantid = Wid(2);  this.point_find = point_find
-		this.ncid_point = ncid_point;  this.point_id = point_id(1)
+		! this.ncid_point = ncid_point;  this.point_id = point_id(1)
 
 	end subroutine
 
@@ -125,7 +125,7 @@ module scan_print
 
 		Class(printer) :: this
 		integer(4), intent(in) :: time
-		real(8), intent(out) :: surface_off(0:2*this.dim+1, 0:2*this.dim+1, 1:6, 1:2)
+		real(8), intent(out) :: surface_off(-1:2*this.dim+2, -1:2*this.dim+2, 1:6, 1:2)
 		integer(4) x, y, face, ier, status, ncid, Wid, dim, Courantid
 
 		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid;  Courantid = this.Courantid
@@ -155,7 +155,7 @@ module scan_print
 	subroutine scan_grid(this, grid)
 
 		Class(printer) :: this
-		real(8), intent(out) :: grid(1:2, 0:2*this.dim+1, 0:2*this.dim+1, 1:6)
+		real(8), intent(out) :: grid(1:2, -1:2*this.dim+2, -1:2*this.dim+2, 1:6)
 		integer(4) x, y, face, ier, dim, status, grid_id, ncid_gr
 
 		dim = this.dim;  ncid_gr = this.ncid_gr;  grid_id = this.grid_id
@@ -175,19 +175,20 @@ module scan_print
 
 
 
-	subroutine print_surf(this, surface_to, time)
+	subroutine print_surf(this, surface_to, surface_precise, time)
 		Class(printer) :: this
-		real(4), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 2)
+		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 2)
+		real(4), intent(in) :: surface_precise(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
 		integer(4), intent(in) :: time
 		integer(4) status, Wid_to, ncid_to, Courantid_to
 
 		ncid_to = this.ncid_to;  Wid_to = this.Wid_to;  Courantid_to = this.Courantid_to
 
 		if(this.nc_or_dat == 0) then
-			status = nf90_put_var(ncid_to, Wid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 1),&
+			status = nf90_put_var(ncid_to, Wid_to, real(surface_to(:,:,1),4) - surface_precise,&
 			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
 
-			status = nf90_put_var(ncid_to, Courantid_to, surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 2),&
+			status = nf90_put_var(ncid_to, Courantid_to, real(surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 2),4),&
 			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		else

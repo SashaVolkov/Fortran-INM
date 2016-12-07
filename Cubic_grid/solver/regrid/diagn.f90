@@ -90,10 +90,10 @@ CONTAINS
 		integer(4) lat, lon, id, ier
 		real(4) L1, L2, L1_prec, L2_prec, L_inf, L_inf_prec, F1, F1_prec, square, pi
 
-		pi = 314159265358979323846d-20
+		pi = 3.14159265358979323846
 
 		do lat = -this.lat_max+1, this.lat_max-1
-			square = cos(lat*pi/180.0)
+			square = cos(real(lat,4)*pi/180.0)
 			do lon = -this.lon_max+1, this.lon_max-1
 
 				if (isnan(surface_to(lon,lat))) then

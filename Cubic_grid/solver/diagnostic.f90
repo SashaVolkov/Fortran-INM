@@ -42,7 +42,7 @@ CONTAINS
 
 		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step
 		this.dt = func.dt;  this.dh = func.delta_on_cube
-		this.convert_time = this.dt/3600d0/24d0
+		this.convert_time = this.dt/(644d0*4000d0)
 		this.flag = 1
 
 		write(istring, *) 2*this.dim

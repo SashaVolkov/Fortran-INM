@@ -35,7 +35,7 @@ implicit none
 
 
 !definition
-	r_sphere= 6371220d0;  g = 9.80616
+	r_sphere= 6371220d0;  g = 980616d-5
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
 	height = 100d0;  dt = 30d0;  flag = 0
 ! r_sphere= 1d0

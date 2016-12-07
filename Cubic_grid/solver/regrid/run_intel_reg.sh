@@ -1,6 +1,10 @@
 #/bin/bash
 
-rm -rf *.o *.mod *.out *.file analyze *~ 2>/dev/null
+if [ ! -d mod_files ]; then
+	mkdir mod_files
+fi
+
+rm -rf *.o *.mod mod_files/*.mod *.out *.file analyze *~ 2>/dev/null
 
 Files="sphere_geometry.f90 diagn.f90 scan-print.f90 grid_interp.f90"
 Files=$Files" Regridder.f90"
@@ -10,7 +14,8 @@ netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
 netcdf="/home/sasha/netcdf"
 
  # -check all -traceback -ftrapuv
-mpiifort -openmp -O3 $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+mpiifort -openmp -O3 $Files -module mod_files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+# mpiifort -check all -traceback -ftrapuv $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	echo "compilation status" $?
 

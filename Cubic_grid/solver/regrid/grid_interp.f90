@@ -13,13 +13,13 @@ implicit none
 
 		Real(8), Allocatable :: latlon_c_off(:, :, :, :)
 		Real(8), Allocatable :: latlon_c_to(:, :, :)
-		Real(8), Allocatable :: weight(:, :, :)
+		Real(8), Allocatable :: weight(:,:, :, :)
 		Real(8), Allocatable :: surface_off(:, :, :, :)
 		Real(8), Allocatable :: surface_to(:, :, :)
 		integer(4), Allocatable :: indexes_xyface(:, :, :, :)
 		integer(4), Allocatable :: closest_xyface(:, :, :)
 
-		integer(4) dim, lon_max, lat_max
+		integer(4) dim, lon_max, lat_max, step
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -42,6 +42,7 @@ CONTAINS
 		integer(4), intent(in) :: dim
 
 		this.dim = dim;  this.lon_max = 180;  this.lat_max = 90
+		this.step = 2
 
 		call this.alloc()
 
@@ -53,13 +54,13 @@ CONTAINS
 		Class(interp) :: this
 		integer(4) dim, f, l, lon, lat
 
-		dim = this.dim;  f = 1 - 1; l = 2*dim + 1
+		dim = this.dim;  f = 1 - this.step; l = 2*dim + this.step
 		lon = this.lon_max; lat = this.lat_max
 
 		Allocate(this.latlon_c_off(1:2, f:l, f:l, 1:6))
 		Allocate(this.surface_off(f:l, f:l, 1:6, 2))
 		Allocate(this.surface_to(-lon:lon, -lat:lat, 2))
-		Allocate(this.weight(1:4, -lat:lat, -lon:lon))
+		Allocate(this.weight(4, 4, -lat:lat, -lon:lon))
 		Allocate(this.indexes_xyface(1:3, 1:4, -lat:lat, -lon:lon))
 		Allocate(this.closest_xyface(1:3, -lon:lon, -lat:lat))
 
@@ -82,8 +83,8 @@ CONTAINS
 		Class(interp) :: this
 		Class(printer) :: printer_scaner
 		Class(geometry) :: g
-		integer(4) lon, lat, x(4), y(4), face(4)
-		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2)
+		integer(4) lon, lat, x(4), y(4), face(4), i, j, dim
+		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2), d(4), ang(4), d_xy(2,4), lagr(2,4)
 		real(8), parameter :: pi = 314159265358979323846d-20
 
 		call this.hem_of_face(this.latlon_c_off(1, :, :, :))
@@ -97,6 +98,7 @@ CONTAINS
 
 		call this.cell_search(g)
 
+		dim = this.dim
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
@@ -111,29 +113,58 @@ CONTAINS
 
 				latlon1(:) = this.latlon_c_off(:, x(1), y(1), face(1))
 				latlon2(:) = this.latlon_c_off(:, x(2), y(2), face(2))
-				call g.triangle(latlon1, latlon2, latlon, S(1))
+				call g.triangle(latlon1, latlon2, latlon, S(1), d(1))
+				ang(1) = g.angle(latlon1, latlon2)
 
 				latlon1(:) = this.latlon_c_off(:, x(2), y(2), face(2))
 				latlon2(:) = this.latlon_c_off(:, x(3), y(3), face(3))
-				call g.triangle(latlon1, latlon2, latlon, S(2))
+				call g.triangle(latlon1, latlon2, latlon, S(2), d(2))
+				ang(2) = g.angle(latlon1, latlon2)
 
 				latlon1(:) = this.latlon_c_off(:, x(3), y(3), face(3))
 				latlon2(:) = this.latlon_c_off(:, x(4), y(4), face(4))
-				call g.triangle(latlon1, latlon2, latlon, S(3))
-				
+				call g.triangle(latlon1, latlon2, latlon, S(3), d(3))
+				ang(3) = g.angle(latlon1, latlon2)
+
 				latlon1(:) = this.latlon_c_off(:, x(4), y(4), face(4))
 				latlon2(:) = this.latlon_c_off(:, x(1), y(1), face(1))
-				call g.triangle(latlon1, latlon2, latlon, S(4))
+				call g.triangle(latlon1, latlon2, latlon, S(4), d(4))
+				ang(4) = g.angle(latlon1, latlon2)
 
-				Big_S = (S(1) + S(3))*(S(2) + S(4))
+				! Big_S = (S(1) + S(3))*(S(2) + S(4))
 
-				this.weight(1, lat, lon) = S(2)*S(3)/Big_S
-				this.weight(2, lat, lon) = S(4)*S(3)/Big_S
-				this.weight(3, lat, lon) = S(1)*S(4)/Big_S
-				this.weight(4, lat, lon) = S(2)*S(1)/Big_S
+				! this.weight(1, lat, lon) = S(2)*S(3)/Big_S
+				! this.weight(2, lat, lon) = S(4)*S(3)/Big_S
+				! this.weight(3, lat, lon) = S(1)*S(4)/Big_S
+				! this.weight(4, lat, lon) = S(2)*S(1)/Big_S
 
+				d_xy(1,1) = ang(1) + d(4);  d_xy(1,2) = d(4);  d_xy(1,3) = d(2);  d_xy(1,4) = ang(1) + d(2)
+				d_xy(2,1) = ang(4) + d(3);  d_xy(2,2) = d(3);  d_xy(2,3) = d(1);  d_xy(2,4) = ang(4) + d(1)
+
+				Big_S = (d(1) + d(3))*(d(2) + d(4))
+
+				this.weight(2,3, lat, lon) = d(2)*d(3)/Big_S
+				this.weight(3,3, lat, lon) = d(4)*d(3)/Big_S
+				this.weight(3,2, lat, lon) = d(1)*d(4)/Big_S
+				this.weight(2,2, lat, lon) = d(2)*d(1)/Big_S
+
+				if (x(4) > 1 .and. y(4) > 1 .and. y(2) < 2*dim .and. x(2) < 2*dim) then
+					lagr(:,1) =-(d_xy(:,2)*d_xy(:,3)*d_xy(:,4))/((d_xy(:,1) - d_xy(:,2))*(d_xy(:,1) + d_xy(:,3))*(d_xy(:,1) + d_xy(:,4)))
+					lagr(:,2) = (d_xy(:,1)*d_xy(:,3)*d_xy(:,4))/((d_xy(:,1) - d_xy(:,2))*(d_xy(:,2) + d_xy(:,3))*(d_xy(:,2) + d_xy(:,4)))
+					lagr(:,3) = (d_xy(:,1)*d_xy(:,2)*d_xy(:,4))/((d_xy(:,1) + d_xy(:,3))*(d_xy(:,2) + d_xy(:,3))*(d_xy(:,4) - d_xy(:,3)))
+					lagr(:,4) =-(d_xy(:,1)*d_xy(:,2)*d_xy(:,3))/((d_xy(:,1) + d_xy(:,4))*(d_xy(:,2) + d_xy(:,4))*(d_xy(:,4) - d_xy(:,3)))
+
+					do i = 1, 4
+						do j = 1, 4
+							this.weight(i,j, lat, lon) = lagr(1, i)*lagr(2, j)
+						end do
+					end do
+				end if
 			end do
 		end do
+		! print *, this.weight(:,:,20,20)
+		! print *, sum(this.weight(:,:,20,20))
+		! print *, sum(lagr(1, :))
 
 	end subroutine
 
@@ -201,7 +232,8 @@ CONTAINS
 
 	subroutine interpolate(this)
 		Class(interp) :: this
-		integer(4) dim, f, l, lon, lat, x, y, face, i
+		integer(4) dim, f, l, lon, lat, x(4), y(4), face, i, j
+		Real(8) :: weight(4, 4)
 
 		! surf_to = sum(w*surf_off)
 		call this.hem_of_face(this.surface_off(:,:,:,1))
@@ -213,12 +245,16 @@ CONTAINS
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
 				this.surface_to(lon, lat, :) = 0d0
-				do i = 1, 4
-					x = this.indexes_xyface(1, i, lat, lon)
-					y = this.indexes_xyface(2, i, lat, lon)
+					x(:) = this.indexes_xyface(1, :, lat, lon)
+					y(:) = this.indexes_xyface(2, :, lat, lon)
 					face = this.closest_xyface(3, lon, lat)
-					this.surface_to(lon, lat, :) =  this.surface_to(lon, lat, :) + this.surface_off(x,y,face, :)*this.weight(i, lat, lon)
-				end do
+					weight(:,:) = this.weight(:,:, lat, lon)
+
+this.surface_to(lon, lat, :) = this.surface_off(x(1),y(1),face, :)*weight(2,3) + this.surface_off(x(2),y(2),face, :)*weight(3,3) + this.surface_off(x(3),y(3),face, :)*weight(3,2) + this.surface_off(x(4),y(4),face, :)*weight(2,2) + &
+this.surface_off(x(1)-1,y(1)+1,face, :)*weight(1,4) + this.surface_off(x(1),y(1)+1,face, :)*weight(2,4) + this.surface_off(x(2),y(1)+1,face, :)*weight(3,4) + this.surface_off(x(2)+1,y(1)+1,face, :)*weight(4,4) + &
+this.surface_off(x(1)-1,y(1),face, :)*weight(1,3) + this.surface_off(x(1)-1,y(4),face, :)*weight(1,2) + this.surface_off(x(2)+1,y(2),face, :)*weight(4,3) + this.surface_off(x(3)+1,y(3),face, :)*weight(4,2) + &
+this.surface_off(x(4)-1,y(4)-1,face, :)*weight(1,1) + this.surface_off(x(4),y(4)-1,face, :)*weight(2,1) + this.surface_off(x(3),y(3)-1,face, :)*weight(3,1) + this.surface_off(x(3)+1,y(3)-1,face, :)*weight(4,1)
+
 			end do
 		end do
 
@@ -231,13 +267,13 @@ CONTAINS
 
 	subroutine hem_of_face(this, cubic)
 		Class(interp) :: this
-		Real(8), intent(inout) :: cubic(0:2*this.dim+1, 0:2*this.dim+1, 1:6)
+		Real(8), intent(inout) :: cubic(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 1:6)
 		integer(4) dim, f, l, x, y, face, i, j, k, step
 
-		dim = this.dim;  step = 1
+		dim = this.dim;  step = this.step
 
 		do i = 1, step
-			do j = 1 - step, 2*dim + step
+			do j = 1, 2*dim
 
 				cubic(j,2*dim+i,2) = cubic(j,i,6);      cubic(j,1-i,6) = cubic(j,2*dim+1-i,2)
 				cubic(2*dim+i,j,2) = cubic(i,j,3);      cubic(1-i,j,3) = cubic(2*dim+1-i,j,2)
@@ -248,7 +284,7 @@ CONTAINS
 		end do
 
 		do i = 1, step
-			do j = 1 - step, 2*dim + step
+			do j = 1, 2*dim
 			k = 2*dim + 1 -j
 
 				cubic(j,2*dim+i,4) = cubic(k,2*dim+1-i,6);     cubic(k,2*dim+i,6) = cubic(j,2*dim+1-i,4)
@@ -260,7 +296,7 @@ CONTAINS
 		end do
 
 		do i = 1, step
-			do j = 1 - step, 2*dim + step
+			do j = 1, 2*dim
 			k = 2*dim + 1 -j
 
 				cubic(j,2*dim+i,3) = cubic(2*dim+1-i,j,6);     cubic(2*dim+i,j,6) = cubic(j,2*dim+1-i,3)
@@ -270,7 +306,7 @@ CONTAINS
 		end do
 
 		do i = 1, step
-			do j = 1 - step, 2*dim + step
+			do j = 1, 2*dim
 			k = 2*dim + 1 -j
 
 				cubic(j,2*dim+i,5) = cubic(i,k,6);     cubic(1-i,k,6) = cubic(j,2*dim+1-i,5)

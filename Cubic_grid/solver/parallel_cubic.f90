@@ -11,7 +11,7 @@ implicit none
 	Type parallel
 		Integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim, first_x, first_y, last_x, last_y
 		Integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), rot(6, 4)
-		Integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
+		Integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2), corn_snd_xy(6, 4, 2), corn_rcv_xy(6, 4, 2)
 		Integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
 		CONTAINS
 			Procedure, Public :: init => parallel_init
@@ -31,6 +31,19 @@ CONTAINS
 ! However, FORTRAN will store the same array in the following sequence:
 ! (1,1),(2,1),(3,1),(1,2),(2,2),(3,2),(1,3),(2,3),(3,3),(1,4),(2,4),(3,4)
 
+! ______________________
+! |   |             |   |
+! | D |      up     | A |
+! |___|_____________|___|
+! |   |             | r |
+! | l |             | i |
+! | e |             | g |
+! | f |             | h |
+! | t |             | t |
+! |___|_____________|___|
+! |   |             |   |
+! | C |     down    | B |
+! |___|_____________|___|
 
 
 Subroutine parallel_init(this, dim, step, np, id)
@@ -97,24 +110,24 @@ Subroutine halo_zone(this, face)
 
 	Class(parallel) :: this
 	Integer(4), intent(in) :: face
-	Integer(4) x, y, mp_dp, ier, i, k, n
+	Integer(4) x, y, mp_dp, ier, i, k, n, A, B, C, D
 	Integer(4) up, right, left, down, displ(1:this.step*this.Xsize), blocklen(1:this.step*this.Ysize)
 
-	up = 1; right=2; down=3; left=4
+	up = 1; right=2; down=3; left=4;  A=1;  B=2;  C=3;  D=4
 	x=this.Xsize + 2*this.step
 	mp_dp = MPI_DOUBLE_PRECISION
 	n = this.step*this.Ysize
 
+
 	this.rcv_xy(face, left, 1) = this.ns_xy(1) - this.step
-	this.rcv_xy(face, left, 2) = this.ns_xy(2);
+	this.rcv_xy(face, left, 2) = this.ns_xy(2)
 	this.rcv_xy(face, right, 1) = this.nf_xy(1) + 1
-	this.rcv_xy(face, right, 2) = this.ns_xy(2);
+	this.rcv_xy(face, right, 2) = this.ns_xy(2)
 
 	this.rcv_xy(face, down, 1) = this.ns_xy(1)
-	this.rcv_xy(face, down, 2) = this.ns_xy(2) - this.step;
+	this.rcv_xy(face, down, 2) = this.ns_xy(2) - this.step
 	this.rcv_xy(face, up, 1) = this.ns_xy(1)
-	this.rcv_xy(face, up, 2) = this.nf_xy(2) + 1;
-
+	this.rcv_xy(face, up, 2) = this.nf_xy(2) + 1
 
 	this.snd_xy(face, left, :) = this.ns_xy(:)
 	this.snd_xy(face, right, 1) = this.nf_xy(1) - this.step + 1
@@ -122,7 +135,25 @@ Subroutine halo_zone(this, face)
 
 	this.snd_xy(face, down, :) = this.ns_xy(:)
 	this.snd_xy(face, up, 1) = this.ns_xy(1)
-	this.snd_xy(face, up, 2) = this.nf_xy(2) - this.step + 1;
+	this.snd_xy(face, up, 2) = this.nf_xy(2) - this.step + 1
+
+
+
+	this.corn_rcv_xy(face, A, :) = this.nf_xy(:)+1
+	this.corn_rcv_xy(face, B, 1) = this.nf_xy(1) + 1
+	this.corn_rcv_xy(face, B, 2) = this.first_y
+
+	this.corn_rcv_xy(face, C, :) = this.ns_xy(:) - this.step
+	this.corn_rcv_xy(face, D, 1) = this.ns_xy(1) - this.step
+	this.corn_rcv_xy(face, D, 2) = this.nf_xy(2) + 1
+
+	this.corn_snd_xy(face, A, :) = this.nf_xy(:) - this.step + 1
+	this.corn_snd_xy(face, B, 1) = this.nf_xy(1) - this.step + 1
+	this.corn_snd_xy(face, B, 2) = this.ns_xy(2)
+
+	this.corn_snd_xy(face, C, :) = this.ns_xy(:)
+	this.corn_snd_xy(face, D, 1) = this.ns_xy(1)
+	this.corn_snd_xy(face, D, 2) = this.nf_xy(2) - this.step + 1
 
 
 	do i = 1, n

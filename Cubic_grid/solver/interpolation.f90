@@ -77,7 +77,7 @@ module interpolation
 		y_fin(:) = this.last_y;  y_fin(3) = this.rcv_xy(2, 3, 2) + this.step
 
 		n=this.n;  dim = this.dim
-		Mass_temp(:, :, :) = Mass(:, :, :)
+		Mass_temp = Mass
 
 		do face = 1, 6
 
@@ -210,7 +210,7 @@ module interpolation
 
 		end do
 
-		Mass(:, :, :) = Mass_temp(:, :, :)
+		Mass = Mass_temp
 
 	End Subroutine
 
