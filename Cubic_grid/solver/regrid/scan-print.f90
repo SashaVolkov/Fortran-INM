@@ -10,7 +10,8 @@ module scan_print
 
 	Type printer
 
-	integer(4) :: dim, ncid, ncid_gr, ncid_to, grid_id, Wid, Wid_to, lon_max, lat_max, nc_or_dat, Courantid, Courantid_to, point_id, ncid_point, point_find
+	integer(4) :: dim, step, ncid, ncid_gr, ncid_to, grid_id, Wid, Wid_to
+	integer(4) :: lon_max, lat_max, nc_or_dat, Courantid, Courantid_to, point_id, ncid_point, point_find
 	real(8) :: convert_time
 		CONTAINS
 		Procedure, Public :: init => init
@@ -40,7 +41,7 @@ module scan_print
 		character(80) path1, path2, path3, path4
 
 		this.dim = dim;  this.lon_max = 180;  this.lat_max = 90;  this.convert_time = convert_time
-		this.nc_or_dat = 0
+		this.nc_or_dat = 0;  this.step = 2
 
 		write(istring, *) 2*dim
 
@@ -125,7 +126,7 @@ module scan_print
 
 		Class(printer) :: this
 		integer(4), intent(in) :: time
-		real(8), intent(out) :: surface_off(-1:2*this.dim+2, -1:2*this.dim+2, 1:6, 1:2)
+		real(8), intent(out) :: surface_off(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 1:6, 1:2)
 		integer(4) x, y, face, ier, status, ncid, Wid, dim, Courantid
 
 		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid;  Courantid = this.Courantid
@@ -155,7 +156,7 @@ module scan_print
 	subroutine scan_grid(this, grid)
 
 		Class(printer) :: this
-		real(8), intent(out) :: grid(1:2, -1:2*this.dim+2, -1:2*this.dim+2, 1:6)
+		real(8), intent(out) :: grid(1:2, 1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 1:6)
 		integer(4) x, y, face, ier, dim, status, grid_id, ncid_gr
 
 		dim = this.dim;  ncid_gr = this.ncid_gr;  grid_id = this.grid_id
@@ -185,7 +186,7 @@ module scan_print
 		ncid_to = this.ncid_to;  Wid_to = this.Wid_to;  Courantid_to = this.Courantid_to
 
 		if(this.nc_or_dat == 0) then
-			status = nf90_put_var(ncid_to, Wid_to, real(surface_to(:,:,1),4) - surface_precise,&
+			status = nf90_put_var(ncid_to, Wid_to, real(surface_to(:,:,1),4),&
 			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
 
 			status = nf90_put_var(ncid_to, Courantid_to, real(surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 2),4),&
