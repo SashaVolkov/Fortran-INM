@@ -357,15 +357,15 @@ this.surface_off(x(4)-1,y(4)-1,face, :)*weight(1,1) + this.surface_off(x(4),y(4)
 				x_cell(3) = x + 1; y_cell(3) = y - 1
 				x_cell(4) = x - 1; y_cell(4) = y - 1
 
-				if(x_cell(1) == 0 .and. y_cell(1) == 2*dim+1) then
-					x_cell(1) = 1
-				else if(x_cell(2) == 2*dim+1 .and. y_cell(2) == 2*dim+1) then
-					y_cell(2) = 2*dim
-				else if(x_cell(3) == 2*dim+1 .and. y_cell(3) == 0) then
-					x_cell(3) = 2*dim
-				else if(x_cell(4) == 0 .and. y_cell(4) == 0) then
-					y_cell(2) = 1
-				end if
+				! if(x_cell(1) == 0 .and. y_cell(1) == 2*dim+1) then
+				! 	x_cell(1) = 1
+				! else if(x_cell(2) == 2*dim+1 .and. y_cell(2) == 2*dim+1) then
+				! 	y_cell(2) = 2*dim
+				! else if(x_cell(3) == 2*dim+1 .and. y_cell(3) == 0) then
+				! 	x_cell(3) = 2*dim
+				! else if(x_cell(4) == 0 .and. y_cell(4) == 0) then
+				! 	y_cell(2) = 1
+				! end if
 
 
 					do i = 1, 4

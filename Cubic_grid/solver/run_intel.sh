@@ -5,6 +5,7 @@ args=(${line//,/ })
 dim="${args[0]}"
 rescale="${args[4]}"
 grid_type="${args[5]}"
+step="${args[6]}"
 
 if [ ! -d mod_files ]; then
 	mkdir mod_files
@@ -33,8 +34,9 @@ elif [ $grid_type == 0 ] && [ $rescale == 1 ]; then
 fi
 
 DIRECTORY="datFiles/$(( 2*$dim ))"
-SubDIRECTORY="datFiles/$(( 2*$dim ))/$grid"
-PIC="datFiles/$(( 2*$dim ))/pic"
+SubDIRECTORY="datFiles/$(( 2*$dim ))/$(( 2*$step ))th"
+SSubDIRECTORY="datFiles/$(( 2*$dim ))/$(( 2*$step ))th/$grid"
+PIC="datFiles/$(( 2*$dim ))/$(( 2*$step ))th/pic"
 
 if [ ! -d datFiles ]; then
 	mkdir datFiles
@@ -45,11 +47,14 @@ fi
 if [ ! -d "$SubDIRECTORY" ]; then
 	mkdir $SubDIRECTORY
 fi
+if [ ! -d "$SSubDIRECTORY" ]; then
+	mkdir $SSubDIRECTORY
+fi
 if [ ! -d "$PIC" ]; then
 	mkdir $PIC
 fi
 if [ -d "$SubDIRECTORY" ]; then
-	echo $SubDIRECTORY
+	echo $SSubDIRECTORY
 fi
 
 if [[ $1 == "compile" ]]; then

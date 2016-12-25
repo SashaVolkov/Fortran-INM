@@ -26,17 +26,20 @@ module printer_ncdf
 
 
 
-	Subroutine init(this, dim, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
+	Subroutine init(this, dim, step, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
 
 		Class(printer) :: this
-		Integer(4), intent(in) :: dim, Tmax, speedup, rescale, grid_type
+		Integer(4), intent(in) :: dim, step, Tmax, speedup, rescale, grid_type
 		Integer(4), intent(out) :: time, grid_id, ncid, ncid_gr
 
 		Integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid, Wid, Courantid
-		character(40) istring
+		character(40) istring, istring1
 		character(80) path1, path2
 
 		write(istring, *) 2*dim
+		write(istring1, *) 2*step
+
+		istring = trim(adjustl(istring))//'/'//trim(adjustl(istring1))//'th'
 
 		if(grid_type == 0) then
 			if(rescale == 0) then

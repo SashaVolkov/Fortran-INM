@@ -98,7 +98,7 @@ module interpolation
 
 						if(x_int(k) < 1 .and. x0 == 1 .and. i==1) then
 							M1 = Mass(2*dim, 1, face)*this.fantom1(1) + Mass(2*dim-1, 1, face)*this.fantom1(2)
-							M = M1*this.weight(4,2*dim-1,2*dim,i) + Mass(0,2*dim,face)*this.weight(3,2*dim-1,2*dim,i) + Mass(-1,2*dim,face)*this.weight(2,2*dim-1,2*dim,i) + Mass(-2,2*dim,face)*this.weight(1,2*dim-1,2*dim,i)
+							M = M1*this.weight(1,1,1,1) + Mass(0,2*dim,face)*this.weight(2,1,1,1) + Mass(-1,2*dim,face)*this.weight(3,1,1,1) + Mass(-2,2*dim,face)*this.weight(4,1,1,1)
 						end if
 
 						if(x_int(k) > 2*dim .and. x0 == 2*dim-1 .and. i==1) then
@@ -130,11 +130,11 @@ module interpolation
 
 						if(x_int(k) < 1 .and. x0 == 1 .and. i==1) then
 							M1 = Mass(2*dim, 1, face)*this.fantom1(1) + Mass(2*dim-1, 1, face)*this.fantom1(2)
-							M = M1*this.weight(4,2*dim-1,2*dim,1) + Mass(2*dim,0,face)*this.weight(3,2*dim-1,2*dim,1) + Mass(2*dim,-1,face)*this.weight(2,2*dim-1,2*dim,1) + Mass(2*dim,-2,face)*this.weight(1,2*dim-1,2*dim,1)
+							M = M1*this.weight(1,1,1,1) + Mass(2*dim,0,face)*this.weight(2,1,1,1) + Mass(2*dim,-1,face)*this.weight(3,1,1,1) + Mass(2*dim,-2,face)*this.weight(4,1,1,1)
 						end if
 
 						if(x_int(k) > 2*dim .and. x0 == 2*dim-1 .and. i==1) then
-							M1 = Mass(2*dim-1, 2*dim, face)*this.fantom1(2) + Mass(2*dim, 2*dim, face)*this.fantom1(1)
+							M1 = Mass(2*dim-1, 2*dim, face)*this.fantom1(1) + Mass(2*dim, 2*dim, face)*this.fantom1(2)
 							M = M1*this.weight(1,1,1,1) + Mass(2*dim,2*dim+1,face)*this.weight(2,1,1,1) + Mass(2*dim,2*dim+2,face)*this.weight(3,1,1,1) + Mass(2*dim,2*dim+3,face)*this.weight(4,1,1,1)
 						end if
 
@@ -163,7 +163,7 @@ module interpolation
 
 						if(x_int(k) < 1 .and. x0 == 1 .and. i==1) then
 							M1 = Mass(1, 1, face)*this.fantom1(1) + Mass(1, 2, face)*this.fantom1(2)
-							M = M1*this.weight(4,2*dim-1,2*dim,1) + Mass(0,1,face)*this.weight(3,2*dim-1,2*dim,1) + Mass(-1,1,face)*this.weight(2,2*dim-1,2*dim,1) + Mass(-2,1,face)*this.weight(1,2*dim-1,2*dim,1)
+							M = M1*this.weight(1,1,1,1) + Mass(0,1,face)*this.weight(2,1,1,1) + Mass(-1,1,face)*this.weight(3,1,1,1) + Mass(-2,1,face)*this.weight(4,1,1,1)
 						end if
 
 						if(x_int(k) > 2*dim .and. x0 == 2*dim-1 .and. i==1) then
@@ -194,7 +194,7 @@ module interpolation
 
 						if(x_int(k) < 1 .and. x0 == 1 .and. i==1) then
 							M1 = Mass(1, 1, face)*this.fantom1(1) + Mass(2, 1, face)*this.fantom1(2)
-							M = M1*this.weight(4,2*dim-1,2*dim,1) + Mass(1,0,face)*this.weight(3,2*dim-1,2*dim,1) + Mass(1,-1,face)*this.weight(2,2*dim-1,2*dim,1) + Mass(1,-2,face)*this.weight(1,2*dim-1,2*dim,1)
+							M = M1*this.weight(1,1,1,1) + Mass(1,0,face)*this.weight(2,1,1,1) + Mass(1,-1,face)*this.weight(3,1,1,1) + Mass(1,-2,face)*this.weight(4,1,1,1)
 						end if
 
 						if(x_int(k) > 2*dim .and. x0 == 2*dim-1 .and. i==1) then

@@ -23,18 +23,21 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, dim, convert_time, grid_type, rescale)
+	subroutine init(this, dim, step, convert_time, grid_type, rescale)
 
 		Class(diagnostic) :: this
-		integer(4), intent(in) :: dim, grid_type, rescale
+		integer(4), intent(in) :: dim, step, grid_type, rescale
 		real(8), intent(in) :: convert_time
 
-		character(32) istring
+		character(32) istring, istring1
 
 		this.lon_max = 180;  this.lat_max = 90
-		this.convert_time = convert_time/(644d0*4000d0)
+		this.convert_time = convert_time/(2d0*40000000d0/dsqrt(100d0*980616d-5))
 
 		write(istring, *) 2*dim
+		write(istring1, *) 2*step
+
+		istring = trim(adjustl(istring))//'/'//trim(adjustl(istring1))//'th'
 
 		if (grid_type == 1) then
 			istring = trim(adjustl(istring))//'/equiang/'

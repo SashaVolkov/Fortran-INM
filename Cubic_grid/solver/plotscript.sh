@@ -2,9 +2,10 @@
 
 line=$(cat init | sed 's/ //g')
 args=(${line//,/ })
-x="${args[0]}"
+dim="${args[0]}"
+step="${args[6]}"
 
-cd datFiles/"$(( 2*$x ))"
+cd datFiles/"$(( 2*$dim ))"/"$(( 2*$step ))"th
 pwd
 
 gnuplot <<EOF
@@ -24,6 +25,7 @@ EOF
 gnuplot <<EOF
 set term png size 800, 800
 set output "pic/L_conf_simple.png"
+set yrange [0:2]
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -40,6 +42,7 @@ gnuplot <<EOF
 set term png size 800, 800
 set output "pic/L_conf_tan.png"
 set xlabel "Cycles"
+set yrange [0:2]
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
 set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -84,6 +87,7 @@ set term png size 800, 800
 set output "pic/L2.png"
 set key inside left top vertical Right noreverse
 set xlabel "Cycles"
+set yrange [0:2]
 set mxtics 5
 set mytics 5
 set grid ytics lt 2 lw 2 lc rgb "#bbbbbb"

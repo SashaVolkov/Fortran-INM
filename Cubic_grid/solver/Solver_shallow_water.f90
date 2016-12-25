@@ -28,7 +28,7 @@ implicit none
 	Type(metric) :: metr
 	Type(parallel) :: paral
 	Type(printer) :: printer_nc
-	Type(method) :: met
+	Type(method) :: meth
 	Type(diagnostic) :: diagn
 	Type(message) :: msg
 	Type(interp) :: inter
@@ -64,20 +64,20 @@ implicit none
 	call var_prev.init(metr, height)
 	call var_prev.start_conditions(metr, geom)
 	call diagn.init(var_prev, Tmax, id)
-	call met.init(var_prev)
+	call meth.init(var_prev, space_step)
 	call inter.init(metr, 4)
 
 	call diagn.L_norm(var_prev, time)
 
-	call printer_nc.init(dim, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
+	call printer_nc.init(dim, space_step, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
 	call printer_nc.to_print(var_prev, diagn, 0, speedup, ncid, id)
 	if(id == 0) call printer_nc.print_grid(grid, grid_id, ncid_gr)
 
 
 	do time = 1, Tmax
-		! call met.Euler(var, var_prev, metr, inter, msg)
-		! call met.Predictor_corrector(var, var_prev, metr, inter, msg)
-		call met.RungeKutta(var, var_prev, metr, inter, msg)
+		! call meth.Euler(var, var_prev, metr, inter, msg)
+		! call meth.Predictor_corrector(var, var_prev, metr, inter, msg)
+		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
 				call diagn.Courant(var_prev, time)
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
@@ -107,7 +107,7 @@ implicit none
 	call var_prev.deinit()
 	call printer_nc.deinit(ncid, ncid_gr)
 	call diagn.deinit()
-	call met.deinit()
+	call meth.deinit()
 	call metr.deinit()
 
 

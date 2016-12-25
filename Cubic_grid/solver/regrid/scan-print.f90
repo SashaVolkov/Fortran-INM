@@ -28,22 +28,25 @@ module scan_print
 
 
 
-	subroutine init(this, dim, all_time, convert_time, rescale, grid_type)
+	subroutine init(this, dim, step, all_time, convert_time, rescale, grid_type)
 
 		Class(printer) :: this
-		integer(4), intent(in) :: dim, all_time, rescale, grid_type
+		integer(4), intent(in) :: dim, step, all_time, rescale, grid_type
 
 		integer(4) status, face, ncid, ncid_to, ncid_gr, nvars, grid_id(1:1), Wid(1:2), Wid_to, time, Courantid_to, point_id(1:1), ncid_point, point_find
 		logical file_exist
 		integer(4) latid, lonid, coord
 		real(8) convert_time
-		character(40) istring
+		character(40) istring, istring1
 		character(80) path1, path2, path3, path4
 
 		this.dim = dim;  this.lon_max = 180;  this.lat_max = 90;  this.convert_time = convert_time
-		this.nc_or_dat = 0;  this.step = 2
+		this.nc_or_dat = 1;  this.step = 2
 
 		write(istring, *) 2*dim
+		write(istring1, *) 2*step
+
+		istring = trim(adjustl(istring))//'/'//trim(adjustl(istring1))//'th'
 
 		if(grid_type == 0) then
 			if(rescale == 0) then

@@ -37,11 +37,11 @@ module methods
 	CONTAINS
 
 
-Subroutine init(this, f)
+Subroutine init(this, f, step)
 
 	Class(f_var) :: f
 	Class(method) :: this
-
+	Integer(4), intent(in) :: step
 	Integer(4) f_x, f_y, l_x, l_y
 
 	f_x = f.first_x;  f_y = f.first_y
@@ -50,7 +50,7 @@ Subroutine init(this, f)
 	this.first_x = f_x;  this.first_y = f_y
 	this.last_x = l_x;  this.last_y = l_y
 
-	this.step = f.step;  this.dim = f.dim
+	this.step = step;  this.dim = f.dim
 	this.ns_x = f.ns_x;  this.ns_y = f.ns_y
 	this.nf_x = f.nf_x;  this.nf_y = f.nf_y
 
@@ -271,7 +271,7 @@ Subroutine FRunge(this, metr, i)
 
 				temp2(:) = this.kh(x, y-step:y+step, face, 0) + coef(i-1)*this.kh(x, y-step:y+step, face, i-1)
 				partial = d.partial_c(temp2, dh, step)
-				this.kv_cov(x, y, face, i) =  - dt*g*partial
+				this.kv_cov(x, y, face, i) = - dt*g*partial
 
 				temp1(:) = this.ku_con(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y, face, i-1)
 				temp2(:) = this.kv_con(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x, y-step:y+step, face, i-1)

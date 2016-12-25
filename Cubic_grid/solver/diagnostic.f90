@@ -38,14 +38,17 @@ CONTAINS
 		Class(f_var) :: func
 
 		Integer(4), intent(in) :: Tmax, id
-		character(32) istring
+		character(32) istring, istring1
 
-		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step
+		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step-1
 		this.dt = func.dt;  this.dh = func.delta_on_cube
 		this.convert_time = this.dt/(644d0*4000d0)
 		this.flag = 1
 
 		write(istring, *) 2*this.dim
+		write(istring1, *) 2*this.step
+
+		istring = trim(adjustl(istring))//'/'//trim(adjustl(istring1))//'th'
 
 		call this.alloc(func)
 
@@ -69,10 +72,10 @@ CONTAINS
 ! 			call this.histogram(16*grid.dim*grid.dim, 'datFiles/dist'//trim(istring)//'.dat', 'datFiles/dist_distribution'//trim(istring)//'.dat')
 ! 			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
 
-			open(9,file='datFiles/'//trim(istring)//'/CFL.dat')
+			open(9,file='datFiles/'//trim(istring)//'CFL.dat')
 			! open(11,file='datFiles/'//trim(istring)//'L1.dat')
 			! open(12,file='datFiles/'//trim(istring)//'L2.dat')
-			open(13,file='datFiles/'//trim(istring)//'/L_inf_cube.dat')
+			open(13,file='datFiles/'//trim(istring)//'L_inf_cube.dat')
 
 		end if
 

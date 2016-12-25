@@ -30,10 +30,10 @@ implicit none
 		Procedure, Public :: equal => equal
 		Procedure, Public :: start_conditions => start_conditions
 		Procedure, Public :: interpolate => interpolate
-		Procedure, Public :: Velocity_from_spherical => Velocity_from_spherical
-		Procedure, Public :: Velocity_to_spherical => Velocity_to_spherical
-		Procedure, Public :: Velocity_from_spherical_border => Velocity_from_spherical_border
-		Procedure, Public :: Velocity_to_spherical_border => Velocity_to_spherical_border
+		Procedure, Private :: Velocity_from_spherical => Velocity_from_spherical
+		Procedure, Private :: Velocity_to_spherical => Velocity_to_spherical
+		Procedure, Private :: Velocity_from_spherical_border => Velocity_from_spherical_border
+		Procedure, Private :: Velocity_to_spherical_border => Velocity_to_spherical_border
 		Procedure, Public :: cov_to_con => cov_to_con
 		Procedure, Public :: con_to_cov => con_to_cov
 	End Type
