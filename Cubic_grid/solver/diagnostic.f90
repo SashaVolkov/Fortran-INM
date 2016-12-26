@@ -22,7 +22,6 @@ module diagnostic_mod
 			Procedure, Private :: alloc => alloc
 			Procedure, Public :: deinit => deinit
 			Procedure, Public :: Courant => Courant
-			Procedure, Public :: L_norm => L_norm
 			Procedure, Public :: histogram => hist_generation
 
 	End Type
@@ -73,9 +72,6 @@ CONTAINS
 ! 			call this.histogram(4*grid.dim*grid.dim, 'datFiles/cell'//trim(istring)//'.dat', 'datFiles/cell_distribution'//trim(istring)//'.dat')
 
 			open(9,file='datFiles/'//trim(istring)//'CFL.dat')
-			! open(11,file='datFiles/'//trim(istring)//'L1.dat')
-			! open(12,file='datFiles/'//trim(istring)//'L2.dat')
-			open(13,file='datFiles/'//trim(istring)//'L_inf_cube.dat')
 
 		end if
 
@@ -105,7 +101,7 @@ CONTAINS
 			close(9)
 			! close(11)
 			! close(12)
-			close(13)
+			! close(13)
 		end if
 
 	end Subroutine
@@ -147,27 +143,6 @@ CONTAINS
 	end Subroutine
 
 
-	Subroutine L_norm(this, func, time)
-		Class(diagnostic) :: this
-		Class(f_var) :: func
-		Integer(4), intent(in) :: time
-
-		Integer(4) face, x, y, id, ier
-		Real(8) L1, L2, L1_all, L2_all, L_inf, L_inf_all, F1, F2, square
-
-		L_inf = MAXVAL(abs(func.h_height))
-		call MPI_Allreduce(L_inf, L_inf_all, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-
-		if (id == 0 ) then
-			! if ( this.flag == 1 ) then
-			! 	write(13, FMT = *), 99d0
-			! 	this.flag = 0
-			! end if
-			write(13, FMT = *), abs(L_inf_all)
-		end if
-
-
-	end Subroutine
 
 
 

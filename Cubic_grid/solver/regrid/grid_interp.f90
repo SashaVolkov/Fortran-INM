@@ -230,9 +230,10 @@ CONTAINS
 	end subroutine
 
 
-	subroutine interpolate(this)
+	subroutine interpolate(this, max)
 		Class(interp) :: this
 		integer(4) dim, f, l, lon, lat, x(4), y(4), face, i, j
+		Real(8), Intent(out) :: max
 		Real(8) :: weight(4, 4)
 
 		! surf_to = sum(w*surf_off)
@@ -260,6 +261,8 @@ this.surface_off(x(4)-1,y(4)-1,face, :)*weight(1,1) + this.surface_off(x(4),y(4)
 
 		!$OMP END DO
 		!$OMP END PARALLEL
+
+		max = MAXVAL(abs(this.surface_off(:,:,:,1)))
 
 	end subroutine
 

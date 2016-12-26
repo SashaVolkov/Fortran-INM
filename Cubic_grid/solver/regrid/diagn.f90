@@ -56,7 +56,7 @@ CONTAINS
 		open(11,file='../datFiles/'//trim(istring)//'L1.dat')
 		open(12,file='../datFiles/'//trim(istring)//'L2.dat')
 		open(13,file='../datFiles/'//trim(istring)//'C.dat')
-		open(14,file='../datFiles/'//trim(istring)//'L_inf_cube.dat', FORM="FORMATTED",STATUS="OLD",ACTION="READ")
+		! open(14,file='../datFiles/'//trim(istring)//'L_inf_cube.dat', FORM="FORMATTED",STATUS="OLD",ACTION="READ")
 
 	end subroutine
 
@@ -80,15 +80,15 @@ CONTAINS
 		close(11)
 		close(12)
 		close(13)
-		close(14)
+		! close(14)
 	end subroutine
 
 
 
-	subroutine L_norm(this,time, surface_to)
+	subroutine L_norm(this,time, surface_to, max)
 		Class(diagnostic) :: this
 		integer(4), intent(in) :: time
-		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
+		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max), max
 
 		integer(4) lat, lon, id, ier
 		real(4) L1, L2, L1_prec, L2_prec, L_inf, L_inf_prec, F1, F1_prec, square, pi
@@ -117,7 +117,8 @@ CONTAINS
 
 
 		L2 = sqrt(L2)
-		read(14, *), L_inf
+		! read(14, *), L_inf
+		L_inf = max
 
 		L2_prec = sqrt(L2_prec)
 		L_inf_prec = MAXVAL(abs(this.surface_precise(-this.lon_max+1:this.lon_max-1, -this.lat_max+1:this.lat_max-1)))

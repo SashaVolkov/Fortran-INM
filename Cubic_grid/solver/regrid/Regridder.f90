@@ -8,7 +8,7 @@ program regrid
 	implicit none
 
 	integer(4) dim, Tmax, speedup, rescale, grid_type, all_time, time, step
-	real(8) dt, convert_time
+	real(8) dt, convert_time, max
 	Type(printer) :: scan
 	Type(interp) :: inter
 	Type(geometry) :: geom
@@ -30,9 +30,9 @@ program regrid
 	call inter.weight_find(geom, scan)
 	do time = 1, all_time
 		call scan.scan_surf(time, inter.surface_off)
-		call inter.interpolate()
+		call inter.interpolate(max)
 		call scan.scan_precise(time, d.surface_precise)
-		call d.L_norm((time-1)*speedup, inter.surface_to)
+		call d.L_norm((time-1)*speedup, inter.surface_to, max)
 		call scan.print_surf(inter.surface_to, d.surface_precise, time)
 	end do
 

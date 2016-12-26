@@ -67,7 +67,6 @@ implicit none
 	call meth.init(var_prev, space_step)
 	call inter.init(metr, 4)
 
-	call diagn.L_norm(var_prev, time)
 
 	call printer_nc.init(dim, space_step, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
 	call printer_nc.to_print(var_prev, diagn, 0, speedup, ncid, id)
@@ -81,7 +80,6 @@ implicit none
 			if(mod(time, speedup) == 0) then
 				call diagn.Courant(var_prev, time)
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
-				call diagn.L_norm(var_prev, time)
 			end if
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()

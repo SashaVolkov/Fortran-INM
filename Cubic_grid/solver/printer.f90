@@ -40,22 +40,21 @@ module printer_ncdf
 		write(istring1, *) 2*step
 
 		istring = trim(adjustl(istring))//'/'//trim(adjustl(istring1))//'th'
-
-		if(grid_type == 0) then
-			if(rescale == 0) then
-				path1 = trim('datFiles/'//trim(adjustl(istring))//'/simple/surface.nc')
-				path2 = trim('datFiles/'//trim(adjustl(istring))//'/simple/grid.nc')
-			else if(rescale == 1) then
-				path1 = trim('datFiles/'//trim(adjustl(istring))//'/tan/surface.nc')
-				path2 = trim('datFiles/'//trim(adjustl(istring))//'/tan/grid.nc')
-			else if(rescale == 2) then
-				path1 = trim('datFiles/'//trim(adjustl(istring))//'/exp/surface.nc')
-				path2 = trim('datFiles/'//trim(adjustl(istring))//'/exp/grid.nc')
+		if (grid_type == 1) then
+			istring = trim(adjustl(istring))//'/equiang/'
+		else if (grid_type == 0) then
+			if (rescale == 1) then
+				istring = trim(adjustl(istring))//'/tan/'
+			else if (rescale == 0) then
+				istring = trim(adjustl(istring))//'/simple/'
+			else if (rescale == 2) then
+				istring = trim(adjustl(istring))//'/exp/'
 			end if
-		else if(grid_type == 1) then
-			path1 = trim('datFiles/'//trim(adjustl(istring))//'/equiang/surface.nc')
-			path2 = trim('datFiles/'//trim(adjustl(istring))//'/equiang/grid.nc')
 		end if
+
+		path1 = trim('datFiles/'//trim(adjustl(istring))//'surface.nc')
+		path2 = trim('datFiles/'//trim(adjustl(istring))//'grid.nc')
+
 
 		status = nf90_create (path = path1, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
 		 comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid)
