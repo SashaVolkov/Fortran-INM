@@ -16,7 +16,9 @@ implicit none
 		Real(8), Allocatable :: weight(:,:, :, :)
 		Real(8), Allocatable :: surface_off(:, :, :, :)
 		Real(8), Allocatable :: surface_to(:, :, :)
+		Real(8), Allocatable :: surface_to_prec(:, :, :)
 		integer(4), Allocatable :: indexes_xyface(:, :, :, :)
+		integer(4), Allocatable :: indexes_ll(:, :, :, :, :)
 		integer(4), Allocatable :: closest_xyface(:, :, :)
 
 		integer(4) dim, lon_max, lat_max, step
@@ -36,12 +38,12 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, dim)
+	subroutine init(this, dim, lon_max, lat_max)
 
 		Class(interp) :: this
-		integer(4), intent(in) :: dim
+		integer(4), intent(in) :: dim, lon_max, lat_max
 
-		this.dim = dim;  this.lon_max = 180;  this.lat_max = 90
+		this.dim = dim;  this.lon_max = lon_max;  this.lat_max = lat_max
 		this.step = 2
 
 		call this.alloc()
@@ -57,12 +59,14 @@ CONTAINS
 		dim = this.dim;  f = 1 - this.step; l = 2*dim + this.step
 		lon = this.lon_max; lat = this.lat_max
 
-		Allocate(this.latlon_c_off(1:2, f:l, f:l, 1:6))
-		Allocate(this.surface_off(f:l, f:l, 1:6, 2))
+		Allocate(this.latlon_c_off(2, f:l, f:l, 6))
+		Allocate(this.surface_off(f:l, f:l, 6, 2))
 		Allocate(this.surface_to(-lon:lon, -lat:lat, 2))
+		Allocate(this.surface_to_prec(f:l, f:l, 6))
 		Allocate(this.weight(4, 4, -lat:lat, -lon:lon))
-		Allocate(this.indexes_xyface(1:3, 1:4, -lat:lat, -lon:lon))
-		Allocate(this.closest_xyface(1:3, -lon:lon, -lat:lat))
+		Allocate(this.indexes_xyface(3, 4, -lat:lat, -lon:lon))
+		Allocate(this.indexes_ll(2, 4, f:l, f:l, 6))
+		Allocate(this.closest_xyface(3, -lon:lon, -lat:lat))
 
 	end subroutine
 
@@ -73,8 +77,11 @@ CONTAINS
 		if (Allocated(this.latlon_c_off)) Deallocate(this.latlon_c_off)
 		if (Allocated(this.surface_off)) Deallocate(this.surface_off)
 		if (Allocated(this.surface_to)) Deallocate(this.surface_to)
+		if (Allocated(this.surface_to_prec)) Deallocate(this.surface_to_prec)
 		if (Allocated(this.weight)) Deallocate(this.weight)
 		if (Allocated(this.indexes_xyface)) Deallocate(this.indexes_xyface)
+		if (Allocated(this.indexes_ll)) Deallocate(this.indexes_ll)
+		if (Allocated(this.closest_xyface)) Deallocate(this.closest_xyface)
 	end subroutine
 
 
@@ -84,7 +91,7 @@ CONTAINS
 		Class(printer) :: printer_scaner
 		Class(geometry) :: g
 		integer(4) lon, lat, x(4), y(4), face(4), i, j, dim
-		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2), d(4), ang(4), d_xy(2,4), lagr(2,4)
+		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2), d(4), ang(4), d_xy(2,4), lagr(2,4), factor
 		real(8), parameter :: pi = 314159265358979323846d-20
 
 		call this.hem_of_face(this.latlon_c_off(1, :, :, :))
@@ -98,12 +105,13 @@ CONTAINS
 
 		call this.cell_search(g)
 
-		dim = this.dim
+		dim = this.dim;  factor = 90d0/dble(this.lat_max)
+		print *, factor
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
 
-				latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0
+				latlon(1) = factor*lat*pi/180d0;  latlon(2) = factor*lon*pi/180d0
 
 				face(:) = this.indexes_xyface(3, :, lat, lon)
 
@@ -173,10 +181,10 @@ CONTAINS
 		Class(interp) :: this
 		Class(geometry) :: g
 		integer(4) dim, f, l, lon, lat, x, y, face(3), i
-		Real(8) angle, latlon(1:2), min
+		Real(8) angle, latlon(1:2), min, factor
 		real(8), parameter :: pi = 314159265358979323846d-20
 
-		dim = this.dim
+		dim = this.dim;  factor = 90d0/dble(this.lat_max)
 		! lon = this.lon_max; lat = this.lat_max
 
 		!$OMP PARALLEL PRIVATE(i, y, x, lon, lat, angle, latlon, min, face)
@@ -184,29 +192,29 @@ CONTAINS
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
-			latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0; min = 10000.0
+			latlon(1) = factor*lat*pi/180d0;  latlon(2) = factor*lon*pi/180d0; min = 10000.0
 
 					do x = 1, 2*dim
 						do y = 1, 2*dim
-							if(lat < -50)then
+							if(lat*factor < -50)then
 								angle = g.angle(this.latlon_c_off(1:2, x, y, 1), latlon)
 								if(angle < min) then
 									min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,1/)
 								end if
-							else if(lat > 50)then
+							else if(lat*factor > 50)then
 								angle = g.angle(this.latlon_c_off(1:2, x, y, 6), latlon)
 								if(angle < min) then
 									min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,6/)
 								end if
 							else
 
-					if(abs(lon) <= 45) then
+					if(abs(lon)*factor <= 45) then
 						face(1:3) = (/1,2,6/)
-					else if(abs(lon) >= 135) then
+					else if(abs(lon)*factor >= 135) then
 						face(1:3) = (/1,4,6/)
-					else if(lon < -45 .and. lon > -135)then
+					else if(lon*factor < -45 .and. lon*factor > -135)then
 						face(1:3) = (/1,5,6/)
-					else if(lon > 45 .and. lon < 135)then
+					else if(lon*factor > 45 .and. lon*factor < 135)then
 						face(1:3) = (/1,3,6/)
 					end if
 
@@ -336,14 +344,16 @@ this.surface_off(x(4)-1,y(4)-1,face, :)*weight(1,1) + this.surface_off(x(4),y(4)
 		Class(interp) :: this
 		Class(geometry) :: g
 		integer(4) dim, f, l, lat, lon, x, y, face, i, x_cell(4), y_cell(4), point
-		Real(8) angle, latlon(1:2), min
+		Real(8) :: angle, latlon(1:2), min, factor
 		real(8), parameter :: pi = 314159265358979323846d-20
-		dim = this.dim
+		dim = this.dim;  factor = 90d0/dble(this.lat_max)
+
+
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
 
-				latlon(1) = lat*pi/180d0;  latlon(2) = lon*pi/180d0; min = 10000.0
+				latlon(1) = factor*lat*pi/180d0;  latlon(2) = factor*lon*pi/180d0; min = 10000.0
 
 				x = this.closest_xyface(1, lon, lat)
 				y = this.closest_xyface(2, lon, lat)

@@ -23,15 +23,15 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, dim, step, convert_time, grid_type, rescale)
+	subroutine init(this, dim, step, convert_time, grid_type, rescale, lon_max, lat_max)
 
 		Class(diagnostic) :: this
-		integer(4), intent(in) :: dim, step, grid_type, rescale
+		integer(4), intent(in) :: dim, step, grid_type, rescale, lon_max, lat_max
 		real(8), intent(in) :: convert_time
 
 		character(32) istring, istring1
 
-		this.lon_max = 180;  this.lat_max = 90
+		this.lon_max = lon_max;  this.lat_max = lat_max
 		this.convert_time = convert_time/(2d0*40000000d0/dsqrt(100d0*980616d-5))
 
 		write(istring, *) 2*dim
@@ -91,12 +91,13 @@ CONTAINS
 		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max), max
 
 		integer(4) lat, lon, id, ier
-		real(4) L1, L2, L1_prec, L2_prec, L_inf, L_inf_prec, F1, F1_prec, square, pi
+		real(4) L1, L2, L1_prec, L2_prec, L_inf, L_inf_prec, F1, F1_prec, square, pi, factor
 
 		pi = 3.14159265358979323846
+		factor = 90.0/real(this.lat_max,4)
 
 		do lat = -this.lat_max+1, this.lat_max-1
-			square = cos(real(lat,4)*pi/180.0)
+			square = cos(real(factor*lat,4)*pi/180.0)
 			do lon = -this.lon_max+1, this.lon_max-1
 
 				if (isnan(surface_to(lon,lat))) then

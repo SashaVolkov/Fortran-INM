@@ -7,7 +7,7 @@ program regrid
 
 	implicit none
 
-	integer(4) dim, Tmax, speedup, rescale, grid_type, all_time, time, step
+	integer(4) dim, Tmax, speedup, rescale, grid_type, all_time, time, step, lon_max, lat_max
 	real(8) dt, convert_time, max
 	Type(printer) :: scan
 	Type(interp) :: inter
@@ -20,11 +20,11 @@ program regrid
 	close(9)
 
 	all_time = Tmax/speedup + 1
-	convert_time = dt
+	convert_time = dt; lon_max = 360; lat_max = 180
 
-	call inter.init(dim)
-	call scan.init(dim, step, all_time, convert_time, rescale, grid_type)
-	call d.init(dim, step, convert_time, grid_type, rescale)
+	call inter.init(dim, lon_max, lat_max)
+	call scan.init(dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max)
+	call d.init(dim, step, convert_time, grid_type, rescale, lon_max, lat_max)
 
 	call scan.scan_grid(inter.latlon_c_off)
 	call inter.weight_find(geom, scan)
