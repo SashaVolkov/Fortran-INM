@@ -24,8 +24,8 @@ program regrid
 	all_time = Tmax/speedup + 1
 	convert_time = dt; lon_max = 360; lat_max = 180
 
-	call inter.init(dim, lon_max, lat_max)
-	call to_cube.init(dim, lon_max, lat_max)
+	call inter.init(dim, step, lon_max, lat_max)
+	call to_cube.init(dim, step, lon_max, lat_max)
 	call scan.init(dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max)
 	call d.init(dim, step, convert_time, grid_type, rescale, lon_max, lat_max)
 
@@ -38,9 +38,9 @@ program regrid
 		call scan.scan_precise(time, d.surface_precise)
 		call inter.interpolate(max)
 		call to_cube.interpolate(d.surface_precise)
-		call d.L_norm((time-1)*speedup, inter.surface_off, to_cube.surface_to, max)
+		call d.L_norm((time-1)*speedup, inter.surface_off, to_cube.precise_cube, max)
 		call scan.print_surf(inter.surface_to, d.surface_precise, time)
-		call scan.print_surf_prec_cube(time, to_cube.surface_to)
+		call scan.print_surf_prec_cube(time, to_cube.precise_cube, inter.surface_off)
 	end do
 
 	call to_cube.deinit()

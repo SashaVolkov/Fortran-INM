@@ -92,23 +92,25 @@ module interpolation
 						x_int(k) = x_int(k-1)+1
 					end do
 
-					Mass_temp(x, y+i, face) = 0d0
+					M2 = 0d0
 					do k = 1, n
 						M = Mass(x_int(k), y+i, face)
 
 						if(x_int(k) < 1 .and. x0 == 1 .and. i==1) then
-							M1 = Mass(2*dim, 1, face)*this.fantom1(1) + Mass(2*dim-1, 1, face)*this.fantom1(2)
-							M = M1*this.weight(1,1,1,1) + Mass(0,2*dim,face)*this.weight(2,1,1,1) + Mass(-1,2*dim,face)*this.weight(3,1,1,1) + Mass(-2,2*dim,face)*this.weight(4,1,1,1)
+							! M1 = Mass(2*dim, 1, face)*this.fantom1(1) + Mass(2*dim-1, 1, face)*this.fantom1(2)
+							! M = M1*this.weight(1,1,1,1) + Mass(0,2*dim,face)*this.weight(2,1,1,1) + Mass(-1,2*dim,face)*this.weight(3,1,1,1) + Mass(-2,2*dim,face)*this.weight(4,1,1,1)
+							M = Mass(0,2*dim,face)*this.fantom1(1) + Mass(-1,2*dim,face)*this.fantom1(2)
 						end if
 
 						if(x_int(k) > 2*dim .and. x0 == 2*dim-1 .and. i==1) then
-							M1 = Mass(2*dim, 2*dim-1, face)*this.fantom1(2) + Mass(2*dim, 2*dim, face)*this.fantom1(1)
-							M = M1*this.weight(1,1,1,1) + Mass(2*dim+1,2*dim,face)*this.weight(2,1,1,1) + Mass(2*dim+2,2*dim,face)*this.weight(3,1,1,1) + Mass(2*dim+3,2*dim,face)*this.weight(4,1,1,1)
+							! M1 = Mass(2*dim, 2*dim-1, face)*this.fantom1(1) + Mass(2*dim, 2*dim, face)*this.fantom1(2)
+							! M = M1*this.weight(1,1,1,1) + Mass(2*dim+1,2*dim,face)*this.weight(2,1,1,1) + Mass(2*dim+2,2*dim,face)*this.weight(3,1,1,1) + Mass(2*dim+3,2*dim,face)*this.weight(4,1,1,1)
+							M = Mass(2*dim+1,2*dim,face)*this.fantom1(1) + Mass(2*dim+2,2*dim,face)*this.fantom1(2)
 						end if
 
-						Mass_temp(x, y+i, face) = M*this.weight(k, x0, x, i) + Mass_temp(x, y+i, face)
+						M2 = M*this.weight(k, x0, x, i) + M2
 					end do
-
+					Mass_temp(x, y+i, face) = M2
 				end do
 			end do
 		end if
@@ -124,23 +126,25 @@ module interpolation
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
 					end do
-					Mass_temp(x+i, y, face) = 0d0
+					M2 = 0d0
 					do k = 1, n
 						M = Mass(x+i, x_int(k), face)
 
 						if(x_int(k) < 1 .and. x0 == 1 .and. i==1) then
-							M1 = Mass(2*dim, 1, face)*this.fantom1(1) + Mass(2*dim-1, 1, face)*this.fantom1(2)
-							M = M1*this.weight(1,1,1,1) + Mass(2*dim,0,face)*this.weight(2,1,1,1) + Mass(2*dim,-1,face)*this.weight(3,1,1,1) + Mass(2*dim,-2,face)*this.weight(4,1,1,1)
+							! M1 = Mass(2*dim, 1, face)*this.fantom1(1) + Mass(2*dim-1, 1, face)*this.fantom1(2)
+							! M = M1*this.weight(1,1,1,1) + Mass(2*dim,0,face)*this.weight(2,1,1,1) + Mass(2*dim,-1,face)*this.weight(3,1,1,1) + Mass(2*dim,-2,face)*this.weight(4,1,1,1)
+							M = Mass(2*dim,0,face)*this.fantom1(1) + Mass(2*dim,-1,face)*this.fantom1(2)
 						end if
 
 						if(x_int(k) > 2*dim .and. x0 == 2*dim-1 .and. i==1) then
-							M1 = Mass(2*dim-1, 2*dim, face)*this.fantom1(1) + Mass(2*dim, 2*dim, face)*this.fantom1(2)
-							M = M1*this.weight(1,1,1,1) + Mass(2*dim,2*dim+1,face)*this.weight(2,1,1,1) + Mass(2*dim,2*dim+2,face)*this.weight(3,1,1,1) + Mass(2*dim,2*dim+3,face)*this.weight(4,1,1,1)
+							! M1 = Mass(2*dim-1, 2*dim, face)*this.fantom1(1) + Mass(2*dim, 2*dim, face)*this.fantom1(2)
+							! M = M1*this.weight(1,1,1,1) + Mass(2*dim,2*dim+1,face)*this.weight(2,1,1,1) + Mass(2*dim,2*dim+2,face)*this.weight(3,1,1,1) + Mass(2*dim,2*dim+3,face)*this.weight(4,1,1,1)
+							M = Mass(2*dim,2*dim+1,face)*this.fantom1(1) + Mass(2*dim,2*dim+2,face)*this.fantom1(2)
 						end if
 
-						Mass_temp(x+i, y, face) = M*this.weight(k, x0, y, i) + Mass_temp(x+i, y, face)
+						M2 = M*this.weight(k, x0, y, i) + M2
 					end do
-
+					Mass_temp(x+i, y, face) = M2
 				end do
 			end do
 		end if
@@ -157,22 +161,25 @@ module interpolation
 						x_int(k) = x_int(k-1)+1
 					end do
 
-					Mass_temp(x, y-i, face) = 0d0
+					M2 = 0d0
 					do k = 1, n
 						M = Mass(x_int(k), y-i, face)
 
 						if(x_int(k) < 1 .and. x0 == 1 .and. i==1) then
-							M1 = Mass(1, 1, face)*this.fantom1(1) + Mass(1, 2, face)*this.fantom1(2)
-							M = M1*this.weight(1,1,1,1) + Mass(0,1,face)*this.weight(2,1,1,1) + Mass(-1,1,face)*this.weight(3,1,1,1) + Mass(-2,1,face)*this.weight(4,1,1,1)
+							! M1 = Mass(1, 1, face)*this.fantom1(1) + Mass(1, 2, face)*this.fantom1(2)
+							! M = M1*this.weight(1,1,1,1) + Mass(0,1,face)*this.weight(2,1,1,1) + Mass(-1,1,face)*this.weight(3,1,1,1) + Mass(-2,1,face)*this.weight(4,1,1,1)
+							M = Mass(0,1,face)*this.fantom1(1) + Mass(-1,1,face)*this.fantom1(2)
 						end if
 
 						if(x_int(k) > 2*dim .and. x0 == 2*dim-1 .and. i==1) then
-							M1 = Mass(2*dim, 1, face)*this.fantom1(1) + Mass(2*dim, 2, face)*this.fantom1(2)
-							M = M1*this.weight(1,1,1,1) + Mass(2*dim+1,1,face)*this.weight(2,1,1,1) + Mass(2*dim+2,1,face)*this.weight(3,1,1,1) + Mass(2*dim+3,1,face)*this.weight(4,1,1,1)
+							! M1 = Mass(2*dim, 1, face)*this.fantom1(1) + Mass(2*dim, 2, face)*this.fantom1(2)
+							! M = M1*this.weight(1,1,1,1) + Mass(2*dim+1,1,face)*this.weight(2,1,1,1) + Mass(2*dim+2,1,face)*this.weight(3,1,1,1) + Mass(2*dim+3,1,face)*this.weight(4,1,1,1)
+							M = Mass(2*dim+1,1,face)*this.fantom1(1) + Mass(2*dim+2,1,face)*this.fantom1(2)
 						end if
 
-						Mass_temp(x, y-i, face) = M*this.weight(k, x0, x, i) + Mass_temp(x, y-i, face)
+						M2 = M*this.weight(k, x0, x, i) + M2
 					end do
+					Mass_temp(x, y-i, face) = M2
 				end do
 			end do
 		end if
@@ -188,22 +195,25 @@ module interpolation
 					do k = 2, n
 						x_int(k) = x_int(k-1)+1
 					end do
-					Mass_temp(x-i, y, face) = 0d0
+					M2 = 0d0
 					do k = 1, n
 						M = Mass(x-i, x_int(k), face)
 
 						if(x_int(k) < 1 .and. x0 == 1 .and. i==1) then
-							M1 = Mass(1, 1, face)*this.fantom1(1) + Mass(2, 1, face)*this.fantom1(2)
-							M = M1*this.weight(1,1,1,1) + Mass(1,0,face)*this.weight(2,1,1,1) + Mass(1,-1,face)*this.weight(3,1,1,1) + Mass(1,-2,face)*this.weight(4,1,1,1)
+							! M1 = Mass(1, 1, face)*this.fantom1(1) + Mass(2, 1, face)*this.fantom1(2)
+							! M = M1*this.weight(1,1,1,1) + Mass(1,0,face)*this.weight(2,1,1,1) + Mass(1,-1,face)*this.weight(3,1,1,1) + Mass(1,-2,face)*this.weight(4,1,1,1)
+							M = Mass(1,0,face)*this.fantom1(1) + Mass(1,-1,face)*this.fantom1(2)
 						end if
 
 						if(x_int(k) > 2*dim .and. x0 == 2*dim-1 .and. i==1) then
-							M1 = Mass(1, 2*dim, face)*this.fantom1(1) + Mass(2, 2*dim, face)*this.fantom1(2)
-							M = M1*this.weight(1,1,1,1) + Mass(1,2*dim+1,face)*this.weight(2,1,1,1) + Mass(1,2*dim+2,face)*this.weight(3,1,1,1) + Mass(1,2*dim+3,face)*this.weight(4,1,1,1)
+							! M1 = Mass(1, 2*dim, face)*this.fantom1(1) + Mass(2, 2*dim, face)*this.fantom1(2)
+							! M = M1*this.weight(1,1,1,1) + Mass(1,2*dim+1,face)*this.weight(2,1,1,1) + Mass(1,2*dim+2,face)*this.weight(3,1,1,1) + Mass(1,2*dim+3,face)*this.weight(4,1,1,1)
+							M = Mass(1,2*dim+1,face)*this.fantom1(1) + Mass(1,2*dim+2,face)*this.fantom1(2)
 						end if
 
-						Mass_temp(x-i, y, face) = M*this.weight(k, x0, y, i) + Mass_temp(x-i, y, face)
+						M2 = M*this.weight(k, x0, y, i) + M2
 					end do
+					Mass_temp(x-i, y, face) = M2
 				end do
 			end do
 		end if

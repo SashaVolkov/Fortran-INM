@@ -36,10 +36,10 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, dim, lon_max, lat_max)
+	subroutine init(this, dim, step, lon_max, lat_max)
 
 		Class(interp) :: this
-		integer(4), intent(in) :: dim, lon_max, lat_max
+		integer(4), intent(in) :: dim, step, lon_max, lat_max
 
 		this.dim = dim;  this.lon_max = lon_max;  this.lat_max = lat_max
 		this.step = 2

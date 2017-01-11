@@ -31,7 +31,7 @@ CONTAINS
 
 		character(32) istring, istring1
 
-		this.lon_max = lon_max;  this.lat_max = lat_max;  this.dim = dim;  this.step = step
+		this.lon_max = lon_max;  this.lat_max = lat_max;  this.dim = dim;  this.step = 2
 		this.convert_time = convert_time/(2d0*40000000d0/dsqrt(100d0*980616d-5))
 
 		write(istring, *) 2*dim
@@ -139,10 +139,10 @@ CONTAINS
 		real(4), intent(in) :: precise(1:2*this.dim, 1:2*this.dim, 6)
 		real(8), intent(in) :: surface_to(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 6, 1:2), max
 
-		integer(4) lat, lon, id, ier, x, y, face
+		integer(4) lat, lon, id, ier, x, y, face, dim
 		real(4) L1, L2, L1_prec, L2_prec, L_inf, L_inf_prec, F1, F1_prec, square, pi, factor
 
-		pi = 3.14159265358979323846
+		pi = 3.14159265358979323846;  dim = this.dim
 		factor = 90.0/real(this.lat_max,4)
 		square = 1.0
 
@@ -151,11 +151,10 @@ CONTAINS
 		! 	do lon = -this.lon_max+1, this.lon_max-1
 
 		do face = 1, 6
-			do x = 1, 2*this.dim
-				do y = 1, 2*this.dim
+			do x = 1, 2*dim
+				do y = 1, 2*dim
 
-					if (isnan(precise(x,y,face))) then
-					else
+					if (.not. ((face==1 .or. face==6) .and. ((x>=dim-1 .and. x<=dim+2) .and. (y>=dim-1 .and. y<=dim+2)))) then
 					F1 = precise(x,y,face) - surface_to(x,y,face,1)
 					F1_prec = precise(x,y,face)
 

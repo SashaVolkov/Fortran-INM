@@ -10,7 +10,7 @@ implicit none
 
 		Real(8), Allocatable :: latlon_cubic(:, :, :, :)
 		Real(8), Allocatable :: weight(:, :, :, :)
-		Real(4), Allocatable :: surface_to(:, :, :)
+		Real(4), Allocatable :: precise_cube(:, :, :)
 		integer(4), Allocatable :: indexes_ll(:, :, :, :, :)
 
 		integer(4) dim, lon_max, lat_max, step
@@ -28,10 +28,10 @@ implicit none
 CONTAINS
 
 
-	subroutine init(this, dim, lon_max, lat_max)
+	subroutine init(this, dim, step, lon_max, lat_max)
 
 		Class(prec_to_cube) :: this
-		integer(4), intent(in) :: dim, lon_max, lat_max
+		integer(4), intent(in) :: dim, step, lon_max, lat_max
 
 		this.dim = dim;  this.lon_max = lon_max;  this.lat_max = lat_max
 		this.step = 2
@@ -50,7 +50,7 @@ CONTAINS
 		lon = this.lon_max; lat = this.lat_max
 
 		Allocate(this.latlon_cubic(2, f:l, f:l, 6))
-		Allocate(this.surface_to(1:2*dim, 1:2*dim, 6))
+		Allocate(this.precise_cube(1:2*dim, 1:2*dim, 6))
 		Allocate(this.weight(4, 1:2*dim, 1:2*dim, 6))
 		Allocate(this.indexes_ll(2, 4, 1:2*dim, 1:2*dim, 6))
 
@@ -61,7 +61,7 @@ CONTAINS
 	subroutine deinit(this)
 		Class(prec_to_cube) :: this
 		if (Allocated(this.latlon_cubic)) Deallocate(this.latlon_cubic)
-		if (Allocated(this.surface_to)) Deallocate(this.surface_to)
+		if (Allocated(this.precise_cube)) Deallocate(this.precise_cube)
 		if (Allocated(this.weight)) Deallocate(this.weight)
 		if (Allocated(this.indexes_ll)) Deallocate(this.indexes_ll)
 	end subroutine
@@ -119,7 +119,7 @@ CONTAINS
 				lon(:) = this.indexes_ll(2,:, x, y, face)
 				weight(:) = this.weight(:, x, y, face)
 
-this.surface_to(x, y, face) = surface_off(lon(1), lat(1))*weight(1) + surface_off(lon(2), lat(2))*weight(2) + surface_off(lon(3), lat(3))*weight(3) + surface_off(lon(4), lat(4))*weight(4)
+this.precise_cube(x, y, face) = surface_off(lon(1), lat(1))*weight(1) + surface_off(lon(2), lat(2))*weight(2) + surface_off(lon(3), lat(3))*weight(3) + surface_off(lon(4), lat(4))*weight(4)
 
 				end do
 			end do

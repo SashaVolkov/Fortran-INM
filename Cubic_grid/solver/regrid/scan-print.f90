@@ -130,16 +130,17 @@ module scan_print
 
 
 
-	subroutine print_surf_prec_cube(this, time, surface_to)
+	subroutine print_surf_prec_cube(this, time, precise, surface_to)
 
 		Class(printer) :: this
 		integer(4), intent(in) :: time
-		real(4), intent(in) :: surface_to(1:2*this.dim, 1:2*this.dim, 1:6)
+		real(4), intent(in) :: precise(1:2*this.dim, 1:2*this.dim, 1:6)
+		real(8), intent(in) :: surface_to(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 6)
 		integer(4) status, ncid, dim, Precid
 
 		dim = this.dim;  ncid = this.ncid;  Precid = this.Precid
 
-		status = nf90_put_var(ncid, Precid, surface_to(1:2*dim, 1:2*dim, 1:6),&
+		status = nf90_put_var(ncid, Precid, precise(1:2*dim, 1:2*dim, 1:6)-real(surface_to(1:2*dim, 1:2*dim, 1:6),4),&
 		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status), "print_surf_cube"
 	end subroutine
