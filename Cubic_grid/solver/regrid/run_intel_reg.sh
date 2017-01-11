@@ -6,7 +6,7 @@ fi
 
 rm -rf *.o *.mod mod_files/*.mod *.out *.file analyze *~ 2>/dev/null
 
-Files="sphere_geometry.f90 diagn.f90 scan-print.f90 grid_interp.f90"
+Files="sphere_geometry.f90 diagn.f90 scan-print.f90 grid_interp.f90 grid_interp_prec_to_cube.f90"
 Files=$Files" Regridder.f90"
 
 
@@ -32,6 +32,10 @@ else
 		time mpiexec -n 1 ./a.out
 
 	fi
+
+	echo "Plotting"
+	cd ..
+	./plotscript.sh
 
 
 fi

@@ -1,4 +1,4 @@
-40, 6400, 3220.0, 4, 0, 1, 2
+40, 320, 3220.0, 4, 0, 1, 2
 
 
 dim, Tmax, dt, speedup, rescale, grid_type, space_step

@@ -11,7 +11,7 @@ module scan_print
 	Type printer
 
 	integer(4) :: dim, step, ncid, ncid_gr, ncid_to, grid_id, Wid, Wid_to
-	integer(4) :: lon_max, lat_max, nc_or_dat, Courantid, Courantid_to, point_id, ncid_point, point_find
+	integer(4) :: lon_max, lat_max, nc_or_dat, Courantid, Precid, Courantid_to, point_id, ncid_point, point_find
 	real(8) :: convert_time
 		CONTAINS
 		Procedure, Public :: init => init
@@ -20,6 +20,7 @@ module scan_print
 		Procedure, Public :: scan_grid => scan_grid
 		Procedure, Public :: scan_point => scan_point
 		Procedure, Public :: print_surf => print_surf
+		Procedure, Public :: print_surf_prec_cube => print_surf_prec_cube
 		Procedure, Public :: print_point => print_point
 		Procedure, Public :: deinit => deinit
 	End Type
@@ -33,7 +34,7 @@ module scan_print
 		Class(printer) :: this
 		integer(4), intent(in) :: dim, step, all_time, rescale, grid_type, lon_max, lat_max
 
-		integer(4) status, face, ncid, ncid_to, ncid_gr, nvars, grid_id(1:1), Wid(1:2), Wid_to, time, Courantid_to, point_id(1:1), ncid_point, point_find
+		integer(4) status, face, ncid, ncid_to, ncid_gr, nvars, grid_id(1:1), Wid(1:3), Wid_to, time, Courantid_to, point_id(1:1), ncid_point, point_find
 		logical file_exist
 		integer(4) latid, lonid, coord
 		real(8) convert_time
@@ -71,7 +72,7 @@ module scan_print
 
 
 
-		status = nf90_open(path = path1, mode = NF90_NOWRITE, ncid = ncid)
+		status = nf90_open(path = path1, mode = NF90_WRITE, ncid = ncid)
 		status = nf90_inq_varids(ncid, nvars, Wid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
@@ -102,7 +103,7 @@ module scan_print
 				open(UNIT=16,file=path4,FORM="FORMATTED",STATUS="NEW",ACTION="WRITE")
 			end if
 
-		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1); this.Courantid = Wid(2);  this.point_find = point_find
+		this.ncid = ncid;  this.ncid_gr = ncid_gr;  this.grid_id = grid_id(1); this.Wid = Wid(1); this.Courantid = Wid(2);  this.Precid = Wid(3);  this.point_find = point_find
 		! this.ncid_point = ncid_point;  this.point_id = point_id(1)
 
 	end subroutine
@@ -125,6 +126,25 @@ module scan_print
 		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status), "scan_surf"
 	end subroutine
+
+
+
+
+	subroutine print_surf_prec_cube(this, time, surface_to)
+
+		Class(printer) :: this
+		integer(4), intent(in) :: time
+		real(4), intent(in) :: surface_to(1:2*this.dim, 1:2*this.dim, 1:6)
+		integer(4) status, ncid, dim, Precid
+
+		dim = this.dim;  ncid = this.ncid;  Precid = this.Precid
+
+		status = nf90_put_var(ncid, Precid, surface_to(1:2*dim, 1:2*dim, 1:6),&
+		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
+		if(status /= nf90_NoErr) print *, nf90_strerror(status), "print_surf_cube"
+	end subroutine
+
+
 
 
 	subroutine scan_precise(this, time, surface_precise)

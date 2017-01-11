@@ -9,7 +9,7 @@ implicit none
 	Type diagnostic
 
 		Real(4), Allocatable :: surface_precise(:, :)
-		integer(4) lon_max, lat_max
+		integer(4) lon_max, lat_max, dim, step
 		real(8) convert_time
 
 		CONTAINS
@@ -31,7 +31,7 @@ CONTAINS
 
 		character(32) istring, istring1
 
-		this.lon_max = lon_max;  this.lat_max = lat_max
+		this.lon_max = lon_max;  this.lat_max = lat_max;  this.dim = dim;  this.step = step
 		this.convert_time = convert_time/(2d0*40000000d0/dsqrt(100d0*980616d-5))
 
 		write(istring, *) 2*dim
@@ -85,33 +85,88 @@ CONTAINS
 
 
 
-	subroutine L_norm(this,time, surface_to, max)
+	! subroutine L_norm(this,time, surface_to, max)
+	! 	Class(diagnostic) :: this
+	! 	integer(4), intent(in) :: time
+	! 	real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max), max
+
+	! 	integer(4) lat, lon, id, ier
+	! 	real(4) L1, L2, L1_prec, L2_prec, L_inf, L_inf_prec, F1, F1_prec, square, pi, factor
+
+	! 	pi = 3.14159265358979323846
+	! 	factor = 90.0/real(this.lat_max,4)
+
+	! 	do lat = -this.lat_max+1, this.lat_max-1
+	! 		square = cos(real(factor*lat,4)*pi/180.0)
+	! 		do lon = -this.lon_max+1, this.lon_max-1
+
+	! 			if (isnan(surface_to(lon,lat))) then
+	! 			else
+	! 			F1 = this.surface_precise(lon, lat) - surface_to(lon,lat)
+	! 			F1_prec = this.surface_precise(lon, lat)
+
+	! 			L1 = abs(F1)*square + L1
+	! 			L2 = F1*F1*square + L2
+
+	! 			L1_prec = abs(F1_prec)*square + L1_prec
+	! 			L2_prec = F1_prec*F1_prec*square + L2_prec
+	! 			end if
+
+	! 		end do
+	! 	end do
+		
+
+
+	! 	L2 = sqrt(L2)
+	! 	! read(14, *), L_inf
+	! 	L_inf = max
+
+	! 	L2_prec = sqrt(L2_prec)
+	! 	L_inf_prec = MAXVAL(abs(this.surface_precise(-this.lon_max+1:this.lon_max-1, -this.lat_max+1:this.lat_max-1)))
+
+	! 		write(11, *),time*this.convert_time,"	", abs(L1/L1_prec)
+	! 		write(12, *),time*this.convert_time,"	", abs(L2/L2_prec)
+	! 		write(13, *),time*this.convert_time,"	", abs(L_inf/abs(L_inf_prec) - 1)
+
+
+	! end subroutine
+
+
+
+	subroutine L_norm(this,time, surface_to, precise, max)
 		Class(diagnostic) :: this
 		integer(4), intent(in) :: time
-		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max), max
+		real(4), intent(in) :: precise(1:2*this.dim, 1:2*this.dim, 6)
+		real(8), intent(in) :: surface_to(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 6, 1:2), max
 
-		integer(4) lat, lon, id, ier
+		integer(4) lat, lon, id, ier, x, y, face
 		real(4) L1, L2, L1_prec, L2_prec, L_inf, L_inf_prec, F1, F1_prec, square, pi, factor
 
 		pi = 3.14159265358979323846
 		factor = 90.0/real(this.lat_max,4)
+		square = 1.0
 
-		do lat = -this.lat_max+1, this.lat_max-1
-			square = cos(real(factor*lat,4)*pi/180.0)
-			do lon = -this.lon_max+1, this.lon_max-1
+		! do lat = -this.lat_max+1, this.lat_max-1
+		! 	! square = cos(real(factor*lat,4)*pi/180.0)
+		! 	do lon = -this.lon_max+1, this.lon_max-1
 
-				if (isnan(surface_to(lon,lat))) then
-				else
-				F1 = this.surface_precise(lon, lat) - surface_to(lon,lat)
-				F1_prec = this.surface_precise(lon, lat)
+		do face = 1, 6
+			do x = 1, 2*this.dim
+				do y = 1, 2*this.dim
 
-				L1 = abs(F1)*square + L1
-				L2 = F1*F1*square + L2
+					if (isnan(precise(x,y,face))) then
+					else
+					F1 = precise(x,y,face) - surface_to(x,y,face,1)
+					F1_prec = precise(x,y,face)
 
-				L1_prec = abs(F1_prec)*square + L1_prec
-				L2_prec = F1_prec*F1_prec*square + L2_prec
-				end if
+					L1 = abs(F1)*square + L1
+					L2 = F1*F1*square + L2
 
+					L1_prec = abs(F1_prec)*square + L1_prec
+					L2_prec = F1_prec*F1_prec*square + L2_prec
+					end if
+
+				end do
 			end do
 		end do
 		
@@ -122,7 +177,7 @@ CONTAINS
 		L_inf = max
 
 		L2_prec = sqrt(L2_prec)
-		L_inf_prec = MAXVAL(abs(this.surface_precise(-this.lon_max+1:this.lon_max-1, -this.lat_max+1:this.lat_max-1)))
+		L_inf_prec = MAXVAL(abs(precise))
 
 			write(11, *),time*this.convert_time,"	", abs(L1/L1_prec)
 			write(12, *),time*this.convert_time,"	", abs(L2/L2_prec)

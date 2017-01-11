@@ -11,14 +11,12 @@ implicit none
 
 	Type interp
 
-		Real(8), Allocatable :: latlon_c_off(:, :, :, :)
+		Real(8), Allocatable :: latlon_cubic(:, :, :, :)
 		Real(8), Allocatable :: latlon_c_to(:, :, :)
 		Real(8), Allocatable :: weight(:,:, :, :)
 		Real(8), Allocatable :: surface_off(:, :, :, :)
 		Real(8), Allocatable :: surface_to(:, :, :)
-		Real(8), Allocatable :: surface_to_prec(:, :, :)
 		integer(4), Allocatable :: indexes_xyface(:, :, :, :)
-		integer(4), Allocatable :: indexes_ll(:, :, :, :, :)
 		integer(4), Allocatable :: closest_xyface(:, :, :)
 
 		integer(4) dim, lon_max, lat_max, step
@@ -59,13 +57,11 @@ CONTAINS
 		dim = this.dim;  f = 1 - this.step; l = 2*dim + this.step
 		lon = this.lon_max; lat = this.lat_max
 
-		Allocate(this.latlon_c_off(2, f:l, f:l, 6))
+		Allocate(this.latlon_cubic(2, f:l, f:l, 6))
 		Allocate(this.surface_off(f:l, f:l, 6, 2))
 		Allocate(this.surface_to(-lon:lon, -lat:lat, 2))
-		Allocate(this.surface_to_prec(f:l, f:l, 6))
 		Allocate(this.weight(4, 4, -lat:lat, -lon:lon))
 		Allocate(this.indexes_xyface(3, 4, -lat:lat, -lon:lon))
-		Allocate(this.indexes_ll(2, 4, f:l, f:l, 6))
 		Allocate(this.closest_xyface(3, -lon:lon, -lat:lat))
 
 	end subroutine
@@ -74,13 +70,11 @@ CONTAINS
 
 	subroutine deinit(this)
 		Class(interp) :: this
-		if (Allocated(this.latlon_c_off)) Deallocate(this.latlon_c_off)
+		if (Allocated(this.latlon_cubic)) Deallocate(this.latlon_cubic)
 		if (Allocated(this.surface_off)) Deallocate(this.surface_off)
 		if (Allocated(this.surface_to)) Deallocate(this.surface_to)
-		if (Allocated(this.surface_to_prec)) Deallocate(this.surface_to_prec)
 		if (Allocated(this.weight)) Deallocate(this.weight)
 		if (Allocated(this.indexes_xyface)) Deallocate(this.indexes_xyface)
-		if (Allocated(this.indexes_ll)) Deallocate(this.indexes_ll)
 		if (Allocated(this.closest_xyface)) Deallocate(this.closest_xyface)
 	end subroutine
 
@@ -94,8 +88,8 @@ CONTAINS
 		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2), d(4), ang(4), d_xy(2,4), lagr(2,4), factor
 		real(8), parameter :: pi = 314159265358979323846d-20
 
-		call this.hem_of_face(this.latlon_c_off(1, :, :, :))
-		call this.hem_of_face(this.latlon_c_off(2, :, :, :))
+		call this.hem_of_face(this.latlon_cubic(1, :, :, :))
+		call this.hem_of_face(this.latlon_cubic(2, :, :, :))
 		if(printer_scaner.point_find == 0) then
 			call printer_scaner.scan_point(this.closest_xyface)
 		else if(printer_scaner.point_find == 1) then
@@ -106,7 +100,7 @@ CONTAINS
 		call this.cell_search(g)
 
 		dim = this.dim;  factor = 90d0/dble(this.lat_max)
-		print *, factor
+		print *, factor, "Factor"
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
@@ -119,23 +113,23 @@ CONTAINS
 				y(:) = this.indexes_xyface(2, :, lat, lon)
 				
 
-				latlon1(:) = this.latlon_c_off(:, x(1), y(1), face(1))
-				latlon2(:) = this.latlon_c_off(:, x(2), y(2), face(2))
+				latlon1(:) = this.latlon_cubic(:, x(1), y(1), face(1))
+				latlon2(:) = this.latlon_cubic(:, x(2), y(2), face(2))
 				call g.triangle(latlon1, latlon2, latlon, S(1), d(1))
 				ang(1) = g.angle(latlon1, latlon2)
 
-				latlon1(:) = this.latlon_c_off(:, x(2), y(2), face(2))
-				latlon2(:) = this.latlon_c_off(:, x(3), y(3), face(3))
+				latlon1(:) = this.latlon_cubic(:, x(2), y(2), face(2))
+				latlon2(:) = this.latlon_cubic(:, x(3), y(3), face(3))
 				call g.triangle(latlon1, latlon2, latlon, S(2), d(2))
 				ang(2) = g.angle(latlon1, latlon2)
 
-				latlon1(:) = this.latlon_c_off(:, x(3), y(3), face(3))
-				latlon2(:) = this.latlon_c_off(:, x(4), y(4), face(4))
+				latlon1(:) = this.latlon_cubic(:, x(3), y(3), face(3))
+				latlon2(:) = this.latlon_cubic(:, x(4), y(4), face(4))
 				call g.triangle(latlon1, latlon2, latlon, S(3), d(3))
 				ang(3) = g.angle(latlon1, latlon2)
 
-				latlon1(:) = this.latlon_c_off(:, x(4), y(4), face(4))
-				latlon2(:) = this.latlon_c_off(:, x(1), y(1), face(1))
+				latlon1(:) = this.latlon_cubic(:, x(4), y(4), face(4))
+				latlon2(:) = this.latlon_cubic(:, x(1), y(1), face(1))
 				call g.triangle(latlon1, latlon2, latlon, S(4), d(4))
 				ang(4) = g.angle(latlon1, latlon2)
 
@@ -197,12 +191,12 @@ CONTAINS
 					do x = 1, 2*dim
 						do y = 1, 2*dim
 							if(lat*factor < -50)then
-								angle = g.angle(this.latlon_c_off(1:2, x, y, 1), latlon)
+								angle = g.angle(this.latlon_cubic(1:2, x, y, 1), latlon)
 								if(angle < min) then
 									min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,1/)
 								end if
 							else if(lat*factor > 50)then
-								angle = g.angle(this.latlon_c_off(1:2, x, y, 6), latlon)
+								angle = g.angle(this.latlon_cubic(1:2, x, y, 6), latlon)
 								if(angle < min) then
 									min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,6/)
 								end if
@@ -219,8 +213,8 @@ CONTAINS
 					end if
 
 								do i = 1, 3
-									if( abs(this.latlon_c_off(2, x, y, face(i)) - latlon(2)) < 0.5 .and. abs(this.latlon_c_off(1, x, y, face(i)) - latlon(1)) < 0.5 ) then
-										angle = g.angle(this.latlon_c_off(1:2, x, y, face(i)), latlon)
+									if( abs(this.latlon_cubic(2, x, y, face(i)) - latlon(2)) < 0.5 .and. abs(this.latlon_cubic(1, x, y, face(i)) - latlon(1)) < 0.5 ) then
+										angle = g.angle(this.latlon_cubic(1:2, x, y, face(i)), latlon)
 										if(angle < min .and. angle >= 0d0) then
 											min = angle;  this.closest_xyface(1:3, lon, lat) = (/x,y,face(i)/)
 										end if
@@ -382,7 +376,7 @@ this.surface_off(x(4)-1,y(4)-1,face, :)*weight(1,1) + this.surface_off(x(4),y(4)
 
 
 					do i = 1, 4
-						angle = g.angle(this.latlon_c_off(:, x_cell(i), y_cell(i), face), latlon)
+						angle = g.angle(this.latlon_cubic(:, x_cell(i), y_cell(i), face), latlon)
 						if(angle < min) then
 							min = angle;  point = i
 						end if
@@ -416,7 +410,7 @@ this.surface_off(x(4)-1,y(4)-1,face, :)*weight(1,1) + this.surface_off(x(4),y(4)
 			end do
 		end do
 
-		! this.latlon_c_off(1:2, x_cell, x_cell, face)
+		! this.latlon_cubic(1:2, x_cell, x_cell, face)
 	end subroutine
 
 

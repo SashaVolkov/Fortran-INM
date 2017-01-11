@@ -87,7 +87,6 @@ set term png size 800, 800
 set output "pic/L2.png"
 set key inside left top vertical Right noreverse
 set xlabel "Cycles"
-set yrange [0:2]
 set mxtics 5
 set mytics 5
 set grid ytics lt 2 lw 2 lc rgb "#bbbbbb"

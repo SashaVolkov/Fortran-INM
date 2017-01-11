@@ -32,7 +32,7 @@ module printer_ncdf
 		Integer(4), intent(in) :: dim, step, Tmax, speedup, rescale, grid_type
 		Integer(4), intent(out) :: time, grid_id, ncid, ncid_gr
 
-		Integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid, Wid, Courantid
+		Integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid, Wid, Courantid, Precid
 		character(40) istring, istring1
 		character(80) path1, path2
 
@@ -72,6 +72,11 @@ module printer_ncdf
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 		status = nf90_def_var (ncid, "CFL", NF90_FLOAT, (/ xid, yid, faceid, time/), Courantid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_def_var (ncid, "Precise", NF90_FLOAT, (/ xid, yid, faceid, time/), Precid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
