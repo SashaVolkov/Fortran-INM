@@ -58,13 +58,22 @@ CONTAINS
 		Class(der) :: this
 		Integer(4), intent(in) :: step
 		Real(8), intent(in) :: fun(-step:step), h
+		Real(8) A , B, C, D, E, F, G, I
 
 		if (step == 1) then
-			partial_c = this.partial_c2(fun, h)
-		else if (step == 2) then
-			partial_c = this.partial_c4(fun, h)
-		else if (step == 3) then
-			partial_c = this.partial_c6(fun, h)
+			partial_c = (fun(1) - fun(-1))/(2d0*h)
+		else if(step == 2) then
+			A = 2d0/(3d0*h);  B = - 2d0/(3d0*h);  C = - 1d0/(12d0*h);  D = 1d0/(12d0*h)
+			partial_c = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2)
+		else if(step == 3) then
+			A = 3d0/(4d0*h);  B = - 3d0/(4d0*h);  C = - 3d0/(20d0*h);  D = 3d0/(20d0*h)
+			E = 1d0/(60d0*h);  F = - 1d0/(60d0*h)
+			partial_c = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3)
+		else if(step == 4) then
+			A = 4d0/(5d0*h);  B = - 4d0/(5d0*h);  C = - 1d0/(5d0*h);  D = 1d0/(5d0*h)
+			E = 4d0/(105d0*h);  F = - 4d0/(105d0*h); G = - 1d0/(280d0*h); I = 1d0/(280d0*h)
+
+			partial_c = A*fun(1) + B*fun(-1) + C*fun(2) + D*fun(-2) + E*fun(3) + F*fun(-3) + G*fun(4) + I*fun(-4)
 		end if
 
 	end function

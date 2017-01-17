@@ -136,7 +136,7 @@ CONTAINS
 
 		pi = 314159265358979323846d-20
 
-		h0 = this.height;  dim = this.dim; R_BIG = geom.radius/3d0
+		h0 = this.height*1d-1;  dim = this.dim; R_BIG = geom.radius/3d0
 		zero(:) = (/0d0, 0d-1*pi/)
 
 		do face = 1, 6
@@ -152,11 +152,12 @@ CONTAINS
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 					r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
-					if ( r < R_BIG ) then
-						this.h_height(x, y, face) = (h0*0.5)*(1d0 + dcos(geom.pi * r/R_BIG))
-					else
-						this.h_height(x, y, face) = 0d0
-					end if
+! 					if ( r < R_BIG ) then
+! 						this.h_height(x, y, face) = (h0*0.5)*(1d0 + dcos(geom.pi * r/R_BIG))
+! 					else
+! 						this.h_height(x, y, face) = 0d0
+! 					end if
+					this.h_height(x, y, face) = 10.0*exp(-((r/R_BIG)**2)*4.0)
 				end do
 			end do
 

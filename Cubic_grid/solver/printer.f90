@@ -34,7 +34,7 @@ module printer_ncdf
 
 		Integer(4) status, face, xid, yid, faceid, llid, gr_xid, gr_yid, gr_faceid, Wid, Courantid, Precid
 		character(40) istring, istring1
-		character(80) path1, path2
+		character(80) path1, path2, path3
 
 		write(istring, *) 2*dim
 		write(istring1, *) 2*step
@@ -54,6 +54,7 @@ module printer_ncdf
 
 		path1 = trim('datFiles/'//trim(adjustl(istring))//'surface.nc')
 		path2 = trim('datFiles/'//trim(adjustl(istring))//'grid.nc')
+		path3 = trim('datFiles/'//trim(adjustl(istring))//'square.dat')
 
 
 		status = nf90_create (path = path1, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
@@ -98,6 +99,10 @@ module printer_ncdf
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 		this.Courantid = Courantid;  this.Wid = Wid
+
+
+			open(42,file=path3)
+
 
 	end Subroutine
 
@@ -145,6 +150,9 @@ module printer_ncdf
 			status = nf90_put_var(ncid_gr, grid_id, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
 			 start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+			write(42, *),real(grid.square(1:2*dim, 1:2*dim),4)
+			close(42)
 	end Subroutine
 
 

@@ -36,7 +36,7 @@ fi
 DIRECTORY="datFiles/$(( 2*$dim ))"
 SubDIRECTORY="datFiles/$(( 2*$dim ))/$(( 2*$step ))th"
 SSubDIRECTORY="datFiles/$(( 2*$dim ))/$(( 2*$step ))th/$grid"
-PIC="datFiles/$(( 2*$dim ))/$(( 2*$step ))th/pic"
+PIC="datFiles/pic/$(( 2*$step ))th"
 
 if [ ! -d datFiles ]; then
 	mkdir datFiles

@@ -29,10 +29,10 @@ module scan_print
 
 
 
-	subroutine init(this, dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max)
+	subroutine init(this, dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max, nc_or_dat)
 
 		Class(printer) :: this
-		integer(4), intent(in) :: dim, step, all_time, rescale, grid_type, lon_max, lat_max
+		integer(4), intent(in) :: dim, step, all_time, rescale, grid_type, lon_max, lat_max, nc_or_dat
 
 		integer(4) status, face, ncid, ncid_to, ncid_gr, nvars, grid_id(1:1), Wid(1:3), Wid_to, time, Courantid_to, point_id(1:1), ncid_point, point_find
 		logical file_exist
@@ -42,7 +42,7 @@ module scan_print
 		character(80) path1, path2, path3, path4
 
 		this.dim = dim;  this.lon_max = lon_max;  this.lat_max = lat_max;  this.convert_time = convert_time
-		this.nc_or_dat = 0;  this.step = 2
+		this.nc_or_dat = nc_or_dat;  this.step = 2
 
 		write(istring, *) 2*dim
 		write(istring1, *) 2*step

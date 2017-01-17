@@ -36,7 +36,7 @@ implicit none
 
 		Real(8) :: four_order_const(5)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
 		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube, max_to_min
-		Integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type, Neighbours_face(6, 4)
+		Integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type, Neighbours_face(6, 4), id
 		Integer(4) first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
@@ -62,7 +62,7 @@ CONTAINS
 		Real(8) t(2), dist
 		Type(generator) :: generate
 
-		this.dim = paral.dim;  this.step = paral.step;  this.g = g
+		this.dim = paral.dim;  this.step = paral.step;  this.id = paral.id;  this.g = g
 		this.omega_cor = omega_cor;  this.r_sphere = geom.radius;  this.dt = dt
 		this.pi = geom.pi;  this.rescale = rescale;  this.grid_type = grid_type
 
@@ -151,7 +151,7 @@ CONTAINS
 		Class(g_var) :: this
 		Class(geometry) :: g
 		Real(8) dist, omega_cor, S1, S2, sphere_area
-		Integer(4) x, y, dim, k, step
+		Integer(4) x, y, dim, k, step, id, ier
 		character(8) istring
 
 

@@ -74,8 +74,8 @@ implicit none
 
 
 	do time = 1, Tmax
-		! call meth.Euler(var, var_prev, metr, inter, msg)
-		! call meth.Predictor_corrector(var, var_prev, metr, inter, msg)
+! 		call meth.Euler(var, var_prev, metr, inter, msg)
+! 		call meth.Predictor_corrector(var, var_prev, metr, inter, msg)
 		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
 				call diagn.Courant(var_prev, time)

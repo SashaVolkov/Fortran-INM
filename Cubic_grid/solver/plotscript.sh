@@ -10,7 +10,7 @@ pwd
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "pic/CFL.png"
+set output "../../pic/$(( 2*$step ))th/CFL_$(( 2*$dim )).png"
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -24,7 +24,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "pic/L_conf_simple.png"
+set output "../../pic/$(( 2*$step ))th/L_conf_simple_$(( 2*$dim )).png"
 set yrange [0:2]
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
@@ -40,9 +40,8 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "pic/L_conf_tan.png"
+set output "../../pic/$(( 2*$step ))th/L_conf_tan_$(( 2*$dim )).png"
 set xlabel "Cycles"
-set yrange [0:2]
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
 set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -55,7 +54,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "pic/L_equiang.png"
+set output "../../pic/$(( 2*$step ))th/L_equiang_$(( 2*$dim )).png"
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -70,7 +69,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "pic/L1.png"
+set output "../../pic/$(( 2*$step ))th/L1_$(( 2*$dim )).png"
 set xlabel "Cycles"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -84,7 +83,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "pic/L2.png"
+set output "../../pic/$(( 2*$step ))th/L2_$(( 2*$dim )).png"
 set key inside left top vertical Right noreverse
 set xlabel "Cycles"
 set mxtics 5
@@ -98,7 +97,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "pic/L_inf.png"
+set output "../../pic/$(( 2*$step ))th/L_inf_$(( 2*$dim )).png"
 set key inside left top vertical Right noreverse
 set xlabel "Cycles"
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -106,6 +105,23 @@ set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
 set mxtics 5
 set mytics 5
 plot "simple/C.dat" w l ti "C_simple", "tan/C.dat" w l ti "C_tan", "equiang/C.dat" w l ti "C_equiang"
+EOF
+
+
+cd ../..
+
+gnuplot <<EOF
+set term png size 800, 800
+set output "pic/$(( 2*$step ))th/L2_equiang.png"
+set key inside left top vertical Right noreverse
+set xlabel "Cycles"
+set mxtics 5
+set mytics 5
+set grid ytics lt 2 lw 2 lc rgb "#bbbbbb"
+set grid xtics lt 2 lw 2 lc rgb "#bbbbbb"
+set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
+set grid mytics lt 0 lw 1 lc rgb "#bbbbbb"
+plot "40/$(( 2*$step ))th/equiang/L2.dat" w l ti "L2_40", "60/$(( 2*$step ))th/equiang/L2.dat" w l ti "L2_60", "80/$(( 2*$step ))th/equiang/L2.dat" w l ti "L2_80"
 EOF
 
 # gnuplot <<EOF
