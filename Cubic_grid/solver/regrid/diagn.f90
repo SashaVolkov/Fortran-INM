@@ -152,7 +152,7 @@ CONTAINS
 		real(4) L1, L2, L1_prec, L2_prec, L_inf, L_inf_prec, F1, F1_prec, square, pi, factor
 
 		pi = 3.14159265358979323846;  dim = this.dim
-		factor = 90.0/real(this.lat_max,4)
+		factor = 90.0/real(this.lat_max,4);  L_inf_prec = 0.0
 
 		! do lat = -this.lat_max+1, this.lat_max-1
 		! 	! square = cos(real(factor*lat,4)*pi/180.0)
@@ -174,6 +174,8 @@ CONTAINS
 
 					L1_prec = abs(F1_prec)*square + L1_prec
 					L2_prec = F1_prec*F1_prec*square + L2_prec
+					if(abs(precise(x,y,face)) > L_inf_prec) L_inf_prec = abs(precise(x,y,face))
+					if(abs(surface_to(x,y,face,1)) > L_inf) L_inf = abs(surface_to(x,y,face,1))
 					end if
 
 				end do
@@ -183,12 +185,9 @@ CONTAINS
 
 
 		L2 = sqrt(L2)
-		! read(14, *), L_inf
-		L_inf = max
-
 		L2_prec = sqrt(L2_prec)
-		L_inf_prec = MAXVAL(abs(precise))
-		L_inf = MAXVAL(abs(surface_to(:,:,:,1)))
+		! L_inf_prec = MAXVAL(abs(precise))
+		! L_inf = MAXVAL(abs(surface_to(:,:,:,1)))
 
 			write(11, *),time*this.convert_time,"	", abs(L1/L1_prec)
 			write(12, *),time*this.convert_time,"	", abs(L2/L2_prec)

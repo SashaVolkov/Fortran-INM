@@ -157,7 +157,7 @@ CONTAINS
 ! 					else
 ! 						this.h_height(x, y, face) = 0d0
 ! 					end if
-					this.h_height(x, y, face) = 10.0*exp(-((r/R_BIG)**2)*4.0)
+					this.h_height(x, y, face) = 10.0*exp(-((r/R_BIG)**2)*4.0) + 1d0
 				end do
 			end do
 

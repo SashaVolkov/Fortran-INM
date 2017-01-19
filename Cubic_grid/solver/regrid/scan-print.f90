@@ -140,7 +140,7 @@ module scan_print
 
 		dim = this.dim;  ncid = this.ncid;  Precid = this.Precid
 
-		status = nf90_put_var(ncid, Precid, precise(1:2*dim, 1:2*dim, 1:6)-real(surface_to(1:2*dim, 1:2*dim, 1:6),4),&
+		status = nf90_put_var(ncid, Precid, precise(1:2*dim, 1:2*dim, 1:6),& !-real(surface_to(1:2*dim, 1:2*dim, 1:6),4)
 		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status), "print_surf_cube"
 	end subroutine

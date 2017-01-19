@@ -9,7 +9,7 @@ implicit none
 	Type prec_to_cube
 
 		Real(8), Allocatable :: latlon_cubic(:, :, :, :)
-		Real(8), Allocatable :: weight(:, :, :, :)
+		Real(8), Allocatable :: weight(:, :, :, :, :)
 		Real(4), Allocatable :: precise_cube(:, :, :)
 		integer(4), Allocatable :: indexes_ll(:, :, :, :, :)
 
@@ -51,7 +51,7 @@ CONTAINS
 
 		Allocate(this.latlon_cubic(2, f:l, f:l, 6))
 		Allocate(this.precise_cube(1:2*dim, 1:2*dim, 6))
-		Allocate(this.weight(4, 1:2*dim, 1:2*dim, 6))
+		Allocate(this.weight(4, 4, 1:2*dim, 1:2*dim, 6))
 		Allocate(this.indexes_ll(2, 4, 1:2*dim, 1:2*dim, 6))
 
 	end subroutine
@@ -71,28 +71,34 @@ CONTAINS
 	subroutine weight_find(this)
 		Class(prec_to_cube) :: this
 		integer(4) lon, lat, x, y, face, i, j, dim
-		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2), d(4), ang(4), d_xy(2,4), lagr(2,4), factor
+		Real(8) :: S(4), Big_S, latlon(2), latlon1(2), latlon2(2), d(4), ang(4), d_xy(2,4), lagr(2,4), factor, f
 		real(8), parameter :: pi = 314159265358979323846d-20
 
 		call this.cell_search()
 
-		dim = this.dim;  factor = 90d0/dble(this.lat_max)/180d0*pi
+		dim = this.dim;  f = 90d0/dble(this.lat_max);  factor = f/180d0*pi
 
 		do face = 1, 6
 			do x = 1, 2*dim
 				do y = 1, 2*dim
 
-					d(1) = abs(this.latlon_cubic(1, x, y, face)/factor - this.indexes_ll(1,1, x, y, face))
-					d(2) = abs(this.latlon_cubic(2, x, y, face)/factor - this.indexes_ll(2,2, x, y, face))
+					d(1) = abs(this.latlon_cubic(1, x, y, face)/factor - this.indexes_ll(1,2, x, y, face))
+					d(2) = abs(this.latlon_cubic(2, x, y, face)/factor - this.indexes_ll(2,3, x, y, face))
 					d(3) = abs(this.latlon_cubic(1, x, y, face)/factor - this.indexes_ll(1,3, x, y, face))
-					d(4) = abs(this.latlon_cubic(2, x, y, face)/factor - this.indexes_ll(2,4, x, y, face))
+					d(4) = abs(this.latlon_cubic(2, x, y, face)/factor - this.indexes_ll(2,2, x, y, face))
+
+					d_xy(1,1) = f + d(4);  d_xy(1,2) = d(4);  d_xy(1,3) = d(2);  d_xy(1,4) = f + d(2)
+					d_xy(2,1) = f + d(1);  d_xy(2,2) = d(1);  d_xy(2,3) = d(3);  d_xy(2,4) = f + d(3)
 
 					Big_S = (d(1) + d(3))*(d(2) + d(4))
 
-					this.weight(1, x, y, face) = d(2)*d(3)/Big_S
-					this.weight(2, x, y, face) = d(4)*d(3)/Big_S
-					this.weight(3, x, y, face) = d(1)*d(4)/Big_S
-					this.weight(4, x, y, face) = d(2)*d(1)/Big_S
+					this.weight(:,:, x, y, face) = 0d0
+
+					this.weight(2,2, x, y, face) = d(2)*d(3)/Big_S
+					this.weight(3,2, x, y, face) = d(4)*d(3)/Big_S
+					this.weight(3,3, x, y, face) = d(1)*d(4)/Big_S
+					this.weight(2,3, x, y, face) = d(2)*d(1)/Big_S
+
 
 				end do
 			end do
@@ -109,7 +115,7 @@ CONTAINS
 		Class(prec_to_cube) :: this
 		integer(4) lon(4), lat(4), x, y, face
 		Real(4), Intent(in) :: surface_off(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
-		Real(8) :: weight(4)
+		Real(8) :: weight(4, 4)
 
 		do face = 1, 6
 			do x = 1, 2*this.dim
@@ -117,9 +123,9 @@ CONTAINS
 
 				lat(:) = this.indexes_ll(1,:, x, y, face)
 				lon(:) = this.indexes_ll(2,:, x, y, face)
-				weight(:) = this.weight(:, x, y, face)
+				weight(:, :) = this.weight(:, :, x, y, face)
 
-this.precise_cube(x, y, face) = surface_off(lon(1), lat(1))*weight(1) + surface_off(lon(2), lat(2))*weight(2) + surface_off(lon(3), lat(3))*weight(3) + surface_off(lon(4), lat(4))*weight(4)
+this.precise_cube(x, y, face) = surface_off(lon(2), lat(3))*weight(2,3) + surface_off(lon(3), lat(3))*weight(3,3) + surface_off(lon(3), lat(2))*weight(3,2) + surface_off(lon(2), lat(2))*weight(2,2)
 
 				end do
 			end do
@@ -135,7 +141,7 @@ this.precise_cube(x, y, face) = surface_off(lon(1), lat(1))*weight(1) + surface_
 		integer(4) dim, x, y, face
 		Real(8) :: factor, f, lat_cell(2), lon_cell(2)
 		real(8), parameter :: pi = 314159265358979323846d-20
-		dim = this.dim;  f = 90d0/dble(this.lat_max);  factor = f/180d0*pi
+		dim = this.dim;  f = 90d0/dble(this.lat_max);  factor = pi*f/180d0
 
 		do face = 1, 6
 			do x = 1, 2*dim
@@ -148,10 +154,10 @@ this.precise_cube(x, y, face) = surface_off(lon(1), lat(1))*weight(1) + surface_
 					if(lon_cell(2) == -180/f) lon_cell(2) = - lon_cell(2)
 
 
-					this.indexes_ll(1,1, x, y, face) = lat_cell(1);  this.indexes_ll(2,1, x, y, face) = lon_cell(2)
-					this.indexes_ll(1,2, x, y, face) = lat_cell(1);  this.indexes_ll(2,2, x, y, face) = lon_cell(1)
+					this.indexes_ll(1,1, x, y, face) = lat_cell(1)+1;  this.indexes_ll(2,1, x, y, face) = lon_cell(2)-1
+					this.indexes_ll(1,2, x, y, face) = lat_cell(1);  this.indexes_ll(2,2, x, y, face) = lon_cell(2)
 					this.indexes_ll(1,3, x, y, face) = lat_cell(2);  this.indexes_ll(2,3, x, y, face) = lon_cell(1)
-					this.indexes_ll(1,4, x, y, face) = lat_cell(2);  this.indexes_ll(2,4, x, y, face) = lon_cell(2)
+					this.indexes_ll(1,4, x, y, face) = lat_cell(2)-1;  this.indexes_ll(2,4, x, y, face) = lon_cell(1)+1
 
 				end do
 			end do
