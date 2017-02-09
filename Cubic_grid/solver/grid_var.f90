@@ -35,7 +35,7 @@ implicit none
 		Real(8), Allocatable :: square_angles(:, :, :)
 
 		Real(8) :: four_order_const(5)   ! "Compact finite difference schemes on non-uniform meshes" Gamet et al. 1999 
-		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube, max_to_min
+		Real(8) ::  omega_cor, r_sphere, g, dt, dx_min, dy_min, dx_max, dy_max, pi, delta_on_cube, max_to_min, min
 		Integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), grid_type, Neighbours_face(6, 4), id
 		Integer(4) first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
@@ -201,7 +201,8 @@ CONTAINS
 		!$OMP END DO
 		!$OMP END PARALLEL
 
-		this.max_to_min = maxval(this.Real_dist(2:2*dim, 1:2*dim))/minval(this.Real_dist(2:2*dim, 1:2*dim))
+		this.min = minval(this.Real_dist(2*dim-2:2*dim, 2*dim-2:2*dim))
+		this.max_to_min = maxval(this.Real_dist(2*dim-2:2*dim, 2*dim-2:2*dim))/this.min
 
 	end Subroutine
 

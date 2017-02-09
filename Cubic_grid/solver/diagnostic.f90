@@ -1,6 +1,7 @@
 module diagnostic_mod
 
 	use func_var, Only: f_var
+	use metrics, Only: metric
 	use mpi
 	use omp_lib
 
@@ -108,9 +109,10 @@ CONTAINS
 
 
 
-	Subroutine Courant(this, func, time)
+	Subroutine Courant(this, metr, func, time)
 		Class(diagnostic) :: this
 		Class(f_var) :: func
+		Class(metric) :: metr
 		Integer(4), intent(in) :: time
 		Integer(4) face, x, y, dim, ier, id
 		Real(8) :: Courant_number, Courant_max
@@ -124,8 +126,8 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.u_cov(x, y, face)*this.dt/(this.dh)) +&
-					 abs(func.v_cov(x, y, face)*this.dt/(this.dh))
+					this.CFL(x, y, face) = abs(func.u_con(x, y, face)*this.dt) !+&
+					 ! abs(func.v_con(x, y, face)*metr.G_sqr(x,y)*this.dt/(this.dh))
 
 				end do
 			end do

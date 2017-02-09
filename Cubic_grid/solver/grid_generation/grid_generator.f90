@@ -33,7 +33,7 @@ CONTAINS
 		real(8), intent(out) :: latlon(2, 1-2*step:2*dim+2*step+1, 1-2*step:2*dim+2*step+1, 6)
 		real(8), intent(out) :: cube_coord_c(1:2, 1-2*step:2*dim+2*step, 1-2*step:2*dim+2*step)
 
-		character*14 filename
+		character*25 filename
 		character istring
 		integer(4) face_index, j, k, status, index, x_min, x_max, y_min, y_max, channel, l, m
 
@@ -55,7 +55,7 @@ CONTAINS
 		channel = face_index
 		write(istring(1:1), '(i1.1)') face_index
 		filename = "grid/face" // istring // ".dat" 
-		open (channel, file = filename)
+		! open (channel, file = trim(filename))
 
 			do j= x_min, x_max
 				do k= y_min, y_max
@@ -76,9 +76,9 @@ CONTAINS
 
 						r_vector = matmul(transpose(matr_of_rots(1:3,1:3,index)),r_vector)		!! Baiburin p.17 (7) !! Rancic p.978 (v)
 						! grid_points_xyz(:, j, k, face_index) = r_vector
-						write(channel,*) r_vector(1),r_vector(2),r_vector(3)
 
 						call cart2sphere(r_vector(1), r_vector(2), r_vector(3), radius, latitude, longitude)
+						! write(channel,*) r_vector(1),r_vector(2),r_vector(3)
 
 						if(abs(mod(j,2)) == 1 .and. abs(mod(k,2)) == 1) then
 							cube_coord_c(1, dim + (j+1)/2, dim + (k+1)/2) = x_face
@@ -91,9 +91,9 @@ CONTAINS
 						end if
 
 					end do
-					write(channel,*)
+					! write(channel,*)
 			end do
-			close(channel)
+			! close(channel)
 		end do
 
 
@@ -152,17 +152,17 @@ CONTAINS
 		real(8), intent(out) :: cube_coord_c(2, 1-2*step:2*dim+2*step, 1-2*step:2*dim+2*step)
 		integer(4) face, i, j, k, min, max, channel
 		real(8) x,y,z,a, pi, r_vector(3), alpha,beta, latitude, longitude, radius, s(6)
-		character*14 filename
+		character*40 filename
 		character istring
 
 		pi = 314159265358979323846d-20;  min = -2*dim - 2*step;  max = - min
 		s(1) = - 1d0;  s(6) = 1d0
 
 		do face = 1, 6
-		! channel = face
-		! write(istring(1:1), '(i1.1)') face
-		! filename = "grid/face" // istring // ".dat" 
-		! open (channel, file = filename)
+		channel = face
+		write(istring(1:1), '(i1.1)') face
+		! filename = "grid/equiang/1face" // istring // ".dat" 
+		! open (channel, file = trim(filename))
 			do j= min, max
 				do i= min, max
 					alpha = pi*i/(8d0*dim);  beta= pi*j/(8d0*dim); k = sign(1, face - 3)
@@ -183,16 +183,26 @@ CONTAINS
 					end select
 
 					call cart2sphere(x, y, z, radius, latitude, longitude)
+					call sphere2cart(x, y, z, 1d0, latitude, longitude)
 
-					! call sphere2cart(x, y, z, 1d0, latitude, longitude)
-					! write(channel,*) x,y,z
 
 					! if(face == 6) then
 					! 	longitude = -datan(dtan(alpha)/atan(beta))
 					! 	latitude = pi/2d0 - datan(dsqrt(dtan(alpha)**2 + dtan(beta)**2))
 					! end if
+					! if(face == 2) then
+					! 	if(abs(i*j) <= 4*dim*dim+4*dim*step) then
+					! 	 write(channel,*) x,y,z
+					! 	 r_vector = (/x,y,z/)
+					! 	else
+					! 	 write(channel,*) r_vector
+					! 	end if
+					! else
+						! if( abs(i) <= 2*dim .and. abs(j) <= 2*dim ) write(channel,*) x,y,z
+					! end if
 
 						if(abs(mod(i,2)) == 1 .and. abs(mod(j,2)) == 1) then
+					! write(channel,*) x,y,z
 							cube_coord_c(1, dim + (i+1)/2, dim + (j+1)/2) = alpha
 							cube_coord_c(2, dim + (i+1)/2, dim + (j+1)/2) = beta
 							latlon_c(1, dim + (i+1)/2, dim + (j+1)/2, face) = latitude

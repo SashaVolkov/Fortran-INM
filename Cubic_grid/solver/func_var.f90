@@ -286,7 +286,7 @@ this.v_con(x, y, face) = metr.Tr_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, 
 	Subroutine Velocity_to_spherical_border(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Real(8) :: G_inv(2,2), A_inv(2,2)
+		Real(8) :: G_inv(2,2), A(2,2)
 		Integer(4) :: x, y, face, i, x_fin(4), y_fin(4)
 
 		x_fin(:) = this.nf_x;  x_fin(4) = this.snd_xy(2, 4, 1) + this.step - 1
@@ -297,14 +297,14 @@ this.v_con(x, y, face) = metr.Tr_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, 
 				do y = this.snd_xy(2, i, 2), y_fin(i)
 					do x = this.snd_xy(2, i, 1), x_fin(i)
 
-					A_inv(:,:) = metr.Tr_to_sph(:,:, x, y, face)
+					A(:,:) = metr.Tr_to_sph(:,:, x, y, face)
 					G_inv(:,:) = metr.G_inverse(:,:, x, y)
 
 this.u_con(x, y, face) = G_inv(1, 1) * this.u_cov(x, y, face) + G_inv(1, 2) * this.v_cov(x, y, face)
 this.v_con(x, y, face) = G_inv(2, 2) * this.v_cov(x, y, face) + G_inv(2, 1) * this.u_cov(x, y, face)
 
-this.lon_vel(x, y, face) = A_inv(1, 1) * this.u_con(x, y, face) + A_inv(1, 2) * this.v_con(x, y, face)
-this.lat_vel(x, y, face) = A_inv(2, 2) * this.v_con(x, y, face) + A_inv(2, 1) * this.u_con(x, y, face)
+this.lon_vel(x, y, face) = A(1, 1) * this.u_con(x, y, face) + A(1, 2) * this.v_con(x, y, face)
+this.lat_vel(x, y, face) = A(2, 2) * this.v_con(x, y, face) + A(2, 1) * this.u_con(x, y, face)
 
 					end do
 				end do
@@ -318,7 +318,7 @@ this.lat_vel(x, y, face) = A_inv(2, 2) * this.v_con(x, y, face) + A_inv(2, 1) * 
 	Subroutine Velocity_from_spherical_border(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Real(8) :: G(2,2), A(2,2)
+		Real(8) :: G(2,2), A_inv(2,2)
 		Integer(4) :: x, y, face, i, x_fin(4), y_fin(4)
 
 		x_fin(:) = this.nf_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step - 1;  x_fin(2) = this.last_x
@@ -329,11 +329,11 @@ this.lat_vel(x, y, face) = A_inv(2, 2) * this.v_con(x, y, face) + A_inv(2, 1) * 
 				do y = this.rcv_xy(2, i, 2), y_fin(i)
 					do x = this.rcv_xy(2, i, 1), x_fin(i)
 
-					A(:,:) = metr.Tr_to_cube(:,:, x, y, face)
+					A_inv(:,:) = metr.Tr_to_cube(:,:, x, y, face)
 					G(:,:) = metr.G_tensor(:,:, x, y)
 
-this.u_con(x, y, face) = A(1, 1) * this.lon_vel(x, y, face) + A(1, 2) * this.lat_vel(x, y, face)
-this.v_con(x, y, face) = A(2, 2) * this.lat_vel(x, y, face) + A(2, 1) * this.lon_vel(x, y, face)
+this.u_con(x, y, face) = A_inv(1, 1) * this.lon_vel(x, y, face) + A_inv(1, 2) * this.lat_vel(x, y, face)
+this.v_con(x, y, face) = A_inv(2, 2) * this.lat_vel(x, y, face) + A_inv(2, 1) * this.lon_vel(x, y, face)
 
 this.u_cov(x, y, face) = G(1, 1) * this.u_con(x, y, face) + G(1, 2) * this.v_con(x, y, face)
 this.v_cov(x, y, face) = G(2, 2) * this.v_con(x, y, face) + G(2, 1) * this.u_con(x, y, face)
