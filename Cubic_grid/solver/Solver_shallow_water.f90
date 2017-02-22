@@ -65,7 +65,7 @@ implicit none
 	call var_prev.start_conditions(metr, geom)
 	call diagn.init(var_prev, Tmax, id)
 	call meth.init(var_prev, space_step)
-	call inter.init(metr, 2)
+	call inter.init(metr, 6)
 
 
 	call printer_nc.init(dim, space_step, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
@@ -78,14 +78,14 @@ implicit none
 ! 		call meth.Predictor_corrector(var, var_prev, metr, inter, msg)
 		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
-				call diagn.Courant(metr, var_prev, time)
+! 				call diagn.Courant(metr, var_prev, time)
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
 			end if
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
 			end if
-			if(var_prev.h_height(2*dim, 2*dim, 6) > height) exit
+! 			if(var_prev.h_height(2*dim, 2*dim, 6) > height) exit
 	end do
 
 

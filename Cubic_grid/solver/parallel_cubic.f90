@@ -10,14 +10,16 @@ implicit none
 
 	Type parallel
 		Integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim, first_x, first_y, last_x, last_y
-		Integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), rot(6, 4)
+		Integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), halo_corn(6, 4), rot(6, 0:4)
 		Integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2), corn_snd_xy(6, 4, 2), corn_rcv_xy(6, 4, 2)
-		Integer(4) Neighbour_id(1:6, 1:4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
+		Integer(4) Neighbour_id(6, 4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
+		Integer(4) Neighbour_corn_id(6, 4), Neighb_corn_dir(6,4), Neighbours_corn_face(6, 4), rot_corn(6, 4), border_corn(6,4), My_dir(6, 4)
 		CONTAINS
 			Procedure, Public :: init => parallel_init
 			Procedure, Private :: halo_zone => halo_zone
 			Procedure, Private :: Neighbourhood => Neighbourhood
 			Procedure, Private :: Displacement => Displacement
+			Procedure, Private :: Displacement_corn => Displacement_corn
 	End Type
 
 
@@ -110,7 +112,7 @@ Subroutine halo_zone(this, face)
 
 	Class(parallel) :: this
 	Integer(4), intent(in) :: face
-	Integer(4) x, y, mp_dp, ier, i, k, n, A, B, C, D
+	Integer(4) x, y, mp_dp, ier, i, j, k, n, A, B, C, D, displ_corn(1:this.step*this.step, 4)
 	Integer(4) up, right, left, down, displ(1:this.step*this.Xsize), blocklen(1:this.step*this.Ysize)
 
 	up = 1; right=2; down=3; left=4;  A=1;  B=2;  C=3;  D=4
@@ -139,15 +141,18 @@ Subroutine halo_zone(this, face)
 
 
 
-	this.corn_rcv_xy(face, A, :) = this.nf_xy(:)+1
+	this.corn_rcv_xy(face, A, 1) = this.nf_xy(1)+1
+	this.corn_rcv_xy(face, A, 2) = this.nf_xy(2)+1
 	this.corn_rcv_xy(face, B, 1) = this.nf_xy(1) + 1
 	this.corn_rcv_xy(face, B, 2) = this.first_y
 
-	this.corn_rcv_xy(face, C, :) = this.ns_xy(:) - this.step
+	this.corn_rcv_xy(face, C, 1) = this.ns_xy(1) - this.step
+	this.corn_rcv_xy(face, C, 2) = this.ns_xy(2) - this.step
 	this.corn_rcv_xy(face, D, 1) = this.ns_xy(1) - this.step
 	this.corn_rcv_xy(face, D, 2) = this.nf_xy(2) + 1
 
-	this.corn_snd_xy(face, A, :) = this.nf_xy(:) - this.step + 1
+	this.corn_snd_xy(face, A, 1) = this.nf_xy(1) - this.step + 1
+	this.corn_snd_xy(face, A, 2) = this.nf_xy(2) - this.step + 1
 	this.corn_snd_xy(face, B, 1) = this.nf_xy(1) - this.step + 1
 	this.corn_snd_xy(face, B, 2) = this.ns_xy(2)
 
@@ -169,6 +174,11 @@ Subroutine halo_zone(this, face)
 
 	end do
 
+	do i = 1, 4
+		call this.Displacement_corn(face, i, displ_corn)
+		call MPI_TYPE_INDEXED(this.step**2, blocklen, displ_corn, mp_dp, this.halo_corn(face, i), ier)
+		call MPI_TYPE_COMMIT(this.halo_corn(face, i), ier)
+	end do
 
 End Subroutine
 
@@ -178,57 +188,95 @@ Subroutine Neighbourhood(this, id)
 
 	Class(parallel) :: this
 	Integer(4), Intent(In) :: id
-	Integer(4) face, up, right, left, down, i
+	Integer(4) face, up, right, left, down, A, B, C, D, i
 	
-	up = 1; right=2; down=3; left=4
+	up = 1; right=2; down=3; left=4;  A=1;  B=2;  C=3;  D=4
 
 	! 			Neighbourhood
 	this.border(:, :) = 0 ! if "0" no rotation, if "1": +pi/2 rotation, if "2": +pi, if "-1": -pi/2
-	this.Neighbour_id(:, 1) = id + 1
-	this.Neighbour_id(:, 2) = this.Ydim_block + id
-	this.Neighbour_id(:, 3) = id - 1
-	this.Neighbour_id(:, 4) = id - this.Ydim_block
+	this.Neighbour_id(:, up) = id + 1
+	this.Neighbour_id(:, right) = this.Ydim_block + id
+	this.Neighbour_id(:, down) = id - 1
+	this.Neighbour_id(:, left) = id - this.Ydim_block
+
+	this.Neighbour_corn_id(:, A) = this.Ydim_block + id + 1
+	this.Neighbour_corn_id(:, B) = this.Ydim_block + id - 1
+	this.Neighbour_corn_id(:, C) = id - this.Ydim_block - 1
+	this.Neighbour_corn_id(:, D) = id - this.Ydim_block + 1
+
 	this.rot(:, :) = 0
 	this.Neighb_dir(:, up) = down
 	this.Neighb_dir(:, down) = up
 	this.Neighb_dir(:, left) = right
 	this.Neighb_dir(:, right) = left
 
+	this.Neighb_corn_dir(:, A) = C
+	this.Neighb_corn_dir(:, B) = D
+	this.Neighb_corn_dir(:, C) = A
+	this.Neighb_corn_dir(:, D) = B
+
 
 	do face = 1, 6
 			this.Neighbours_face(face, :) = face
+			this.Neighbours_corn_face(face, :) = face
 
 		if (this.block_y == this.Ydim_block - 1) then  ! up
 
-			this.Neighbour_id(face, up) = this.block_x*this.Xdim_block
+			this.Neighbour_id(face, up) = this.block_x*this.Ydim_block
+			this.Neighbour_corn_id(face, A) = (this.block_x + 1)*this.Ydim_block
+			this.Neighbour_corn_id(face, D) = (this.block_x - 1)*this.Ydim_block
 			this.Neighbours_face(face, up) = 6
+			this.Neighbours_corn_face(face, A) = 6
+			this.Neighbours_corn_face(face, D) = 6
+			this.My_dir(face, A) = up
+			this.My_dir(face, D) = up
 
 			if ( face == 3 ) then
 				this.Neighbour_id(face, up) = this.block_y*this.Xdim_block + this.block_x
+				this.Neighbour_corn_id(face, A) = this.block_y*this.Xdim_block + this.block_x + 1
+				this.Neighbour_corn_id(face, D) = this.block_y*this.Xdim_block + this.block_x - 1
 				this.border(face, up) = -1
 				this.rot(face, up) = 1
 				this.Neighb_dir(face, up) = right
+				this.Neighb_corn_dir(face, A) = B
+				this.Neighb_corn_dir(face, D) = A
 
 			else if ( face == 5 ) then
 				this.Neighbour_id(face, up) = this.Xdim_block - this.block_x - 1
+				this.Neighbour_corn_id(face, A) = this.Xdim_block - this.block_x - 2
+				this.Neighbour_corn_id(face, D) = this.Xdim_block - this.block_x
 				this.border(face, up) = 1
 				this.rot(face, up) = -1
 				this.Neighb_dir(face, up) = left
+				this.Neighb_corn_dir(face, A) = D
+				this.Neighb_corn_dir(face, D) = C
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, A) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x-1)*this.Xdim_block
+				this.Neighbour_corn_id(face, D) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x+1)*this.Xdim_block
 				this.border(face, up) = 2
 				this.Neighb_dir(face, up) = up
+				this.Neighb_corn_dir(face, A) = A
+				this.Neighb_corn_dir(face, D) = D
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, A) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x-1)*this.Xdim_block
+				this.Neighbour_corn_id(face, D) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x+1)*this.Xdim_block
 				this.Neighbours_face(face, up) = 4
+				this.Neighbours_corn_face(face, A) = 4
+				this.Neighbours_corn_face(face, D) = 4
 				this.rot(face, up) = 2
 				this.border(face, up) = 2
 				this.Neighb_dir(face, up) = up
+				this.Neighb_corn_dir(face, A) = A
+				this.Neighb_corn_dir(face, D) = D
 
 			else if ( face == 1 ) then
 				this.Neighbours_face(face, up) = 2
+				this.Neighbours_corn_face(face, A) = 2
+				this.Neighbours_corn_face(face, D) = 2
 
 			end if
 		end if
@@ -238,24 +286,44 @@ Subroutine Neighbourhood(this, id)
 		if (this.block_x == this.Xdim_block - 1) then  ! right
 
 			this.Neighbour_id(face, right) = this.block_y
+			this.Neighbour_corn_id(face, A) = this.block_y + 1
+			this.Neighbour_corn_id(face, B) = this.block_y - 1
 			this.Neighbours_face(face, right) = face + 1
+			this.Neighbours_corn_face(face, A) = face + 1
+			this.Neighbours_corn_face(face, B) = face + 1
+			this.My_dir(face, A) = right
+			this.My_dir(face, B) = right
 
 			if ( face == 1 ) then
 				this.Neighbour_id(face, right) = (this.Ydim_block - this.block_y - 1)*this.Xdim_block
+				this.Neighbour_corn_id(face, A) = (this.Ydim_block - this.block_y - 2)*this.Xdim_block
+				this.Neighbour_corn_id(face, B) = (this.Ydim_block - this.block_y)*this.Xdim_block
 				this.border(face, right) = 1
 				this.rot(face, right) = 1
 				this.Neighbours_face(face, right) = 3
+				this.Neighbours_corn_face(face, A) = 3
+				this.Neighbours_corn_face(face, B) = 3
 				this.Neighb_dir(face, right) = down
+				this.Neighb_corn_dir(face, A) = B
+				this.Neighb_corn_dir(face, B) = C
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, right) = this.block_y*this.Xdim_block + this.block_x
+				this.Neighbour_corn_id(face, A) = (this.block_y + 1)*this.Xdim_block + this.block_x
+				this.Neighbour_corn_id(face, B) = (this.block_y - 1)*this.Xdim_block + this.block_x
 				this.border(face, right) = -1
 				this.rot(face, right) = -1
 				this.Neighbours_face(face, right) = 3
+				this.Neighbours_corn_face(face, A) = 3
+				this.Neighbours_corn_face(face, B) = 3
 				this.Neighb_dir(face, right) = up
+				this.Neighb_corn_dir(face, A) = D
+				this.Neighb_corn_dir(face, B) = A
 
 			else if(face == 5) then
 				this.Neighbours_face(face, right) = 2
+				this.Neighbours_corn_face(face, A) = 2
+				this.Neighbours_corn_face(face, B) = 2
 			end if
 		end if
 
@@ -263,34 +331,60 @@ Subroutine Neighbourhood(this, id)
 		if (this.block_y == 0) then  ! down
 
 			this.Neighbour_id(face, down) = this.block_x*this.Xdim_block + this.Ydim_block - 1
+			this.Neighbour_corn_id(face, B) = (this.block_x+1)*this.Xdim_block + this.Ydim_block - 1
+			this.Neighbour_corn_id(face, C) = (this.block_x-1)*this.Xdim_block + this.Ydim_block - 1
 			this.Neighbours_face(face, down) = 1
+			this.Neighbours_corn_face(face, B) = 1
+			this.Neighbours_corn_face(face, C) = 1
+			this.My_dir(face, B) = down
+			this.My_dir(face, C) = down
 
 			if ( face == 3 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*this.Xdim_block - this.block_x - 1
+				this.Neighbour_corn_id(face, B) = this.Ydim_block*this.Xdim_block - this.block_x - 2
+				this.Neighbour_corn_id(face, C) = this.Ydim_block*this.Xdim_block - this.block_x
 				this.border(face, down) = 1
 				this.rot(face, down) = -1
 				this.Neighb_dir(face, down) = right
+				this.Neighb_corn_dir(face, B) = A
+				this.Neighb_corn_dir(face, C) = B
 
 			else if ( face == 5 ) then
 				this.Neighbour_id(face, down) = this.block_x
+				this.Neighbour_corn_id(face, B) = this.block_x + 1
+				this.Neighbour_corn_id(face, C) = this.block_x - 1
 				this.border(face, down) = -1
 				this.rot(face, down) = 1
 				this.Neighb_dir(face, down) = left
+				this.Neighb_corn_dir(face, B) = C
+				this.Neighb_corn_dir(face, C) = D
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, B) = this.Ydim_block*(this.Xdim_block) - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, C) = this.Ydim_block*(this.Xdim_block - 2) - this.block_x*this.Xdim_block
 				this.border(face, down) = 2
 				this.Neighb_dir(face, down) = down
+				this.Neighb_corn_dir(face, B) = B
+				this.Neighb_corn_dir(face, C) = C
 
 			else if ( face == 1 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, B) = this.Ydim_block*(this.Xdim_block) - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, C) = this.Ydim_block*(this.Xdim_block - 2) - this.block_x*this.Xdim_block
 				this.border(face, down) = 2
 				this.rot(face, down) = 2
 				this.Neighbours_face(face, down) = 4
+				this.Neighbours_corn_face(face, B) = 4
+				this.Neighbours_corn_face(face, C) = 4
 				this.Neighb_dir(face, down) = down
+				this.Neighb_corn_dir(face, B) = B
+				this.Neighb_corn_dir(face, C) = C
 
 			else if ( face == 6 ) then
 				this.Neighbours_face(face, down) = 2
+				this.Neighbours_corn_face(face, B) = 2
+				this.Neighbours_corn_face(face, C) = 2
 			end if
 		end if
 
@@ -298,26 +392,51 @@ Subroutine Neighbourhood(this, id)
 		if (this.block_x == 0) then  ! left
 
 			this.Neighbour_id(face, left) = this.block_y + this.Xdim_block*(this.Xdim_block - 1)
+			this.Neighbour_corn_id(face, C) = this.block_y + this.Xdim_block*(this.Xdim_block - 1) - 1
+			this.Neighbour_corn_id(face, D) = this.block_y + this.Xdim_block*(this.Xdim_block - 1) + 1
 			this.Neighbours_face(face, left) = face - 1
+			this.Neighbours_corn_face(face, C) = face - 1
+			this.Neighbours_corn_face(face, D) = face - 1
+			this.My_dir(face, D) = left
+			this.My_dir(face, C) = left
 
 			if ( face == 1 ) then
 				this.Neighbour_id(face, left) = this.Xdim_block*this.block_y
+				this.Neighbour_corn_id(face, C) = this.Xdim_block*(this.block_y - 1)
+				this.Neighbour_corn_id(face, D) = this.Xdim_block*(this.block_y + 1)
 				this.border(face, left) = -1
 				this.rot(face, left) = -1
 				this.Neighbours_face(face, left) = 5
+				this.Neighbours_corn_face(face, C) = 5
+				this.Neighbours_corn_face(face, D) = 5
 				this.Neighb_dir(face, left) = down
+				this.Neighb_corn_dir(face, D) = C
+				this.Neighb_corn_dir(face, C) = B
 
 			else if ( face == 6 ) then
-				this.Neighbour_id(face, left) = this.Xdim_block*this.Ydim_block - 1 - this.block_y*this.Xdim_block
+				this.Neighbour_id(face, left) = this.Xdim_block*(this.Ydim_block - this.block_y) - 1
+				this.Neighbour_corn_id(face, D) = this.Xdim_block*(this.Ydim_block - this.block_y - 1) - 1
+				this.Neighbour_corn_id(face, C) = this.Xdim_block*(this.Ydim_block - this.block_y + 1) - 1
 				this.border(face, left) = 1
 				this.rot(face, left) = 1
 				this.Neighbours_face(face, left) = 5
+				this.Neighbours_corn_face(face, C) = 5
+				this.Neighbours_corn_face(face, D) = 5
 				this.Neighb_dir(face, left) = up
+				this.Neighb_corn_dir(face, D) = A
+				this.Neighb_corn_dir(face, C) = D
 
 			else if ( face == 2 ) then
 				this.Neighbours_face(face, left) = 5
+				this.Neighbours_corn_face(face, D) = 5
+				this.Neighbours_corn_face(face, C) = 5
 			end if
 		end if
+
+		if (this.block_y == this.Ydim_block - 1 .and. this.block_x == this.Xdim_block - 1) this.Neighbour_corn_id (:, A) = -1
+		if (this.block_y == 0 .and. this.block_x == this.Xdim_block - 1) this.Neighbour_corn_id (:, B) = -1
+		if (this.block_y == 0 .and. this.block_x == 0) this.Neighbour_corn_id (:, C) = -1
+		if (this.block_y == this.Ydim_block - 1 .and. this.block_x == 0) this.Neighbour_corn_id (:, D) = -1
 	end do
 
 End Subroutine
@@ -412,6 +531,125 @@ Subroutine Displacement(this, face, dir, displ)
 	end if
 
 
+
+End Subroutine
+
+
+Subroutine Displacement_corn(this, face, dir, displ)
+	Class(parallel) :: this
+	Integer(4), intent(in) :: face, dir
+	Integer(4), intent(out) :: displ(1:this.step*this.step)
+	Integer(4) k, i, n, x
+
+	n = this.step*this.step
+	x=this.Xsize + 2*this.step
+
+	if ( this.My_dir(face, dir) == this.right .or. this.My_dir(face, dir) == this.left ) then
+
+
+		select case(this.rot(face, this.My_dir(face, dir)) == 2)
+		case (.false.)
+
+			displ(1) = 0
+			do k = 2, this.step
+				displ(k) = displ(k - 1) + 1
+			end do
+
+			if(this.step > 1) then
+				do i = this.step+1, n
+					displ(i) = displ(i - this.step) + x
+				end do
+			end if
+
+		case (.true.)
+
+			displ(1) = x*(this.step - 1) + this.step - 1
+			do k = 2, this.step
+				displ(k) = displ(k - 1) - 1
+			end do
+
+			if(this.step > 1) then
+				do i = this.step+1, n
+					displ(i) = displ(i - this.step) - x
+				end do
+			end if
+		end select
+
+
+		select case(this.border(face, this.My_dir(face, dir)))
+		case (0)
+
+			displ(1) = 0
+			do k = 2, this.step
+				displ(k) = displ(k - 1) + x
+			end do
+
+			if(this.step > 1) then
+				do i = this.step+1, n
+					displ(i) = displ(i - this.step) + 1
+				end do
+			end if
+
+		case (1)
+
+			displ(1) = (this.step - 1)*x
+			do k = 2, this.step
+				displ(k) = displ(k - 1) - x
+			end do
+
+			if(this.step > 1) then
+				do i = this.step+1, n
+					displ(i) = displ(i - this.step) + 1
+				end do
+			end if
+
+		case (-1)
+
+			displ(1) = this.step - 1
+			do k = 2, this.step
+				displ(k) = displ(k - 1) + x
+			end do
+
+			if(this.step > 1) then
+				do i = this.step+1, n
+					displ(i) = displ(i - this.step) - 1
+				end do
+			end if
+
+		end select
+
+	else if ( this.My_dir(face, dir) == this.up .or. this.My_dir(face, dir) == this.down ) then
+
+		i = this.My_dir(face, dir)
+		select case(this.rot(face, i) == 2)
+		case (.false.)
+
+			displ(1) = 0
+			do k = 2, this.step
+				displ(k) = displ(k - 1) + 1
+			end do
+
+			if(this.step > 1) then
+				do i = this.step+1, n
+					displ(i) = displ(i - this.step) + x
+				end do
+			end if
+
+		case (.true.)
+
+			displ(1) = x*(this.step - 1) + this.step - 1
+			do k = 2, this.step
+				displ(k) = displ(k - 1) - 1
+			end do
+
+			if(this.step > 1) then
+				do i = this.step+1, n
+					displ(i) = displ(i - this.step) - x
+				end do
+			end if
+		end select
+
+	end if
 
 End Subroutine
 

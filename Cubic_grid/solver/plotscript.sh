@@ -59,7 +59,6 @@ set xlabel "Cycles"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
 set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
-set yrange [0:.2]
 set mxtics 5
 set mytics 5
 set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -83,21 +82,20 @@ plot "simple/L1.dat" w l ti "L1_simple", "tan/L1.dat" w l ti "L1_tan", "equiang/
 EOF
 
 # set terminal postscript eps size 4, 3
+# set yrange [0:.1]
 gnuplot <<EOF
 set term png size 800, 800
 set output "../../pic/$(( 2*$step ))th/L2_$(( 2*$dim )).png"
 set key inside right top vertical Right noreverse
 set xlabel "Cycles"
 set ylabel "Normalized error"
-set yrange [0:.1]
-set xrange [0:10]
 set mxtics 5
 set mytics 5
 set grid ytics lt 2 lw 2 lc rgb "#bbbbbb"
 set grid xtics lt 2 lw 2 lc rgb "#bbbbbb"
 set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
 set grid mytics lt 0 lw 1 lc rgb "#bbbbbb"
-plot "simple/L2.dat" w l lw 5 ti "L2 conf", "tan/L2.dat" w l lw 5 lt 5 ti "L2 tan", "equiang/L2.dat" w l lw 5 lt 3 ti "L2 equiang"
+plot "simple/L2.dat" w l lw 1 ti "L2 conf", "tan/L2.dat" w l lw 1 ti "L2 tan", "equiang/L2.dat" w l lw 1 ti "L2 equiang"
 EOF
 
 gnuplot <<EOF

@@ -165,7 +165,7 @@ CONTAINS
 				do y = 1, 2*dim
 					
 					if (.not. (isnan(precise(x,y,face)) .or. ((face==1 .or. face==6) .and. ((x>=dim-1 .and. x<=dim+2) .and. (y>=dim-1 .and. y<=dim+2))))) then
-					if (.not. ((x>=3 .and. x<=2*dim-2) .and. (y>=3 .and. y<=2*dim-2))) then
+! 					if (.not. ((x>=3 .and. x<=2*dim-2) .and. (y>=3 .and. y<=2*dim-2))) then
 					square = this.square(x, y)
 					F1 = precise(x,y,face) - surface_to(x,y,face,1)
 					F1_prec = precise(x,y,face)
@@ -177,7 +177,7 @@ CONTAINS
 					L2_prec = F1_prec*F1_prec*square + L2_prec
 					if(abs(precise(x,y,face)) > L_inf_prec) L_inf_prec = abs(precise(x,y,face))
 					if(abs(surface_to(x,y,face,1)) > L_inf) L_inf = abs(surface_to(x,y,face,1))
-					end if
+! 					end if
 					end if
 
 				end do
