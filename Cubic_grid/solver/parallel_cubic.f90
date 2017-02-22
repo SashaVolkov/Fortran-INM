@@ -12,8 +12,8 @@ implicit none
 		Integer(4) Ydim_block, Xdim_block, Xsize, Ysize, block_x, block_y, dim, first_x, first_y, last_x, last_y
 		Integer(4) ns_xy(1:2), nf_xy(1:2), step, up, right, left, down, halo(6, 4), halo_corn(6, 4), rot(6, 0:4)
 		Integer(4) snd_xy(6, 4, 2), rcv_xy(6, 4, 2), corn_snd_xy(6, 4, 2), corn_rcv_xy(6, 4, 2)
-		Integer(4) Neighbour_id(6, 4), border(6, 4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
-		Integer(4) Neighbour_corn_id(6, 4), Neighb_corn_dir(6,4), Neighbours_corn_face(6, 4), rot_corn(6, 4), border_corn(6,4), My_dir(6, 4)
+		Integer(4) Neighbour_id(6, 4), border(6, 0:4), Neighbours_face(6, 4), id, Neighb_dir(6,4)
+		Integer(4) Neighbour_corn_id(6, 4), Neighb_corn_dir(6,4), Neighbours_corn_face(6, 4), My_dir(6, 4)
 		CONTAINS
 			Procedure, Public :: init => parallel_init
 			Procedure, Private :: halo_zone => halo_zone
@@ -547,35 +547,6 @@ Subroutine Displacement_corn(this, face, dir, displ)
 	if ( this.My_dir(face, dir) == this.right .or. this.My_dir(face, dir) == this.left ) then
 
 
-		select case(this.rot(face, this.My_dir(face, dir)) == 2)
-		case (.false.)
-
-			displ(1) = 0
-			do k = 2, this.step
-				displ(k) = displ(k - 1) + 1
-			end do
-
-			if(this.step > 1) then
-				do i = this.step+1, n
-					displ(i) = displ(i - this.step) + x
-				end do
-			end if
-
-		case (.true.)
-
-			displ(1) = x*(this.step - 1) + this.step - 1
-			do k = 2, this.step
-				displ(k) = displ(k - 1) - 1
-			end do
-
-			if(this.step > 1) then
-				do i = this.step+1, n
-					displ(i) = displ(i - this.step) - x
-				end do
-			end if
-		end select
-
-
 		select case(this.border(face, this.My_dir(face, dir)))
 		case (0)
 
@@ -648,6 +619,19 @@ Subroutine Displacement_corn(this, face, dir, displ)
 				end do
 			end if
 		end select
+
+
+	else
+		displ(1) = 0
+		do k = 2, this.step
+			displ(k) = displ(k - 1) + 1
+		end do
+
+		if(this.step > 1) then
+			do i = this.step+1, n
+				displ(i) = displ(i - this.step) + x
+			end do
+		end if
 
 	end if
 

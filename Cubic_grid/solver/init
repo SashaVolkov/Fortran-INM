@@ -1,4 +1,4 @@
-20, 800, 3220.0, 16, 0, 1, 3
+20, 8000, 3220.0, 16, 0, 1, 3
 
 
 dim, Tmax, dt, speedup, rescale, grid_type, space_step
@@ -6,4 +6,4 @@ dim, Tmax, dt, speedup, rescale, grid_type, space_step
 50, 20000, 1288.0, 40
 40, 16000, 1610.0, 32
 30, 12500, 2060.8, 25
-20, 8000, 3220, 16
+20, 8000, 3220.0, 16
