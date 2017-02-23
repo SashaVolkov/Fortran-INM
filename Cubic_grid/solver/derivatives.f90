@@ -16,6 +16,7 @@ implicit none
 		Procedure, Private :: partial_c6 => partial_c6
 		Procedure, Private :: partial_c_fg => partial_c_fg
 		Procedure, Public :: div => div
+		Procedure, Public :: vorticity => vorticity
 	End Type
 
 
@@ -105,6 +106,18 @@ CONTAINS
 		end do
 
 		div = ( this.partial_c_fg(u1_con, J_1, h, step) + this.partial_c_fg(u2_con, J_2, h, step))/J_1(0)
+
+	end function
+
+
+
+	Real(8) function vorticity(this, metr, u1_cov, u2_cov, h, x, y, step)
+		Class(der) :: this
+		Class(metric) :: metr
+		Integer(4), intent(in) :: x, y, step
+		Real(8), intent(in) :: u1_cov(-step:step), u2_cov(-step:step), h
+
+		vorticity = ( this.partial_c(u2_cov, h, step) - this.partial_c(u1_cov, h, step))/metr.G_sqr(x, y)
 
 	end function
 

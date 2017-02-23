@@ -85,7 +85,7 @@ implicit none
 				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
 			end if
-			if(var_prev.h_height(2*dim, 2*dim, 6) > height) exit
+			! if(var_prev.h_height(2*dim, 2*dim, 6) > 10*height) exit
 	end do
 
 
