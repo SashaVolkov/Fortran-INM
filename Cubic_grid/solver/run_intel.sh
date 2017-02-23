@@ -81,9 +81,9 @@ else
 		export OMP_NUM_THREADS=$2
 		mpirun -n $1 ./a.out
 
-		# echo "Regridding"
-		# cd regrid
-		# ./run_intel_reg.sh
+		echo "Regridding"
+		cd regrid
+		./run_intel_reg.sh
 
 	fi
 

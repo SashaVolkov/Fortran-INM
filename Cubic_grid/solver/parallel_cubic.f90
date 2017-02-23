@@ -444,7 +444,7 @@ Subroutine Neighbourhood(this, id)
 		if (this.block_y == this.Ydim_block - 1 .and. this.block_x == 0) this.Neighbour_corn_id (:, D) = -1
 	end do
 
-	print *, "My = ", id, this.Neighbour_corn_id(6, :)
+	! print *, "My = ", id, this.Neighbour_corn_id(6, :)
 
 End Subroutine
 

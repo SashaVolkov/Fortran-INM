@@ -114,13 +114,13 @@ Subroutine Simple_msg(this, level, lon_vel, lat_vel)
 			rcv_tag = (this.id + 1)*6*4  + face*4 + i
 
 			if ( neib_id >= 0 .and. neib_id < this.np ) then
-				! call MPI_IRecv(level(rx, ry, face), 1, this.halo_corn(face, i), neib_id, rcv_tag, this.comm_corn(1), this.rcv_corn_req(i, face, 1), this.ier)
-				! call MPI_IRecv(lon_vel(rx, ry, face), 1, this.halo_corn(face, i), neib_id, rcv_tag, this.comm_corn(2), this.rcv_corn_req(i, face, 2), this.ier) ! x -> x
-				! call MPI_IRecv(lat_vel(rx, ry, face), 1, this.halo_corn(face, i), neib_id, rcv_tag, this.comm_corn(3), this.rcv_corn_req(i, face, 3), this.ier) ! y -> y
+				call MPI_IRecv(level(rx, ry, face), 1, this.halo_corn(face, i), neib_id, rcv_tag, this.comm_corn(1), this.rcv_corn_req(i, face, 1), this.ier)
+				call MPI_IRecv(lon_vel(rx, ry, face), 1, this.halo_corn(face, i), neib_id, rcv_tag, this.comm_corn(2), this.rcv_corn_req(i, face, 2), this.ier) ! x -> x
+				call MPI_IRecv(lat_vel(rx, ry, face), 1, this.halo_corn(face, i), neib_id, rcv_tag, this.comm_corn(3), this.rcv_corn_req(i, face, 3), this.ier) ! y -> y
 
-				! call MPI_ISend(level(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(1), this.snd_corn_req(i, face, 1), this.ier)
-				! call MPI_ISend(lon_vel(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(2), this.snd_corn_req(i, face, 2), this.ier)
-				! call MPI_ISend(lat_vel(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(3), this.snd_corn_req(i, face, 3), this.ier)
+				call MPI_ISend(level(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(1), this.snd_corn_req(i, face, 1), this.ier)
+				call MPI_ISend(lon_vel(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(2), this.snd_corn_req(i, face, 2), this.ier)
+				call MPI_ISend(lat_vel(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(3), this.snd_corn_req(i, face, 3), this.ier)
 			end if
 		end do
 	end do
