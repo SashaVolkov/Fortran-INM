@@ -248,7 +248,7 @@ Subroutine FRunge(this, metr, i)
 	Type(der) :: d
 
 	Integer(4), intent(in) :: i
-	Real(8) g, height, dt, partial, temp1(-this.step:this.step), temp2(-this.step:this.step), coef(0:3), div, dh
+	Real(8) g, height, dt, grad_Fx, grad_Fy, temp1(-this.step:this.step), temp2(-this.step:this.step), coef(0:3), div, dh
 	Integer(4) x,y, face, step, ns_x, ns_y, nf_x, nf_y
 
 	coef(0) = 0d0;  coef(1) = 5d-1;  coef(2) = 5d-1;  coef(3) = 1d0;
@@ -258,7 +258,7 @@ Subroutine FRunge(this, metr, i)
 	ns_x = this.ns_x;  ns_y = this.ns_y
 	nf_x = this.nf_x;  nf_y = this.nf_y
 
-	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
+	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, temp1, temp2, div)
 	!$OMP DO
 
 	do face = 1, 6
@@ -266,17 +266,17 @@ Subroutine FRunge(this, metr, i)
 			do x = ns_x, nf_x
 
 				temp1(:) = this.kh(x-step:x+step, y, face, 0) + coef(i-1)*this.kh(x-step:x+step, y, face, i-1)
-				partial = d.partial_c(temp1, dh, step)
-				this.ku_cov(x, y, face, i) = - dt*g*partial ! + metr.G_sqr(x, y)*this.kv_con(x, y, face, 0)*metr.f_cor(x, y, face)
+				grad_Fx = d.partial_c(temp1, dh, step)
+				this.ku_cov(x, y, face, i) = - dt*g*grad_Fx + metr.G_sqr(x, y)*this.kv_con(x, y, face, 0)*metr.f_cor(x, y, face)
 
 				temp2(:) = this.kh(x, y-step:y+step, face, 0) + coef(i-1)*this.kh(x, y-step:y+step, face, i-1)
-				partial = d.partial_c(temp2, dh, step)
-				this.kv_cov(x, y, face, i) = - dt*g*partial ! - metr.G_sqr(x, y)*this.ku_con(x, y, face, 0)*metr.f_cor(x, y, face)
+				grad_Fy = d.partial_c(temp2, dh, step)
+				this.kv_cov(x, y, face, i) = - dt*g*grad_Fy - metr.G_sqr(x, y)*this.ku_con(x, y, face, 0)*metr.f_cor(x, y, face)
 
 				temp1(:) = this.ku_con(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y, face, i-1)
 				temp2(:) = this.kv_con(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x, y-step:y+step, face, i-1)
 				div = d.div(metr, temp1, temp2, dh, x, y, step)
-				this.kh(x, y, face, i) = - dt*(height)*div
+				this.kh(x, y, face, i) = - dt*(height + this.kh(x, y, face, i-1))*div - this.ku_cov(x, y, face, i-1)*dt*g*grad_Fx - this.kv_cov(x, y, face, i-1)*dt*g*grad_Fy
 
 			end do
 		end do
