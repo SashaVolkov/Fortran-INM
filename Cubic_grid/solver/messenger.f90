@@ -104,6 +104,9 @@ Subroutine Simple_msg(this, level, lon_vel, lat_vel)
 	do face = 1, 6
 		do i = 1, 4
 
+			this.rcv_corn_req(i, face, :) = MPI_REQUEST_NULL
+			this.snd_corn_req(i, face, :) = MPI_REQUEST_NULL
+
 			neib_id = this.Neighbour_corn_id(face, i)
 			rx = this.corn_rcv_xy(face, i, 1);  ry = this.corn_rcv_xy(face, i, 2)
 			sx = this.corn_snd_xy(face, i, 1);  sy = this.corn_snd_xy(face, i, 2)
@@ -118,9 +121,6 @@ Subroutine Simple_msg(this, level, lon_vel, lat_vel)
 				call MPI_ISend(level(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(1), this.snd_corn_req(i, face, 1), this.ier)
 				call MPI_ISend(lon_vel(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(2), this.snd_corn_req(i, face, 2), this.ier)
 				call MPI_ISend(lat_vel(sx, sy, face), 1, this.halo_corn(face, i), neib_id, snd_tag, this.comm_corn(3), this.snd_corn_req(i, face, 3), this.ier)
-			else
-				this.rcv_corn_req(i, face, :) = MPI_REQUEST_NULL
-				this.snd_corn_req(i, face, :) = MPI_REQUEST_NULL
 			end if
 		end do
 	end do

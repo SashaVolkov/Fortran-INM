@@ -36,7 +36,7 @@ implicit none
 
 !definition
 	r_sphere= 6371220d0;  g = 980616d-5
-	pi = 314159265358979323846d-20;  omega_cor = 7292d-2
+	pi = 314159265358979323846d-20;  omega_cor = 7292d-8
 	height = 100d0;  dt = 30d0;  flag = 0
 ! r_sphere= 1d0
 	! rescale  0-simple, 1-tan, 2-pow(4/3)q
@@ -58,8 +58,8 @@ implicit none
 	call paral.init(dim, space_step+1, np, id) ! Yep, that's right step+1 is correct, interpolation and transformation matrix need more than step points
 	call msg.init(grid_type, paral)
 	call geom.init(r_sphere, pi)
-	call grid.init(geom, paral, omega_cor, g, dt, rescale, grid_type)
-	call metr.init(grid)
+	call grid.init(geom, paral, g, dt, rescale, grid_type)
+	call metr.init(grid, omega_cor)
 	call var.init(metr, height)
 	call var_prev.init(metr, height)
 	call var_prev.start_conditions(metr, geom)
@@ -78,14 +78,14 @@ implicit none
 ! 		call meth.Predictor_corrector(var, var_prev, metr, inter, msg)
 		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
-! 				call diagn.Courant(metr, var_prev, time)
+				call diagn.Courant(metr, var_prev, time)
 				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
 			end if
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
 			end if
-! 			if(var_prev.h_height(2*dim, 2*dim, 6) > height) exit
+			if(var_prev.h_height(2*dim, 2*dim, 6) > height) exit
 	end do
 
 

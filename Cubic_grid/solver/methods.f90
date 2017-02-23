@@ -267,16 +267,16 @@ Subroutine FRunge(this, metr, i)
 
 				temp1(:) = this.kh(x-step:x+step, y, face, 0) + coef(i-1)*this.kh(x-step:x+step, y, face, i-1)
 				partial = d.partial_c(temp1, dh, step)
-				this.ku_cov(x, y, face, i) = - dt*g*partial
+				this.ku_cov(x, y, face, i) = - dt*g*partial ! + metr.G_sqr(x, y)*this.kv_con(x, y, face, 0)*metr.f_cor(x, y, face)
 
 				temp2(:) = this.kh(x, y-step:y+step, face, 0) + coef(i-1)*this.kh(x, y-step:y+step, face, i-1)
 				partial = d.partial_c(temp2, dh, step)
-				this.kv_cov(x, y, face, i) = - dt*g*partial
+				this.kv_cov(x, y, face, i) = - dt*g*partial ! - metr.G_sqr(x, y)*this.ku_con(x, y, face, 0)*metr.f_cor(x, y, face)
 
 				temp1(:) = this.ku_con(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y, face, i-1)
 				temp2(:) = this.kv_con(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x, y-step:y+step, face, i-1)
 				div = d.div(metr, temp1, temp2, dh, x, y, step)
-				this.kh(x, y, face, i) = - dt*height*div
+				this.kh(x, y, face, i) = - dt*(height)*div
 
 			end do
 		end do

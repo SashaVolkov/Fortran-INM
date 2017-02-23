@@ -23,7 +23,7 @@ program regrid
 
 	all_time = Tmax/speedup + 1
 	convert_time = dt; lon_max = 360; lat_max = 180
-	nc_or_dat = 1
+	nc_or_dat = 0
 
 	call inter.init(dim, step, lon_max, lat_max)
 	call to_cube.init(dim, step, lon_max, lat_max)

@@ -43,7 +43,6 @@ implicit none
 		Procedure, Public :: init => init
 		Procedure, Private :: alloc => alloc
 		Procedure, Public :: deinit => deinit
-		Procedure, Private :: const_def => const_def
 		Procedure, Private :: tiles_prop => tiles_prop
 	End Type
 
@@ -51,19 +50,19 @@ implicit none
 CONTAINS
 
 
-	Subroutine init(this, geom, paral, omega_cor, g, dt, rescale,grid_type)
+	Subroutine init(this, geom, paral, g, dt, rescale,grid_type)
 
 		Class(g_var) :: this
 		Class(geometry) :: geom
 		Class(parallel) :: paral
 		Integer(4), intent(in) :: rescale, grid_type
-		Real(8), intent(in) :: omega_cor, g, dt
+		Real(8), intent(in) :: g, dt
 		Integer(4) x, y
 		Real(8) t(2), dist
 		Type(generator) :: generate
 
 		this.dim = paral.dim;  this.step = paral.step;  this.id = paral.id;  this.g = g
-		this.omega_cor = omega_cor;  this.r_sphere = geom.radius;  this.dt = dt
+		this.r_sphere = geom.radius;  this.dt = dt
 		this.pi = geom.pi;  this.rescale = rescale;  this.grid_type = grid_type
 
 		this.ns_xy(:) = paral.ns_xy(:);  this.nf_xy(:) = paral.nf_xy(:);
@@ -80,7 +79,7 @@ CONTAINS
 		else if(grid_type == 1)then
 			call generate.equiangular_cubed_sphere(this.dim, this.step, this.cube_coord_c, this.latlon_c, this.latlon)
 		end if
-		call this.const_def(geom)
+		call this.tiles_prop(geom)
 
 	end Subroutine
 
@@ -122,28 +121,6 @@ CONTAINS
 	end Subroutine
 
 
-
-	Subroutine const_def(this, g)
-		Class(g_var) :: this
-		Class(geometry) :: g
-		Real(8) dist, omega_cor, h(-1:2)
-		Integer(4) face, x, y, dim
-		Integer(4), parameter :: A =1, B=2, C=3, D=4, E=5
-
-		omega_cor = this.omega_cor
-		dim = this.dim
-
-		do face = 1, 6 ! Only longitude
-			do x = this.ns_xy(1), this.nf_xy(1)
-				do y = this.ns_xy(2), this.nf_xy(2)
-					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.latlon_c(1, x, y, face)) ! function of latitude
-				end do
-			end do
-		end do
-
-		call this.tiles_prop(g)
-
-	end Subroutine
 
 
 

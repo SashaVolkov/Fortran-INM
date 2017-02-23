@@ -78,12 +78,12 @@ else
 	echo `grep -c ifort err.file` "ifort"
 
 	if [[ $1 != "compile" ]]; then
-		# export OMP_NUM_THREADS=$2
+		export OMP_NUM_THREADS=$2
 		mpirun -n $1 ./a.out
 
-		# echo "Regridding"
-		# cd regrid
-		# ./run_intel_reg.sh
+		echo "Regridding"
+		cd regrid
+		./run_intel_reg.sh
 
 	fi
 

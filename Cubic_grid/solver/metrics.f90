@@ -17,6 +17,7 @@ implicit none
 		Real(8), Allocatable :: Tr_to_cube(:, :, :, :, :)
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: cube_coord_c(:, :, :)
+		Real(8), Allocatable :: f_cor(:, :, :)
 
 		Real(8) :: r_sphere, delta_on_cube, dt, g
 		Integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
@@ -44,10 +45,12 @@ implicit none
 CONTAINS
 
 
-	Subroutine init(this, grid)
+	Subroutine init(this, grid, omega_cor)
 
 		Class(metric) :: this
 		Class(g_var) :: grid
+		Real(8), intent(in) :: omega_cor
+		Integer(4) :: face, x, y
 
 
 		this.dim = grid.dim;  this.step = grid.step;  this.g = grid.g
@@ -66,6 +69,14 @@ CONTAINS
 		this.cube_coord_c = grid.cube_coord_c
 		this.latlon_c = grid.latlon_c
 		call this.define()
+
+		do face = 1, 6 ! Only longitude
+			do x = this.ns_xy(1), this.nf_xy(1)
+				do y = this.ns_xy(2), this.nf_xy(2)
+					this.f_cor(x, y, face)= 2*omega_cor*dsin(this.latlon_c(1, x, y, face)) ! function of latitude
+				end do
+			end do
+		end do
 
 	end Subroutine
 
@@ -100,6 +111,7 @@ CONTAINS
 		Allocate(this.Tr_to_cube(2, 2, f_x:l_x , f_y:l_y, 6))
 		Allocate(this.cube_coord_c(2, f:l , f:l))
 		Allocate(this.latlon_c(2, f:l , f:l, 6))
+		Allocate(this.f_cor(f_x:l_x , f_y:l_y, 6))
 
 	end Subroutine
 
