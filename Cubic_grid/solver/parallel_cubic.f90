@@ -176,7 +176,7 @@ Subroutine halo_zone(this, face)
 
 	do i = 1, 4
 		call this.Displacement_corn(face, i, displ_corn)
-		call MPI_TYPE_INDEXED(this.step**2, blocklen, displ_corn, mp_dp, this.halo_corn(face, i), ier)
+		call MPI_TYPE_INDEXED(this.step**2, blocklen(1:this.step**2), displ_corn, mp_dp, this.halo_corn(face, i), ier)
 		call MPI_TYPE_COMMIT(this.halo_corn(face, i), ier)
 	end do
 
@@ -214,6 +214,11 @@ Subroutine Neighbourhood(this, id)
 	this.Neighb_corn_dir(:, B) = D
 	this.Neighb_corn_dir(:, C) = A
 	this.Neighb_corn_dir(:, D) = B
+
+	this.My_dir(:, A) = up
+	this.My_dir(:, B) = down
+	this.My_dir(:, C) = down
+	this.My_dir(:, D) = up
 
 
 	do face = 1, 6
@@ -253,8 +258,8 @@ Subroutine Neighbourhood(this, id)
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
-				this.Neighbour_corn_id(face, A) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x-1)*this.Xdim_block
-				this.Neighbour_corn_id(face, D) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x+1)*this.Xdim_block
+				this.Neighbour_corn_id(face, A) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x+1)*this.Xdim_block
+				this.Neighbour_corn_id(face, D) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x-1)*this.Xdim_block
 				this.border(face, up) = 2
 				this.Neighb_dir(face, up) = up
 				this.Neighb_corn_dir(face, A) = A
@@ -262,8 +267,8 @@ Subroutine Neighbourhood(this, id)
 
 			else if ( face == 6 ) then
 				this.Neighbour_id(face, up) = this.Ydim_block*this.Xdim_block - 1 - this.block_x*this.Xdim_block
-				this.Neighbour_corn_id(face, A) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x-1)*this.Xdim_block
-				this.Neighbour_corn_id(face, D) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x+1)*this.Xdim_block
+				this.Neighbour_corn_id(face, A) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x+1)*this.Xdim_block
+				this.Neighbour_corn_id(face, D) = this.Ydim_block*this.Xdim_block - 1 - (this.block_x-1)*this.Xdim_block
 				this.Neighbours_face(face, up) = 4
 				this.Neighbours_corn_face(face, A) = 4
 				this.Neighbours_corn_face(face, D) = 4
@@ -361,8 +366,8 @@ Subroutine Neighbourhood(this, id)
 
 			else if ( face == 4 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
-				this.Neighbour_corn_id(face, B) = this.Ydim_block*(this.Xdim_block) - this.block_x*this.Xdim_block
-				this.Neighbour_corn_id(face, C) = this.Ydim_block*(this.Xdim_block - 2) - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, B) = this.Ydim_block*(this.Xdim_block - 2) - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, C) = this.Ydim_block*(this.Xdim_block) - this.block_x*this.Xdim_block
 				this.border(face, down) = 2
 				this.Neighb_dir(face, down) = down
 				this.Neighb_corn_dir(face, B) = B
@@ -370,8 +375,8 @@ Subroutine Neighbourhood(this, id)
 
 			else if ( face == 1 ) then
 				this.Neighbour_id(face, down) = this.Ydim_block*(this.Xdim_block - 1) - this.block_x*this.Xdim_block
-				this.Neighbour_corn_id(face, B) = this.Ydim_block*(this.Xdim_block) - this.block_x*this.Xdim_block
-				this.Neighbour_corn_id(face, C) = this.Ydim_block*(this.Xdim_block - 2) - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, B) = this.Ydim_block*(this.Xdim_block - 2) - this.block_x*this.Xdim_block
+				this.Neighbour_corn_id(face, C) = this.Ydim_block*(this.Xdim_block) - this.block_x*this.Xdim_block
 				this.border(face, down) = 2
 				this.rot(face, down) = 2
 				this.Neighbours_face(face, down) = 4
@@ -438,6 +443,8 @@ Subroutine Neighbourhood(this, id)
 		if (this.block_y == 0 .and. this.block_x == 0) this.Neighbour_corn_id (:, C) = -1
 		if (this.block_y == this.Ydim_block - 1 .and. this.block_x == 0) this.Neighbour_corn_id (:, D) = -1
 	end do
+
+	print *, "My = ", id, this.Neighbour_corn_id(6, :)
 
 End Subroutine
 
@@ -595,9 +602,8 @@ Subroutine Displacement_corn(this, face, dir, displ)
 		select case(this.rot(face, i) == 2)
 		case (.false.)
 
-			displ(1) = 0
-			do k = 2, this.step
-				displ(k) = displ(k - 1) + 1
+			do k = 1, this.step
+				displ(k) = k - 1
 			end do
 
 			if(this.step > 1) then
@@ -622,9 +628,8 @@ Subroutine Displacement_corn(this, face, dir, displ)
 
 
 	else
-		displ(1) = 0
-		do k = 2, this.step
-			displ(k) = displ(k - 1) + 1
+		do k = 1, this.step
+			displ(k) = k - 1
 		end do
 
 		if(this.step > 1) then
