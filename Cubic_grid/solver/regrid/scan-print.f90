@@ -62,7 +62,7 @@ module scan_print
 		end if
 
 		path1 = trim(trim(adjustl(istring))//'surface.nc')
-		path2 = trim(trim(adjustl(istring))//'grid.nc')
+		open(43,trim(trim(adjustl(istring))//'grid.dat'))
 		if(this.nc_or_dat == 0) then
 			path3 = trim(trim(adjustl(istring))//'surface_ll.nc')
 		else
@@ -74,10 +74,6 @@ module scan_print
 
 		status = nf90_open(path = path1, mode = NF90_WRITE, ncid = ncid)
 		status = nf90_inq_varids(ncid, nvars, Wid)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
-		status = nf90_open (path = path2, mode = NF90_NOWRITE, ncid = ncid_gr)
-		status = nf90_inq_varids(ncid_gr, nvars, grid_id)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 		if(this.nc_or_dat == 0) then
@@ -165,13 +161,8 @@ module scan_print
 
 		Class(printer) :: this
 		real(8), intent(out) :: grid(1:2, 1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 1:6)
-		integer(4) x, y, face, ier, dim, status, grid_id, ncid_gr
 
-		dim = this.dim;  ncid_gr = this.ncid_gr;  grid_id = this.grid_id
-
-		status = nf90_get_var(ncid_gr, grid_id, grid(1:2, 1:2*dim, 1:2*dim, 1:6),&
-		 start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
-		if(status /= nf90_NoErr) print *, nf90_strerror(status), "scan_grid"
+		read(43, *),grid(1:2, 1:2*this.dim, 1:2*this.dim, 1:6)
 	end subroutine
 
 
@@ -226,6 +217,7 @@ module scan_print
 		else
 			close(15)
 		end if
+		close(43)
 	end subroutine
 
 

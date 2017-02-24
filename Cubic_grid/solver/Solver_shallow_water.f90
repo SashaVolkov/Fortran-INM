@@ -18,7 +18,7 @@ implicit none
 
 !variables
 	Real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	Integer(4) dim, space_step, Tmax, time, speedup, Wid, grid_id, xid, yid, faceid, ncid, ncid_gr, rescale, face, grid_type, x, y, flag
+	Integer(4) dim, space_step, Tmax, time, speedup, rescale, face, grid_type, x, y, flag
 
 	Integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
 
@@ -68,9 +68,9 @@ implicit none
 	call inter.init(metr, 6)
 
 
-	call printer_nc.init(dim, space_step, Tmax, speedup, time, grid_id, ncid, ncid_gr, rescale, grid_type)
-	call printer_nc.to_print(var_prev, diagn, 0, speedup, ncid, id)
-	if(id == 0) call printer_nc.print_grid(grid, grid_id, ncid_gr)
+	call printer_nc.init(dim, space_step, Tmax, speedup, time, rescale, grid_type)
+	call printer_nc.to_print(var_prev, diagn, 0, speedup, id)
+	if(id == 0) call printer_nc.print_grid(grid)
 
 
 	do time = 1, Tmax
@@ -79,7 +79,7 @@ implicit none
 		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
 				call diagn.Courant(metr, var_prev, time)
-				call printer_nc.to_print(var_prev, diagn, time, speedup, ncid, id)
+				call printer_nc.to_print(var_prev, diagn, time, speedup, id)
 			end if
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
@@ -105,7 +105,7 @@ implicit none
 	call grid.deinit()
 	call var.deinit()
 	call var_prev.deinit()
-	call printer_nc.deinit(ncid, ncid_gr)
+	call printer_nc.deinit()
 	call diagn.deinit()
 	call meth.deinit()
 	call metr.deinit()
