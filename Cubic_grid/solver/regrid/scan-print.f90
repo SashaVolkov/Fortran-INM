@@ -62,7 +62,7 @@ module scan_print
 		end if
 
 		path1 = trim(trim(adjustl(istring))//'surface.nc')
-		open(43,trim(trim(adjustl(istring))//'grid.dat'))
+		path2 = trim(trim(adjustl(istring))//'grid.dat')
 		if(this.nc_or_dat == 0) then
 			path3 = trim(trim(adjustl(istring))//'surface_ll.nc')
 		else
@@ -70,6 +70,7 @@ module scan_print
 		end if
 		path4 = trim(trim(adjustl(istring))//'closest_point_ll_C.dat')
 
+		open(40, file=path2)
 
 
 		status = nf90_open(path = path1, mode = NF90_WRITE, ncid = ncid)
@@ -162,7 +163,8 @@ module scan_print
 		Class(printer) :: this
 		real(8), intent(out) :: grid(1:2, 1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 1:6)
 
-		read(43, *),grid(1:2, 1:2*this.dim, 1:2*this.dim, 1:6)
+		read(40, *), grid(1:2, 1:2*this.dim, 1:2*this.dim, 1:6)
+
 	end subroutine
 
 
@@ -217,7 +219,7 @@ module scan_print
 		else
 			close(15)
 		end if
-		close(43)
+		close(40)
 	end subroutine
 
 

@@ -68,8 +68,8 @@ implicit none
 	call inter.init(metr, 6)
 
 
-	call printer_nc.init(dim, space_step, Tmax, speedup, time, rescale, grid_type)
-	call printer_nc.to_print(var_prev, diagn, 0, speedup, id)
+	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
+	call printer_nc.to_print(var_prev, diagn, 0, id)
 	if(id == 0) call printer_nc.print_grid(grid)
 
 
@@ -79,7 +79,7 @@ implicit none
 		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
 				call diagn.Courant(metr, var_prev, time)
-				call printer_nc.to_print(var_prev, diagn, time, speedup, id)
+				call printer_nc.to_print(var_prev, diagn, time, id)
 			end if
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
