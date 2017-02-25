@@ -13,7 +13,7 @@ module printer_ncdf
 
 	Type printer
 
-		Integer(4) :: Wid, Courantid, grid_id, ncid, ncid_gr, speedup
+		Integer(4) :: Wid, Courantid, grid_id, ncid, ncid_gr, speedup, id
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -33,11 +33,14 @@ module printer_ncdf
 		Integer(4), intent(in) :: Tmax, speedup, rescale, grid_type
 		Integer(4), intent(out) :: time
 
-		Integer(4) status, face, xid, yid, dim, step, faceid, llid, gr_xid, gr_yid, gr_faceid, Wid, Courantid, Precid, grid_id, ncid, ncid_gr
+		Integer(4) status, face, xid, yid, dim, step, faceid, llid, gr_xid, gr_yid
+		Integer(4) gr_faceid, Wid, Courantid, Precid, grid_id, ncid, ncid_gr, id, ier
 		character(40) istring, istring1
 		character(80) path1, path2, path3
 
 		this.speedup = speedup;  dim = grid.dim;  step = grid.step - 1
+		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
+		this.id = id
 
 		write(istring, *) 2*dim
 		write(istring1, *) 2*step
@@ -85,39 +88,23 @@ module printer_ncdf
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-
-		! status = nf90_create (path = path2, cmode = IOR(NF90_NETCDF4,IOR(NF90_MPIIO,NF90_CLOBBER)),&
-		!  comm = MPI_COMM_WORLD, info = MPI_INFO_NULL, ncid = ncid_gr)
-		! if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
-		! status = nf90_def_dim (ncid_gr, "ll", 2, llid)
-		! status = nf90_def_dim (ncid_gr, "x", 2*dim, gr_xid)
-		! status = nf90_def_dim (ncid_gr, "y", 2*dim, gr_yid)
-		! status = nf90_def_dim (ncid_gr, "face", 6, gr_faceid)
-		! if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
-		! status = nf90_def_var (ncid_gr, "latlon", NF90_DOUBLE, (/ llid, gr_xid, gr_yid, gr_faceid/), grid_id)
-		! if(status /= nf90_NoErr) print *, nf90_strerror(status)
-		! status = nf90_enddef (ncid_gr)
-		! if(status /= nf90_NoErr) print *, nf90_strerror(status)
-
 		this.Courantid = Courantid;  this.Wid = Wid; this.grid_id = grid_id; this.ncid = ncid; this.ncid_gr = ncid_gr
 
-
-			open(42,file=path3)
+		if(id==0) then
 			open(40,file=path2)
-
+			open(42,file=path3)
+		end if
 
 	end Subroutine
 
 
 
-	Subroutine to_print(this, var, diagn, time, id)
+	Subroutine to_print(this, var, diagn, time)
 
 		Class(printer) :: this
 		Class(f_var) :: var
 		Class(diagnostic) :: diagn
-		Integer(4), intent(in) :: time, id
+		Integer(4), intent(in) :: time
 
 		Integer(4) x, y, face, ier
 		Integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize, Wid, Courantid
@@ -133,11 +120,11 @@ module printer_ncdf
 		do face = 1, 6
 			status = nf90_put_var(this.ncid, Wid, real(var.h_height(ns_x:nf_x, ns_y:nf_y, face),4),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
-			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
 
 			status = nf90_put_var(this.ncid, Courantid, real(diagn.CFL(ns_x:nf_x, ns_y:nf_y, face),4),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
-			if(status /= nf90_NoErr) print *, nf90_strerror(status) , id
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
 		end do
 	end Subroutine
 
@@ -149,28 +136,20 @@ module printer_ncdf
 		Integer(4) x, y, face, ier, dim, status
 
 		dim = grid.dim
-
-		! status = nf90_put_var(this.ncid_gr, this.grid_id, grid.latlon_c(1:2, 1:2*dim, 1:2*dim, 1:6),&
-		!  start = (/1, 1, 1, 1/), count = (/2, 2*dim, 2*dim, 6/))
-		! if(status /= nf90_NoErr) print *, nf90_strerror(status)
-		! status = nf90_close (this.ncid_gr)
-
-		write(42, *),real(grid.square(1:2*dim, 1:2*dim),4)
-		close(42)
-
-		write(40, *),grid.latlon_c(1:2,1:2*dim, 1:2*dim,1:6)
-		close(40)
+		if(this.id==0) then
+			write(40, *),grid.latlon_c(1:2,1:2*dim, 1:2*dim,1:6)
+			write(42, *),real(grid.square(1:2*dim, 1:2*dim),4)
+			close(40)
+			close(42)
+		end if
 	end Subroutine
-
 
 
 	Subroutine deinit(this)
 		Class(printer) :: this
-		Integer(4) status
-
+		Integer(4) :: status
 		status = nf90_close (this.ncid)
 	end Subroutine
-
 
 
 end module

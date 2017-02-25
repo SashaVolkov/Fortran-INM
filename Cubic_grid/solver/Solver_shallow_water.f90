@@ -59,18 +59,18 @@ implicit none
 	call msg.init(grid_type, paral)
 	call geom.init(r_sphere, pi)
 	call grid.init(geom, paral, g, dt, rescale, grid_type)
-	call metr.init(grid, omega_cor)
-	call var.init(metr, height)
-	call var_prev.init(metr, height)
+	call metr.init(grid)
+	call var.init(metr, height, omega_cor)
+	call var_prev.init(metr, height, omega_cor)
 	call var_prev.start_conditions(metr, geom)
 	call diagn.init(var_prev, Tmax, id)
 	call meth.init(var_prev, space_step)
 	call inter.init(metr, 6)
-
-
 	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
-	call printer_nc.to_print(var_prev, diagn, 0, id)
-	if(id == 0) call printer_nc.print_grid(grid)
+
+
+	call printer_nc.to_print(var_prev, diagn, 0)
+	call printer_nc.print_grid(grid)
 
 
 	do time = 1, Tmax
@@ -79,7 +79,7 @@ implicit none
 		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
 				call diagn.Courant(metr, var_prev, time)
-				call printer_nc.to_print(var_prev, diagn, time, id)
+				call printer_nc.to_print(var_prev, diagn, time)
 			end if
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()

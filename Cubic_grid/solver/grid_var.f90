@@ -109,7 +109,6 @@ CONTAINS
 
 	Subroutine deinit(this)
 		Class(g_var) :: this
-		if (Allocated(this.f_cor)) Deallocate(this.f_cor)
 		if (Allocated(this.latlon_c)) Deallocate(this.latlon_c)
 		if (Allocated(this.cube_coord_c)) Deallocate(this.cube_coord_c)
 		if (Allocated(this.latlon)) Deallocate(this.latlon)

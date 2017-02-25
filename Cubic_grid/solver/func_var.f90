@@ -19,6 +19,7 @@ implicit none
 		Real(8), Allocatable :: v_con(:, :, :)
 		Real(8), Allocatable :: lon_vel(:, :, :)
 		Real(8), Allocatable :: lat_vel(:, :, :)
+		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8) height,  g, dt, delta_on_cube
 		Integer(4) step, dim, interp_factor(1:4), Neighbours_face(6, 4), grid_type, rescale
 		Integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
@@ -43,12 +44,12 @@ CONTAINS
 
 
 
-	Subroutine init(this, metr, height)
+	Subroutine init(this, metr, height, omega_cor)
 
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Real(8), intent(in) :: height
-		Integer(4) :: i
+		Real(8), intent(in) :: height, omega_cor
+		Integer(4) :: i, x, y, face
 
 		this.ns_x = metr.ns_xy(1);  this.ns_y = metr.ns_xy(2)
 		this.nf_x = metr.nf_xy(1);  this.nf_y = metr.nf_xy(2)
@@ -72,6 +73,14 @@ CONTAINS
 
 		call this.alloc()
 
+		do face = 1, 6
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
+						this.f_cor(x, y, face)= 2*omega_cor*dsin(metr.latlon_c(1, x, y, face)) ! function of latitude
+				end do
+			end do
+		end do
+
 	end Subroutine
 
 
@@ -88,6 +97,7 @@ CONTAINS
 		Allocate(this.v_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.lon_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.lat_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.f_cor(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 
 	end Subroutine
 
@@ -104,6 +114,7 @@ CONTAINS
 		if (Allocated(this.v_con)) Deallocate(this.v_con)
 		if (Allocated(this.lon_vel)) Deallocate(this.lon_vel)
 		if (Allocated(this.lat_vel)) Deallocate(this.lat_vel)
+		if (Allocated(this.f_cor)) Deallocate(this.f_cor)
 
 	end Subroutine
 
@@ -141,25 +152,25 @@ CONTAINS
 
 		do face = 1, 6
 
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-					this.h_height(x, y, face) = 0d0
-					this.u_cov(x, y, face) = 0d0
-					this.v_cov(x, y, face) = 0d0
-				end do
+		do y = this.first_y, this.last_y
+			do x = this.first_x, this.last_x
+				this.h_height(x, y, face) = 0d0
+				this.u_cov(x, y, face) = 0d0
+				this.v_cov(x, y, face) = 0d0
 			end do
+		end do
 
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-					r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
+		do y = this.first_y, this.last_y
+			do x = this.first_x, this.last_x
+				r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
 ! 					if ( r < R_BIG ) then
 ! 						this.h_height(x, y, face) = (h0*0.5)*(1d0 + dcos(geom.pi * r/R_BIG))
 ! 					else
 ! 						this.h_height(x, y, face) = 0d0
 ! 					end if
-					this.h_height(x, y, face) = 10.0*exp(-((r/R_BIG)**2)*4.0) + 1d0
-				end do
+				this.h_height(x, y, face) = 10.0*exp(-((r/R_BIG)**2)*4.0) + 1d0
 			end do
+		end do
 
 
 			! do y = this.first_y, this.last_y
