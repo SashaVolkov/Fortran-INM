@@ -35,9 +35,9 @@ implicit none
 
 
 !definition
-	r_sphere= 6371220d0;  g = 980616d-5
+	r_sphere= 6371220d0
 	pi = 314159265358979323846d-20;  omega_cor = 7292d-8
-	height = 100d0;  dt = 30d0;  flag = 0
+	height = 100d0;  flag = 0
 ! r_sphere= 1d0
 	! rescale  0-simple, 1-tan, 2-pow(4/3)q
 	! grid_type  0 - conformal, 1 - equiangular
@@ -58,14 +58,14 @@ implicit none
 	call paral.init(dim, space_step+1, np, id) ! Yep, that's right step+1 is correct, interpolation and transformation matrix need more than step points
 	call msg.init(grid_type, paral)
 	call geom.init(r_sphere, pi)
-	call grid.init(geom, paral, g, dt, rescale, grid_type)
+	call grid.init(geom, paral, rescale, grid_type)
 	call metr.init(grid)
-	call var.init(metr, height, omega_cor)
-	call var_prev.init(metr, height, omega_cor)
-	call var_prev.start_conditions(metr, geom)
+	call var.init(metr, height, dt)
+	call var_prev.init(metr, height, dt)
+	call var_prev.start_conditions(metr, geom, omega_cor)
 	call diagn.init(var_prev, Tmax, id)
 	call meth.init(var_prev, space_step)
-	call inter.init(metr, 6)
+	call inter.init(metr, 4)
 	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
 
 
@@ -85,7 +85,6 @@ implicit none
 				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
 			end if
-			! if(var_prev.h_height(2*dim, 2*dim, 6) > 10*height) exit
 	end do
 
 

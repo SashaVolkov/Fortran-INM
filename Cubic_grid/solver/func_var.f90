@@ -20,7 +20,7 @@ implicit none
 		Real(8), Allocatable :: lon_vel(:, :, :)
 		Real(8), Allocatable :: lat_vel(:, :, :)
 		Real(8), Allocatable :: f_cor(:, :, :)
-		Real(8) height,  g, dt, delta_on_cube
+		Real(8) height,  g, dt, delta_on_cube, u0
 		Integer(4) step, dim, interp_factor(1:4), Neighbours_face(6, 4), grid_type, rescale
 		Integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
@@ -44,12 +44,14 @@ CONTAINS
 
 
 
-	Subroutine init(this, metr, height, omega_cor)
+	Subroutine init(this, metr, height, dt)
 
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Real(8), intent(in) :: height, omega_cor
+		Real(8), intent(in) :: height, dt
 		Integer(4) :: i, x, y, face
+
+		this.g = 980616d-5;  this.dt = dt
 
 		this.ns_x = metr.ns_xy(1);  this.ns_y = metr.ns_xy(2)
 		this.nf_x = metr.nf_xy(1);  this.nf_y = metr.nf_xy(2)
@@ -57,13 +59,13 @@ CONTAINS
 		this.first_x = metr.first_x;  this.first_y = metr.first_y
 		this.last_x = metr.last_x;  this.last_y = metr.last_y
 
-		this.step = metr.step;  this.height = height;  this.dim = metr.dim
+		this.step = metr.step;  this.height = 2940d0/this.g;  this.dim = metr.dim
 		this.Neighbours_face = metr.Neighbours_face;  this.grid_type = metr.grid_type
 
 		this.snd_xy = metr.snd_xy;  this.rcv_xy = metr.rcv_xy
 		this.interp_factor(:) = 0;  this.rescale = metr.rescale
 		this.delta_on_cube = metr.delta_on_cube
-		this.dt = metr.dt;  this.g = metr.g
+
 
 		do i = 1, 4
 			if(this.grid_type == 1) then
@@ -72,14 +74,6 @@ CONTAINS
 		end do
 
 		call this.alloc()
-
-		do face = 1, 6
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-						this.f_cor(x, y, face)= 2*omega_cor*dsin(metr.latlon_c(1, x, y, face)) ! function of latitude
-				end do
-			end do
-		end do
 
 	end Subroutine
 
@@ -137,60 +131,46 @@ CONTAINS
 
 
 
-	Subroutine start_conditions(this, metr, geom)
+	Subroutine start_conditions(this, metr, geom, omega_cor)
 
 		Class(f_var) :: this
 		Class(metric) :: metr
 		Class(geometry) :: geom
+		Real(8), intent(in) :: omega_cor
 		Integer(4) dim, x, y, face
-		Real(8) h0, r, R_BIG, zero(2), pi
+		Real(8) gh0, r, R_BIG, zero(2), pi, u0, alpha, lon, lat
 
 		pi = 314159265358979323846d-20
 
-		h0 = this.height*1d-1;  dim = this.dim; R_BIG = geom.radius/3d0
+		dim = this.dim; R_BIG = geom.radius/3d0
 		zero(:) = (/0d0, 0d-1*pi/)
+		this.h_height = 0d0
+		this.u_cov = 0d0;  this.v_cov = 0d0;  this.lon_vel = 0d0
+		this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
+
+		u0 = 2d0*pi*geom.radius/(12d0*24d0*60d0*60d0);  alpha = 0d0
+		gh0 = 2940d0
 
 		do face = 1, 6
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
 
-		do y = this.first_y, this.last_y
-			do x = this.first_x, this.last_x
-				this.h_height(x, y, face) = 0d0
-				this.u_cov(x, y, face) = 0d0
-				this.v_cov(x, y, face) = 0d0
+lat = metr.latlon_c(1,x,y,face)*pi/180d0
+lon = metr.latlon_c(2,x,y,face)*pi/180d0
+
+this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
+this.lat_vel(x, y, face) = u0*(dsin(lon)*dsin(alpha))
+this.h_height(x, y, face) = (gh0 - (geom.radius*omega_cor*u0 + (u0**2)/2d0)*((-dcos(lon)*dcos(lat)*dsin(alpha) + dsin(lat)*dcos(alpha))**2))/this.g
+! this.f_cor(x, y, face)= (2d0*omega_cor)*(-dcos(lon)*dcos(lat)*dsin(alpha) + dsin(lat)*dcos(alpha))
+
+
+this.f_cor(x, y, face)= 2*omega_cor*dsin(lat) ! function of latitude
+				end do
 			end do
 		end do
 
-		do y = this.first_y, this.last_y
-			do x = this.first_x, this.last_x
-				r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
-! 					if ( r < R_BIG ) then
-! 						this.h_height(x, y, face) = (h0*0.5)*(1d0 + dcos(geom.pi * r/R_BIG))
-! 					else
-! 						this.h_height(x, y, face) = 0d0
-! 					end if
-				this.h_height(x, y, face) = 10.0*exp(-((r/R_BIG)**2)*4.0) + 1d0
-			end do
-		end do
-
-
-			! do y = this.first_y, this.last_y
-			! 	do x = this.first_x, this.last_x
-			! 		r = geom.dist((/0d0,0d0/),metr.latlon_c(:,x,y,face))
-			! 		this.h_height(x, y, face) = h0*exp(-((10d0*r/geom.radius)**2))
-			! 	end do
-			! end do
-
-! 			do y = this.first_y, this.last_y
-! 				do x = this.first_x, this.last_x
-! 					this.lon_vel(x,y,face) = 100d0
-! 				end do
-! 			end do
-
-		end do
-
-! 		call this.Velocity_from_spherical(metr)
-! 		call this.con_to_cov(metr)
-
+		call this.Velocity_from_spherical(metr)
+		call this.con_to_cov(metr)
 		this.h_starter(:,:,:) = this.h_height(:,:,:)
 
 	end Subroutine
@@ -216,14 +196,16 @@ CONTAINS
 	Subroutine cov_to_con(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
+		Real(8) :: G_inv(2,2)
 		Integer(4) :: x, y, face
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 
-this.u_con(x, y, face) = metr.G_inverse(1, 1, x, y) * this.u_cov(x, y, face) + metr.G_inverse(1, 2, x, y) * this.v_cov(x, y, face)
-this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + metr.G_inverse(2, 1, x, y) * this.u_cov(x, y, face)
+G_inv(:,:) = metr.G_inverse(:,:, x, y)
+this.u_con(x, y, face) = G_inv(1, 1) * this.u_cov(x, y, face) + G_inv(1, 2) * this.v_cov(x, y, face)
+this.v_con(x, y, face) = G_inv(2, 2) * this.v_cov(x, y, face) + G_inv(2, 1) * this.u_cov(x, y, face)
 
 				end do
 			end do
@@ -236,14 +218,16 @@ this.v_con(x, y, face) = metr.G_inverse(2, 2, x, y) * this.v_cov(x, y, face) + m
 	Subroutine con_to_cov(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
+		Real(8) :: G(2,2)
 		Integer(4) :: x, y, face
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 
-this.u_cov(x, y, face) = metr.G_tensor(1, 1, x, y) * this.u_con(x, y, face) + metr.G_tensor(1, 2, x, y) * this.v_con(x, y, face)
-this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + metr.G_tensor(2, 1, x, y) * this.u_con(x, y, face)
+G(:,:) = metr.G_tensor(:,:, x, y)
+this.u_cov(x, y, face) = G(1, 1) * this.u_con(x, y, face) + G(1, 2) * this.v_con(x, y, face)
+this.v_cov(x, y, face) = G(2, 2) * this.v_con(x, y, face) + G(2, 1) * this.u_con(x, y, face)
 
 				end do
 			end do
@@ -256,15 +240,16 @@ this.v_cov(x, y, face) = metr.G_tensor(2, 2, x, y) * this.v_con(x, y, face) + me
 	Subroutine Velocity_to_spherical(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Real(8) :: vel_x_contr, vel_y_contr
+		Real(8) :: vel_x_contr, vel_y_contr, A(2,2)
 		Integer(4) :: x, y, face
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 
-this.lon_vel(x, y, face) = metr.Tr_to_sph(1, 1, x, y, face) * this.u_con(x, y, face) + metr.Tr_to_sph(1, 2, x, y, face) * this.v_con(x, y, face)
-this.lat_vel(x, y, face) = metr.Tr_to_sph(2, 2, x, y, face) * this.v_con(x, y, face) + metr.Tr_to_sph(2, 1, x, y, face) * this.u_con(x, y, face)
+A(:,:) = metr.Tr_to_sph(:,:, x, y, face)
+this.lon_vel(x, y, face) = A(1, 1) * this.u_con(x, y, face) + A(1, 2) * this.v_con(x, y, face)
+this.lat_vel(x, y, face) = A(2, 2) * this.v_con(x, y, face) + A(2, 1) * this.u_con(x, y, face)
 
 				end do
 			end do
@@ -277,14 +262,16 @@ this.lat_vel(x, y, face) = metr.Tr_to_sph(2, 2, x, y, face) * this.v_con(x, y, f
 	Subroutine Velocity_from_spherical(this, metr)
 		Class(f_var) :: this
 		Class(metric) :: metr
+		Real(8) :: A_inv(2,2)
 		Integer(4) :: x, y, face
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 
-this.u_con(x, y, face) = metr.Tr_to_cube(1, 1, x, y, face) * this.lon_vel(x, y, face) + metr.Tr_to_cube(1, 2, x, y, face) * this.lat_vel(x, y, face)
-this.v_con(x, y, face) = metr.Tr_to_cube(2, 2, x, y, face) * this.lat_vel(x, y, face) + metr.Tr_to_cube(2, 1, x, y, face) * this.lon_vel(x, y, face)
+A_inv(:,:) = metr.Tr_to_cube(:,:, x, y, face)
+this.u_con(x, y, face) = A_inv(1, 1) * this.lon_vel(x, y, face) + A_inv(1, 2) * this.lat_vel(x, y, face)
+this.v_con(x, y, face) = A_inv(2, 2) * this.lat_vel(x, y, face) + A_inv(2, 1) * this.lon_vel(x, y, face)
 
 				end do
 			end do

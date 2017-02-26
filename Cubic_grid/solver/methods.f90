@@ -203,7 +203,7 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg)
 	this.kh(:, :, :, 0) = var_pr.h_height(:, :, :)
 
 		do iteration = 1, 4
-			call this.FRunge(metr, var, iteration)
+			call this.FRunge(metr, var_pr, iteration)
 			var_pr.u_cov(:, :, :) = this.ku_cov(:, :, :, iteration)
 			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
@@ -285,9 +285,9 @@ Subroutine FRunge(this, metr, var, i)
 				grad_uu = d.partial_c(temp2, dh, step)
 				grad_vv = d.partial_c(temp2, dh, step)
 
-				this.ku_cov(x, y, face, i) = - dt*(g*grad_Fx + 5d-1*(grad_uu + grad_vv)) + metr.G_sqr(x, y)*this.kv_con(x, y, face, i-1)*(var.f_cor(x, y, face) + vorticity)*dt
-				this.kv_cov(x, y, face, i) = - dt*(g*grad_Fy + 5d-1*(grad_uu + grad_vv)) - metr.G_sqr(x, y)*this.ku_con(x, y, face, i-1)*(var.f_cor(x, y, face) + vorticity)*dt
-				this.kh(x, y, face, i) = - dt*(height + this.kh(x, y, face, i-1))*div - this.ku_con(x, y, face, i-1)*dt*g*grad_Fx - this.kv_con(x, y, face, i-1)*dt*g*grad_Fy
+				this.ku_cov(x, y, face, i) = - dt*g*grad_Fx + metr.G_sqr(x, y)*this.kv_con(x, y, face, i-1)*(var.f_cor(x, y, face) + vorticity)*dt - dt*5d-1*(grad_uu + grad_vv)
+				this.kv_cov(x, y, face, i) = - dt*g*grad_Fy - metr.G_sqr(x, y)*this.ku_con(x, y, face, i-1)*(var.f_cor(x, y, face) + vorticity)*dt - dt*5d-1*(grad_uu + grad_vv)
+				this.kh(x, y, face, i) = - dt*(this.kh(x, y, face, i-1))*div - this.ku_con(x, y, face, i-1)*dt*g*grad_Fx - this.kv_con(x, y, face, i-1)*dt*g*grad_Fy
 
 			end do
 		end do

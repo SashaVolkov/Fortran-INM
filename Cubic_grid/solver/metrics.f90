@@ -18,7 +18,7 @@ implicit none
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: cube_coord_c(:, :, :)
 
-		Real(8) :: r_sphere, delta_on_cube, dt, g
+		Real(8) :: r_sphere, delta_on_cube
 		Integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 		Integer(4) first_x, first_y, last_x, last_y, grid_type, Neighbours_face(6, 4)
 
@@ -51,8 +51,8 @@ CONTAINS
 		Integer(4) :: face, x, y
 
 
-		this.dim = grid.dim;  this.step = grid.step;  this.g = grid.g
-		this.delta_on_cube = grid.delta_on_cube;  this.dt = grid.dt
+		this.dim = grid.dim;  this.step = grid.step
+		this.delta_on_cube = grid.delta_on_cube
 
 		this.ns_xy(:) = grid.ns_xy(:);  this.nf_xy(:) = grid.nf_xy(:);
 		this.first_x = grid.first_x;  this.first_y = grid.first_y
