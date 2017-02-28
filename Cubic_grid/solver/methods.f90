@@ -92,11 +92,11 @@ Subroutine Euler(this, var, var_pr, metr, inter, msg)
 
 				temp1(:) = var_pr.h_height(x-step:x+step, y, face)
 				partial = d.partial_c(temp1, dh, step)
-				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial
+				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial + dt*metr.G_sqr(x, y)*var_pr.v_con(x, y, face)*var_pr.f_cor(x, y, face)
 
 				temp1(:) = var_pr.h_height(x, y-step:y+step, face)
 				partial = d.partial_c(temp1, dh, step)
-				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial
+				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial - dt*metr.G_sqr(x, y)*var_pr.u_con(x, y, face)*var_pr.f_cor(x, y, face)
 
 				temp1(:) = var_pr.u_con(x-step:x+step, y, face)
 				temp2(:) = var_pr.v_con(x, y-step:y+step, face)
@@ -266,28 +266,30 @@ Subroutine FRunge(this, metr, var, i)
 		do y = ns_y, nf_y
 			do x = ns_x, nf_x
 
-				temp1(:) = this.kh(x-step:x+step, y, face, 0) + coef(i-1)*this.kh(x-step:x+step, y, face, i-1)
-				grad_Fx = d.partial_c(temp1, dh, step)
+temp1(:) = this.kh(x-step:x+step, y, face, 0) + coef(i-1)*this.kh(x-step:x+step, y, face, i-1)
+grad_Fx = d.partial_c(temp1, dh, step)
 
-				temp2(:) = this.kh(x, y-step:y+step, face, 0) + coef(i-1)*this.kh(x, y-step:y+step, face, i-1)
-				grad_Fy = d.partial_c(temp2, dh, step)
+temp2(:) = this.kh(x, y-step:y+step, face, 0) + coef(i-1)*this.kh(x, y-step:y+step, face, i-1)
+grad_Fy = d.partial_c(temp2, dh, step)
 
-				temp1(:) = this.ku_cov(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_cov(x-step:x+step, y, face, i-1)
-				temp2(:) = this.kv_cov(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_cov(x, y-step:y+step, face, i-1)
-				vorticity = d.vorticity(metr, temp1, temp2, dh, x, y, step)
+! temp1(:) = this.ku_cov(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_cov(x-step:x+step, y, face, i-1)
+! temp2(:) = this.kv_cov(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_cov(x, y-step:y+step, face, i-1)
+vorticity = 0d0 ! d.vorticity(metr, temp1, temp2, dh, x, y, step)
 
-				temp1(:) = this.ku_con(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y, face, i-1)
-				temp2(:) = this.kv_con(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x, y-step:y+step, face, i-1)
-				div = d.div(metr, temp1, temp2, dh, x, y, step)
+temp1(:) = this.ku_con(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y, face, i-1)
+temp2(:) = this.kv_con(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x, y-step:y+step, face, i-1)
+div = d.div(metr, temp1, temp2, dh, x, y, step)
 
-				temp1(:) = (this.ku_con(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y, face, i-1))*(this.ku_cov(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_cov(x-step:x+step, y, face, i-1))
-				temp2(:) = (this.kv_con(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x, y-step:y+step, face, i-1))*(this.kv_cov(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_cov(x, y-step:y+step, face, i-1))
-				grad_uu = d.partial_c(temp2, dh, step)
-				grad_vv = d.partial_c(temp2, dh, step)
+! temp1(:) = (this.ku_con(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y, face, i-1))*(this.ku_cov(x-step:x+step, y, face, 0) + coef(i-1)*this.ku_cov(x-step:x+step, y, face, i-1))
+! temp2(:) = (this.kv_con(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x, y-step:y+step, face, i-1))*(this.kv_cov(x, y-step:y+step, face, 0) + coef(i-1)*this.kv_cov(x, y-step:y+step, face, i-1))
+! grad_uu = d.partial_c(temp2, dh, step)
+! grad_vv = d.partial_c(temp2, dh, step)
 
-				this.ku_cov(x, y, face, i) = - dt*g*grad_Fx + metr.G_sqr(x, y)*this.kv_con(x, y, face, i-1)*(var.f_cor(x, y, face) + vorticity)*dt - dt*5d-1*(grad_uu + grad_vv)
-				this.kv_cov(x, y, face, i) = - dt*g*grad_Fy - metr.G_sqr(x, y)*this.ku_con(x, y, face, i-1)*(var.f_cor(x, y, face) + vorticity)*dt - dt*5d-1*(grad_uu + grad_vv)
-				this.kh(x, y, face, i) = - dt*(this.kh(x, y, face, i-1))*div - this.ku_con(x, y, face, i-1)*dt*g*grad_Fx - this.kv_con(x, y, face, i-1)*dt*g*grad_Fy
+this.ku_cov(x, y, face, i) = - dt*g*grad_Fx + dt*metr.G_sqr(x, y)*this.kv_con(x, y, face, 0)*(var.f_cor(x, y, face) + vorticity) ! - dt*5d-1*(grad_uu + grad_vv)
+this.kv_cov(x, y, face, i) = - dt*g*grad_Fy - dt*metr.G_sqr(x, y)*this.ku_con(x, y, face, 0)*(var.f_cor(x, y, face) + vorticity) ! - dt*5d-1*(grad_uu + grad_vv)
+this.kh(x, y, face, i) = - dt*(height)*div ! - this.ku_con(x, y, face, 0)*dt*g*grad_Fx - this.kv_con(x, y, face, 0)*dt*g*grad_Fy
+
+		print *, div
 
 			end do
 		end do

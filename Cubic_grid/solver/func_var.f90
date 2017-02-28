@@ -32,7 +32,7 @@ implicit none
 		Procedure, Public :: start_conditions => start_conditions
 		Procedure, Public :: interpolate => interpolate
 		Procedure, Private :: Velocity_from_spherical => Velocity_from_spherical
-		Procedure, Private :: Velocity_to_spherical => Velocity_to_spherical
+		Procedure, Public :: Velocity_to_spherical => Velocity_to_spherical
 		Procedure, Private :: Velocity_from_spherical_border => Velocity_from_spherical_border
 		Procedure, Private :: Velocity_to_spherical_border => Velocity_to_spherical_border
 		Procedure, Public :: cov_to_con => cov_to_con
@@ -59,7 +59,7 @@ CONTAINS
 		this.first_x = metr.first_x;  this.first_y = metr.first_y
 		this.last_x = metr.last_x;  this.last_y = metr.last_y
 
-		this.step = metr.step;  this.height = 2940d0/this.g;  this.dim = metr.dim
+		this.step = metr.step;  this.height = 294d2/this.g;  this.dim = metr.dim
 		this.Neighbours_face = metr.Neighbours_face;  this.grid_type = metr.grid_type
 
 		this.snd_xy = metr.snd_xy;  this.rcv_xy = metr.rcv_xy
@@ -148,23 +148,27 @@ CONTAINS
 		this.u_cov = 0d0;  this.v_cov = 0d0;  this.lon_vel = 0d0
 		this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
 
-		u0 = 2d0*pi*geom.radius/(12d0*24d0*60d0*60d0);  alpha = 0d0
-		gh0 = 2940d0
+		u0 = 2d0*pi*geom.radius/(12d0*24d0*60d0*60d0);  alpha = 0d0 !-pi/4d0
+		gh0 = 294d2
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
 
-lat = metr.latlon_c(1,x,y,face)*pi/180d0
-lon = metr.latlon_c(2,x,y,face)*pi/180d0
+lat = metr.latlon_c(1,x,y,face)
+lon = metr.latlon_c(2,x,y,face)
 
-this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
-this.lat_vel(x, y, face) = u0*(dsin(lon)*dsin(alpha))
-this.h_height(x, y, face) = (gh0 - (geom.radius*omega_cor*u0 + (u0**2)/2d0)*((-dcos(lon)*dcos(lat)*dsin(alpha) + dsin(lat)*dcos(alpha))**2))/this.g
-! this.f_cor(x, y, face)= (2d0*omega_cor)*(-dcos(lon)*dcos(lat)*dsin(alpha) + dsin(lat)*dcos(alpha))
+this.lon_vel(x, y, face) = u0
+this.lat_vel(x, y, face) = 0d0
+this.h_height(x, y, face) = geom.radius*2d0*omega_cor*u0 *(dcos(lat))/this.g
+this.f_cor(x, y, face)= (2d0*omega_cor)*dsin(lat)
 
 
-this.f_cor(x, y, face)= 2*omega_cor*dsin(lat) ! function of latitude
+! r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
+! this.h_height(x, y, face) = 10.0*exp(-((r/R_BIG)**2)*4.0)
+
+! this.f_cor(x, y, face)= -2*omega_cor*dsin(lat) ! function of latitude
+! if ( face == 2 .and. x == dim ) print *, this.f_cor(x, y, face)
 				end do
 			end do
 		end do
@@ -187,6 +191,8 @@ this.f_cor(x, y, face)= 2*omega_cor*dsin(lat) ! function of latitude
 		call i.Lagrange(this.lat_vel, this.interp_factor)
 		call i.Lagrange(this.lon_vel, this.interp_factor)
 		call this.Velocity_from_spherical_border(metr)
+! 		this.lat_vel = 0d0
+! 		call this.Velocity_from_spherical(metr)
 		call this.cov_to_con(metr)
 
 	end Subroutine

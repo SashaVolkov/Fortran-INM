@@ -13,7 +13,7 @@ module printer_ncdf
 
 	Type printer
 
-		Integer(4) :: Wid, Courantid, grid_id, ncid, ncid_gr, speedup, id
+		Integer(4) :: Wid, Courantid, grid_id, ncid, ncid_gr, speedup, id, Lonid, Latid
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -33,7 +33,7 @@ module printer_ncdf
 		Integer(4), intent(in) :: Tmax, speedup, rescale, grid_type
 		Integer(4), intent(out) :: time
 
-		Integer(4) status, face, xid, yid, dim, step, faceid, llid, gr_xid, gr_yid
+		Integer(4) status, face, xid, yid, dim, step, faceid, llid, gr_xid, gr_yid, Lonid, Latid
 		Integer(4) gr_faceid, Wid, Courantid, Precid, grid_id, ncid, ncid_gr, id, ier
 		character(40) istring, istring1
 		character(80) path1, path2, path3
@@ -78,6 +78,16 @@ module printer_ncdf
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
+		status = nf90_def_var (ncid, "Lon_vel", NF90_FLOAT, (/ xid, yid, faceid, time/), Lonid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_def_var (ncid, "Lat_vel", NF90_FLOAT, (/ xid, yid, faceid, time/), Latid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
 		status = nf90_def_var (ncid, "CFL", NF90_FLOAT, (/ xid, yid, faceid, time/), Courantid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
@@ -89,6 +99,7 @@ module printer_ncdf
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
 		this.Courantid = Courantid;  this.Wid = Wid; this.grid_id = grid_id; this.ncid = ncid; this.ncid_gr = ncid_gr
+		this.Lonid = Lonid;  this.Latid = Latid
 
 		if(id==0) then
 			open(40,file=path2)
@@ -107,9 +118,9 @@ module printer_ncdf
 		Integer(4), intent(in) :: time
 
 		Integer(4) x, y, face, ier
-		Integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize, Wid, Courantid
+		Integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize, Wid, Courantid, Lonid, Latid
 
-		Courantid = this.Courantid;  Wid = this.Wid
+		Courantid = this.Courantid;  Wid = this.Wid; Latid = this.Latid; Lonid = this.Lonid
 
 		ns_y = var.ns_y;  nf_y = var.nf_y
 		ns_x = var.ns_x;  nf_x = var.nf_x
@@ -119,6 +130,14 @@ module printer_ncdf
 
 		do face = 1, 6
 			status = nf90_put_var(this.ncid, Wid, real(var.h_height(ns_x:nf_x, ns_y:nf_y, face),4),&
+			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
+
+			status = nf90_put_var(this.ncid, Lonid, real(var.lon_vel(ns_x:nf_x, ns_y:nf_y, face),4),&
+			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
+
+			status = nf90_put_var(this.ncid, Latid, real(var.lat_vel(ns_x:nf_x, ns_y:nf_y, face),4),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
 

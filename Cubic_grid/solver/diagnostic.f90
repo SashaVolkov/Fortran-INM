@@ -126,8 +126,7 @@ CONTAINS
 			do y = func.ns_y, func.nf_y
 				do x = func.ns_x, func.nf_x
 
-					this.CFL(x, y, face) = abs(func.u_con(x, y, face)*this.dt) !+&
-					 ! abs(func.v_con(x, y, face)*metr.G_sqr(x,y)*this.dt/(this.dh))
+					this.CFL(x, y, face) = dsqrt((func.u_con(x, y, face)*metr.G_sqr(x,y)*this.dt/(this.dh))**2 + (func.v_con(x, y, face)*metr.G_sqr(x,y)*this.dt/(this.dh))**2)
 
 				end do
 			end do

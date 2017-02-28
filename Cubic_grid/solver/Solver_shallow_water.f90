@@ -36,7 +36,7 @@ implicit none
 
 !definition
 	r_sphere= 6371220d0
-	pi = 314159265358979323846d-20;  omega_cor = 7292d-8
+	pi = 314159265358979323846d-20;  omega_cor = 7292d-8 !13d-5 ! 
 	height = 100d0;  flag = 0
 ! r_sphere= 1d0
 	! rescale  0-simple, 1-tan, 2-pow(4/3)q
@@ -78,6 +78,7 @@ implicit none
 ! 		call meth.Predictor_corrector(var, var_prev, metr, inter, msg)
 		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
+				call var.Velocity_to_spherical(metr)
 				call diagn.Courant(metr, var_prev, time)
 				call printer_nc.to_print(var_prev, diagn, time)
 			end if
