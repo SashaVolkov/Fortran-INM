@@ -65,7 +65,7 @@ implicit none
 	call var_prev.start_conditions(metr, geom, omega_cor)
 	call diagn.init(var_prev, Tmax, id)
 	call meth.init(var_prev, space_step)
-	call inter.init(metr, 4)
+	call inter.init(metr, 6)
 	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
 
 
@@ -78,7 +78,6 @@ implicit none
 ! 		call meth.Predictor_corrector(var, var_prev, metr, inter, msg)
 		call meth.RungeKutta(var, var_prev, metr, inter, msg)
 			if(mod(time, speedup) == 0) then
-				call var.Velocity_to_spherical(metr)
 				call diagn.Courant(metr, var_prev, time)
 				call printer_nc.to_print(var_prev, diagn, time)
 			end if

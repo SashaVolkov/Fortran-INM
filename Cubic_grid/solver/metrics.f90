@@ -17,6 +17,7 @@ implicit none
 		Real(8), Allocatable :: Tr_to_cube(:, :, :, :, :)
 		Real(8), Allocatable :: latlon_c(:, :, :, :)
 		Real(8), Allocatable :: cube_coord_c(:, :, :)
+		Real(8), Allocatable :: S_cor(:, :, :, :, :)
 
 		Real(8) :: r_sphere, delta_on_cube
 		Integer(4) dim, step, rescale, ns_xy(2), nf_xy(2), snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
@@ -37,6 +38,11 @@ implicit none
 		Procedure, Private :: hem_of_face => hem_of_face
 		Procedure, Private :: partial => partial
 
+		Procedure, Public :: cov_to_con => cov_to_con
+		Procedure, Public :: con_to_cov => con_to_cov
+
+		Procedure, Public :: spherical_to_con => spherical_to_con
+		Procedure, Public :: con_to_spherical => con_to_spherical
 
 	End Type
 
@@ -101,6 +107,7 @@ CONTAINS
 		Allocate(this.Tr_to_cube(2, 2, f_x:l_x , f_y:l_y, 6))
 		Allocate(this.cube_coord_c(2, f:l , f:l))
 		Allocate(this.latlon_c(2, f:l , f:l, 6))
+		Allocate(this.S_cor(2, 2, f:l , f:l, 6))
 
 	end Subroutine
 
@@ -124,7 +131,7 @@ CONTAINS
 
 	Subroutine metric_tensor_equiang(this)   ! Ullrich phd thesis Appendices
 		Class(metric) :: this
-		Real(8) x_1, x_2, g_coef, g_inv_coef
+		Real(8) x_1, x_2, g_coef, g_inv_coef, delta
 		Integer(4) x, y, face
 
 		call this.transf_matrix_equiang()
@@ -135,10 +142,10 @@ CONTAINS
 			x_1 = dtan(this.cube_coord_c(1, x, y))
 			x_2 = dtan(this.cube_coord_c(2, x, y))
 
-			this.rho(x, y) = dsqrt(1d0 + x_1**2 + x_2**2)
-			this.G_sqr(x, y) = (1d0 + x_1**2)*(1d0 + x_2**2)/(this.rho(x, y)**3)
-			g_coef = (1d0 + x_1**2)*(1d0 + x_2**2)/(this.rho(x, y)**4)
-			g_inv_coef = (this.rho(x, y)**2)/((1d0 + x_1**2)*(1d0 + x_2**2))
+			delta = dsqrt(1d0 + x_1**2 + x_2**2)
+			this.G_sqr(x, y) = (1d0 + x_1**2)*(1d0 + x_2**2)/(delta**3)
+			g_coef = (1d0 + x_1**2)*(1d0 + x_2**2)/(delta**4)
+			g_inv_coef = (delta**2)/((1d0 + x_1**2)*(1d0 + x_2**2))
 
 			this.G_tensor(1, 1, x, y) = g_coef * (1d0 + x_1**2)
 			this.G_tensor(1, 2, x, y) = g_coef * (- x_1*x_2)
@@ -159,9 +166,9 @@ CONTAINS
 
 	Subroutine transf_matrix_equiang(this)   ! Ullrich phd thesis Appendix G.4
 		Class(metric) :: this
-		Real(8) x_1, x_2, g_coef, s(6), cos_theta, delta
-		Integer(4) x, y, face
-		s(1) = - 1d0;  s(6) = 1d0
+		Real(8) :: x_1, x_2, g_coef, s(6), cos_theta, delta, omega_cor, f
+		Integer(4) :: x, y, face
+		s(1) = - 1d0;  s(6) = 1d0;  omega_cor = 7292d-8
 
 
 		do face = 2,5
@@ -172,6 +179,8 @@ CONTAINS
 					delta = dsqrt(1d0 + x_1**2 + x_2**2)
 					cos_theta = dcos(this.latlon_c(1, x, y, face))
 
+					f = 2d0*omega_cor*x_2/(delta**2)
+
 					this.Tr_to_cube(1,1,x,y,face) = 1d0
 					this.Tr_to_cube(1,2,x,y,face) = 0d0
 					this.Tr_to_cube(2,1,x,y,face) = x_1*x_2/(1 + x_2**2)
@@ -181,6 +190,11 @@ CONTAINS
 					this.Tr_to_sph(1,2,x,y,face) = 0d0
 					this.Tr_to_sph(2,1,x,y,face) = - x_1*x_2*dsqrt(1d0 + x_1**2)/(delta**2)
 					this.Tr_to_sph(2,2,x,y,face) = ((1d0 + x_2**2)*dsqrt(1d0 + x_1**2))/(delta**2)
+
+					this.S_cor(1,1,x,y,face) = -f*x_1*x_2
+					this.S_cor(1,2,x,y,face) = f*(1 + x_2**2)
+					this.S_cor(2,1,x,y,face) = -f*(1 + x_1**2)
+					this.S_cor(2,2,x,y,face) = f*x_1*x_2
 				end do
 			end do
 		end do
@@ -194,6 +208,7 @@ CONTAINS
 					delta = dsqrt(1d0 + x_1**2 + x_2**2)
 					cos_theta = dcos(this.latlon_c(1, x, y, face))
 
+					f = 2d0*omega_cor*s(face)/(delta**2)
 
 					this.Tr_to_cube(1,1,x,y,face) = -s(face)*x_2/(1d0 + x_1**2)
 					this.Tr_to_cube(1,2,x,y,face) = -s(face)*(delta**2)*x_1/((1d0 + x_1**2)*dsqrt(x_2**2 + x_1**2))
@@ -204,6 +219,11 @@ CONTAINS
 					this.Tr_to_sph(1,2,x,y,face) = s(face)*x_1*(1d0 + x_2**2)/(x_2**2 + x_1**2)
 					this.Tr_to_sph(2,1,x,y,face) = - s(face)*x_1*(1d0 + x_1**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
 					this.Tr_to_sph(2,2,x,y,face) = - s(face)*x_2*(1d0 + x_2**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
+
+					this.S_cor(1,1,x,y,face) = -f*x_1*x_2
+					this.S_cor(1,2,x,y,face) = f*(1 + x_2**2)
+					this.S_cor(2,1,x,y,face) = -f*(1 + x_1**2)
+					this.S_cor(2,2,x,y,face) = f*x_1*x_2
 
 				end do
 			end do
@@ -374,6 +394,65 @@ CONTAINS
 		end do
 
 	end Subroutine
+
+
+
+	Subroutine cov_to_con(this, u_cov, v_cov, u_con, v_con, x, y, face)
+		Class(metric) :: this
+		Integer(4), intent(in) :: x, y, face
+		Real(8), intent(in) :: u_cov, v_cov
+		Real(8), intent(out) :: u_con, v_con
+		Real(8) :: G_inv(2,2)
+
+G_inv(:,:) = this.G_inverse(:,:, x, y)
+u_con = G_inv(1, 1) * u_cov + G_inv(1, 2) * v_cov
+v_con = G_inv(2, 2) * v_cov + G_inv(2, 1) * u_cov
+
+	end Subroutine
+
+
+
+	Subroutine con_to_cov(this, u_con, v_con, u_cov, v_cov, x, y, face)
+		Class(metric) :: this
+		Integer(4), intent(in) :: x, y, face
+		Real(8), intent(in) :: u_con, v_con
+		Real(8), intent(out) :: u_cov, v_cov
+		Real(8) :: G(2,2)
+
+G(:,:) = this.G_tensor(:,:, x, y)
+u_cov = G(1, 1) * u_con + G(1, 2) * v_con
+v_cov = G(2, 2) * v_con + G(2, 1) * u_con
+
+	end Subroutine
+
+
+		Subroutine con_to_spherical(this, u_con, v_con, lon_vel, lat_vel, x, y, face)
+			Class(metric) :: this
+			Integer(4), intent(in) :: x, y, face
+			Real(8), intent(in) :: u_con, v_con
+			Real(8), intent(out) :: lon_vel, lat_vel
+			Real(8) :: vel_x_contr, vel_y_contr, A(2,2)
+
+	A(:,:) = this.Tr_to_sph(:,:, x, y, face)
+	lon_vel = A(1, 1) * u_con + A(1, 2) * v_con
+	lat_vel = A(2, 2) * v_con + A(2, 1) * u_con
+
+		end Subroutine
+
+
+
+		Subroutine spherical_to_con(this, lon_vel, lat_vel, u_con, v_con, x, y, face)
+			Class(metric) :: this
+			Integer(4), intent(in) :: x, y, face
+			Real(8), intent(in) :: lon_vel, lat_vel
+			Real(8), intent(out) :: u_con, v_con
+			Real(8) :: A_inv(2,2)
+
+	A_inv(:,:) = this.Tr_to_cube(:,:, x, y, face)
+	u_con = A_inv(1, 1) * lon_vel + A_inv(1, 2) * lat_vel
+	v_con = A_inv(2, 2) * lat_vel + A_inv(2, 1) * lon_vel
+
+		end Subroutine
 
 
 

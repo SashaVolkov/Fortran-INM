@@ -19,7 +19,6 @@ implicit none
 		Real(8), Allocatable :: v_con(:, :, :)
 		Real(8), Allocatable :: lon_vel(:, :, :)
 		Real(8), Allocatable :: lat_vel(:, :, :)
-		Real(8), Allocatable :: f_cor(:, :, :)
 		Real(8) height,  g, dt, delta_on_cube, u0
 		Integer(4) step, dim, interp_factor(1:4), Neighbours_face(6, 4), grid_type, rescale
 		Integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
@@ -31,12 +30,9 @@ implicit none
 		Procedure, Public :: equal => equal
 		Procedure, Public :: start_conditions => start_conditions
 		Procedure, Public :: interpolate => interpolate
-		Procedure, Private :: Velocity_from_spherical => Velocity_from_spherical
-		Procedure, Public :: Velocity_to_spherical => Velocity_to_spherical
 		Procedure, Private :: Velocity_from_spherical_border => Velocity_from_spherical_border
 		Procedure, Private :: Velocity_to_spherical_border => Velocity_to_spherical_border
-		Procedure, Public :: cov_to_con => cov_to_con
-		Procedure, Public :: con_to_cov => con_to_cov
+
 	End Type
 
 
@@ -85,13 +81,12 @@ CONTAINS
 
 		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.h_starter(this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.u_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.v_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+! 		Allocate(this.u_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+! 		Allocate(this.v_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.u_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.v_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.lon_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.lat_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.f_cor(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 
 	end Subroutine
 
@@ -108,7 +103,6 @@ CONTAINS
 		if (Allocated(this.v_con)) Deallocate(this.v_con)
 		if (Allocated(this.lon_vel)) Deallocate(this.lon_vel)
 		if (Allocated(this.lat_vel)) Deallocate(this.lat_vel)
-		if (Allocated(this.f_cor)) Deallocate(this.f_cor)
 
 	end Subroutine
 
@@ -121,8 +115,8 @@ CONTAINS
 
 
 		var_pr.h_height = var.h_height
-		var_pr.u_cov = var.u_cov
-		var_pr.v_cov = var.v_cov
+		var_pr.u_con = var.u_con
+		var_pr.v_con = var.v_con
 
 		call var_pr.Velocity_to_spherical_border(metr)
 
@@ -138,18 +132,18 @@ CONTAINS
 		Class(geometry) :: geom
 		Real(8), intent(in) :: omega_cor
 		Integer(4) dim, x, y, face
-		Real(8) gh0, r, R_BIG, zero(2), pi, u0, alpha, lon, lat
+		Real(8) gh0, r, R_BIG, zero(2), pi, u0, alpha, lon, lat, f, f_con_y, f_con_x, A_inv(2,2), G(2,2)
 
 		pi = 314159265358979323846d-20
+		gh0 = 294d2
 
 		dim = this.dim; R_BIG = geom.radius/3d0
 		zero(:) = (/0d0, 0d-1*pi/)
-		this.h_height = 0d0
+		this.h_height = gh0/this.g
 		this.u_cov = 0d0;  this.v_cov = 0d0;  this.lon_vel = 0d0
 		this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
 
 		u0 = 2d0*pi*geom.radius/(12d0*24d0*60d0*60d0);  alpha = 0d0 !-pi/4d0
-		gh0 = 294d2
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
@@ -160,8 +154,8 @@ lon = metr.latlon_c(2,x,y,face)
 
 this.lon_vel(x, y, face) = u0
 this.lat_vel(x, y, face) = 0d0
-this.h_height(x, y, face) = geom.radius*2d0*omega_cor*u0 *(dcos(lat))/this.g
-this.f_cor(x, y, face)= (2d0*omega_cor)*dsin(lat)
+this.h_height(x, y, face) = geom.radius*2d0*omega_cor*u0*(dcos(lat))/this.g
+! f = (2d0*omega_cor)*dsin(lat)
 
 
 ! r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
@@ -169,12 +163,12 @@ this.f_cor(x, y, face)= (2d0*omega_cor)*dsin(lat)
 
 ! this.f_cor(x, y, face)= -2*omega_cor*dsin(lat) ! function of latitude
 ! if ( face == 2 .and. x == dim ) print *, this.f_cor(x, y, face)
+call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
 				end do
 			end do
 		end do
 
-		call this.Velocity_from_spherical(metr)
-		call this.con_to_cov(metr)
+! 		call this.con_to_cov(metr)
 		this.h_starter(:,:,:) = this.h_height(:,:,:)
 
 	end Subroutine
@@ -193,97 +187,13 @@ this.f_cor(x, y, face)= (2d0*omega_cor)*dsin(lat)
 		call this.Velocity_from_spherical_border(metr)
 ! 		this.lat_vel = 0d0
 ! 		call this.Velocity_from_spherical(metr)
-		call this.cov_to_con(metr)
+! 		call this.cov_to_con(metr)
 
 	end Subroutine
 
 
 
-	Subroutine cov_to_con(this, metr)
-		Class(f_var) :: this
-		Class(metric) :: metr
-		Real(8) :: G_inv(2,2)
-		Integer(4) :: x, y, face
 
-		do face = 1, 6
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-
-G_inv(:,:) = metr.G_inverse(:,:, x, y)
-this.u_con(x, y, face) = G_inv(1, 1) * this.u_cov(x, y, face) + G_inv(1, 2) * this.v_cov(x, y, face)
-this.v_con(x, y, face) = G_inv(2, 2) * this.v_cov(x, y, face) + G_inv(2, 1) * this.u_cov(x, y, face)
-
-				end do
-			end do
-		end do
-
-	end Subroutine
-
-
-
-	Subroutine con_to_cov(this, metr)
-		Class(f_var) :: this
-		Class(metric) :: metr
-		Real(8) :: G(2,2)
-		Integer(4) :: x, y, face
-
-		do face = 1, 6
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-
-G(:,:) = metr.G_tensor(:,:, x, y)
-this.u_cov(x, y, face) = G(1, 1) * this.u_con(x, y, face) + G(1, 2) * this.v_con(x, y, face)
-this.v_cov(x, y, face) = G(2, 2) * this.v_con(x, y, face) + G(2, 1) * this.u_con(x, y, face)
-
-				end do
-			end do
-		end do
-
-	end Subroutine
-
-
-
-	Subroutine Velocity_to_spherical(this, metr)
-		Class(f_var) :: this
-		Class(metric) :: metr
-		Real(8) :: vel_x_contr, vel_y_contr, A(2,2)
-		Integer(4) :: x, y, face
-
-		do face = 1, 6
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-
-A(:,:) = metr.Tr_to_sph(:,:, x, y, face)
-this.lon_vel(x, y, face) = A(1, 1) * this.u_con(x, y, face) + A(1, 2) * this.v_con(x, y, face)
-this.lat_vel(x, y, face) = A(2, 2) * this.v_con(x, y, face) + A(2, 1) * this.u_con(x, y, face)
-
-				end do
-			end do
-		end do
-
-	end Subroutine
-
-
-
-	Subroutine Velocity_from_spherical(this, metr)
-		Class(f_var) :: this
-		Class(metric) :: metr
-		Real(8) :: A_inv(2,2)
-		Integer(4) :: x, y, face
-
-		do face = 1, 6
-			do y = this.first_y, this.last_y
-				do x = this.first_x, this.last_x
-
-A_inv(:,:) = metr.Tr_to_cube(:,:, x, y, face)
-this.u_con(x, y, face) = A_inv(1, 1) * this.lon_vel(x, y, face) + A_inv(1, 2) * this.lat_vel(x, y, face)
-this.v_con(x, y, face) = A_inv(2, 2) * this.lat_vel(x, y, face) + A_inv(2, 1) * this.lon_vel(x, y, face)
-
-				end do
-			end do
-		end do
-
-	end Subroutine
 
 
 
@@ -301,14 +211,7 @@ this.v_con(x, y, face) = A_inv(2, 2) * this.lat_vel(x, y, face) + A_inv(2, 1) * 
 				do y = this.snd_xy(2, i, 2), y_fin(i)
 					do x = this.snd_xy(2, i, 1), x_fin(i)
 
-					A(:,:) = metr.Tr_to_sph(:,:, x, y, face)
-					G_inv(:,:) = metr.G_inverse(:,:, x, y)
-
-this.u_con(x, y, face) = G_inv(1, 1) * this.u_cov(x, y, face) + G_inv(1, 2) * this.v_cov(x, y, face)
-this.v_con(x, y, face) = G_inv(2, 2) * this.v_cov(x, y, face) + G_inv(2, 1) * this.u_cov(x, y, face)
-
-this.lon_vel(x, y, face) = A(1, 1) * this.u_con(x, y, face) + A(1, 2) * this.v_con(x, y, face)
-this.lat_vel(x, y, face) = A(2, 2) * this.v_con(x, y, face) + A(2, 1) * this.u_con(x, y, face)
+call metr.con_to_spherical(this.u_con(x, y, face), this.v_con(x, y, face), this.lon_vel(x, y, face), this.lat_vel(x, y, face), x, y, face)
 
 					end do
 				end do
@@ -333,14 +236,7 @@ this.lat_vel(x, y, face) = A(2, 2) * this.v_con(x, y, face) + A(2, 1) * this.u_c
 				do y = this.rcv_xy(2, i, 2), y_fin(i)
 					do x = this.rcv_xy(2, i, 1), x_fin(i)
 
-					A_inv(:,:) = metr.Tr_to_cube(:,:, x, y, face)
-					G(:,:) = metr.G_tensor(:,:, x, y)
-
-this.u_con(x, y, face) = A_inv(1, 1) * this.lon_vel(x, y, face) + A_inv(1, 2) * this.lat_vel(x, y, face)
-this.v_con(x, y, face) = A_inv(2, 2) * this.lat_vel(x, y, face) + A_inv(2, 1) * this.lon_vel(x, y, face)
-
-this.u_cov(x, y, face) = G(1, 1) * this.u_con(x, y, face) + G(1, 2) * this.v_con(x, y, face)
-this.v_cov(x, y, face) = G(2, 2) * this.v_con(x, y, face) + G(2, 1) * this.u_con(x, y, face)
+call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
 
 					end do
 				end do
