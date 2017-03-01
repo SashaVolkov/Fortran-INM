@@ -112,14 +112,21 @@ CONTAINS
 
 		Class(f_var) :: var_pr, var
 		Class(metric) :: metr
+		Integer(4) :: face, x, y
 
 
 		var_pr.h_height = var.h_height
 		var_pr.u_con = var.u_con
 		var_pr.v_con = var.v_con
 
-		call var_pr.Velocity_to_spherical_border(metr)
-
+! 		call var_pr.Velocity_to_spherical_border(metr)
+	do face = 1, 6
+		do y = var_pr.first_y, var_pr.last_y
+			do x = var_pr.first_x, var_pr.last_x
+call metr.con_to_spherical(var_pr.u_con(x, y, face), var_pr.v_con(x, y, face), var_pr.lon_vel(x, y, face), var_pr.lat_vel(x, y, face), x, y, face)
+			end do
+		end do
+	end do
 
 	end Subroutine
 
@@ -155,6 +162,7 @@ lon = metr.latlon_c(2,x,y,face)
 this.lon_vel(x, y, face) = u0
 this.lat_vel(x, y, face) = 0d0
 this.h_height(x, y, face) = geom.radius*2d0*omega_cor*u0*(dcos(lat))/this.g
+call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
 ! f = (2d0*omega_cor)*dsin(lat)
 
 
@@ -163,7 +171,6 @@ this.h_height(x, y, face) = geom.radius*2d0*omega_cor*u0*(dcos(lat))/this.g
 
 ! this.f_cor(x, y, face)= -2*omega_cor*dsin(lat) ! function of latitude
 ! if ( face == 2 .and. x == dim ) print *, this.f_cor(x, y, face)
-call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
 				end do
 			end do
 		end do

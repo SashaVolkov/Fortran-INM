@@ -59,8 +59,12 @@ fi
 
 if [[ $1 == "compile" ]]; then
 mpiifort -check all -traceback -ftrapuv -openmp $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+# mpiifort -check all -traceback -ftrapuv -openmp $Files -module mod_files 2> err.file
+# mpiifort -openmp -O3 $Files -module mod_files 2> err.file
+# mpiifort -openmp -O3 -trace -tcollect -g $Files -module mod_files 2> err.file
 elif [[ $1 != "compile" ]] ; then
 mpiifort -openmp -O3 $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+# mpiifort -openmp -O3 $Files -module mod_files 2> err.file
 # mpiifort -check all -traceback -ftrapuv -g $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 fi
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o

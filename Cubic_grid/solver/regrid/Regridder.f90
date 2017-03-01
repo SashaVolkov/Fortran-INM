@@ -40,7 +40,7 @@ program regrid
 		call inter.interpolate(max)
 		call to_cube.interpolate(d.surface_precise)
 ! 		call d.L_norm_ll((time-1)*speedup, inter.surface_to, max)
-		call d.L_norm_c((time-1)*speedup, inter.surface_off, to_cube.precise_cube, max)
+! 		call d.L_norm_c((time-1)*speedup, inter.surface_off, to_cube.precise_cube, max)
 		call scan.print_surf(inter.surface_to, d.surface_precise, time)
 		call scan.print_surf_prec_cube(time, to_cube.precise_cube, inter.surface_off)
 	end do

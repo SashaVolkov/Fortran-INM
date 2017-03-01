@@ -24,6 +24,7 @@ module methods
 		Real(8), Allocatable :: ku_con(:, :, :, :)
 		Real(8), Allocatable :: kv_con(:, :, :, :)
 		Real(8), Allocatable :: kh(:, :, :, :)
+		Real(8), Allocatable :: msg_time(:)
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -37,11 +38,11 @@ module methods
 	CONTAINS
 
 
-Subroutine init(this, f, step)
+Subroutine init(this, f, step, Tmax)
 
 	Class(f_var) :: f
 	Class(method) :: this
-	Integer(4), intent(in) :: step
+	Integer(4), intent(in) :: step, Tmax
 	Integer(4) f_x, f_y, l_x, l_y
 
 	f_x = f.first_x;  f_y = f.first_y
@@ -62,6 +63,7 @@ Subroutine init(this, f, step)
 	Allocate(this.ku_con(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kv_con(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kh(f_x: l_x, f_y : l_y, 6, 0:4))
+	Allocate(this.msg_time(Tmax))
 
 
 End Subroutine
@@ -117,7 +119,7 @@ end Subroutine
 
 
 
-Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
+Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg, time)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
@@ -125,6 +127,7 @@ Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
 	Class(interp) :: inter
 	Class(message) :: msg
 	Type(der) :: d
+	Integer(4), intent(in) :: time
 
 	Real(8) g, height, dt, partial, temp1(-this.step:this.step), temp2(-this.step:this.step), div, dh
 	Integer(4) face, x, y, dim, step, i
@@ -170,7 +173,9 @@ Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
 		!$OMP END PARALLEL
 
 		call var_pr.equal(var, metr)
+		this.msg_time(time) = MPI_Wtime()
 		call msg.msg(var_pr.h_height, var_pr.lon_vel, var_pr.lat_vel)
+		this.msg_time(time) = MPI_Wtime() - this.msg_time(time)
 		call var_pr.interpolate(inter, metr)
 
 	end do
@@ -180,13 +185,14 @@ end Subroutine
 
 
 
-Subroutine RungeKutta(this, var, var_pr, metr, inter, msg)
+Subroutine RungeKutta(this, var, var_pr, metr, inter, msg, time)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
 	Class(metric) :: metr
 	Class(interp) :: inter
 	Class(message) :: msg
+	Integer(4), intent(in) :: time
 
 	Integer(4) face, x, y, i, j, stat, ns_x, ns_y, nf_x, nf_y, ier, iteration
 
@@ -229,7 +235,11 @@ var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2d
 
 
 	call var_pr.equal(var, metr)
+	call MPI_Barrier(MPI_COMM_WORLD, ier)
+	this.msg_time(time) = MPI_Wtime()
 	call msg.msg(var_pr.h_height, var_pr.lon_vel, var_pr.lat_vel)
+	call MPI_Barrier(MPI_COMM_WORLD, ier)
+	this.msg_time(time) = MPI_Wtime() - this.msg_time(time)
 	call var_pr.interpolate(inter, metr)
 
 End Subroutine
@@ -289,8 +299,8 @@ lat = metr.latlon_c(1,x,y,face)
 call metr.cov_to_con(grad_Fx,grad_Fy, S_p(1), S_p(2), x,y,face)
 call metr.spherical_to_con(0d0, (2d0*7292d-8)*dsin(lat), S_c(1), S_c(2), x, y, face)
 
-this.ku_con(x, y, face, i) = - dt*g*S_p(1) - dt*S_c(1) ! - dt*5d-1*(grad_uu + grad_vv)
-this.kv_con(x, y, face, i) = - dt*g*S_p(2) - dt*S_c(2) ! - dt*5d-1*(grad_uu + grad_vv)
+this.ku_con(x, y, face, i) = - dt*g*S_p(1)  - dt*S_c(1) ! - dt*5d-1*(grad_uu + grad_vv)
+this.kv_con(x, y, face, i) = - dt*g*S_p(2)  - dt*S_c(2) ! - dt*5d-1*(grad_uu + grad_vv)
 this.kh(x, y, face, i) = - dt*(height)*div ! - this.ku_con(x, y, face, 0)*dt*g*grad_Fx - this.kv_con(x, y, face, 0)*dt*g*grad_Fy
 
 ! this.kh(x, y, face, 0) = (2d0)*dsin(lat)
@@ -319,6 +329,7 @@ Subroutine deinit(this)
 	if (Allocated(this.ku_con)) Deallocate(this.ku_con)
 	if (Allocated(this.kv_con)) Deallocate(this.kv_con)
 	if (Allocated(this.kh)) Deallocate(this.kh)
+	if (Allocated(this.msg_time)) Deallocate(this.msg_time)
 
 End Subroutine
 
