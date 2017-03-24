@@ -87,7 +87,7 @@ module interpolation
 				do i = 1, this.step
 
 					x0 = this.x0_mass(x, i);  n=this.n;  M2 = 0d0;  M1 = 0d0
-					if ( i == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 ) ) n = 4
+					if (n > 4 .and. ( x0 - n/2 + 1 < 1 .or. x0 + n/2 > 2*dim )) n = 4
 					do k = 1, n
 						x_int(k) = x0 - n/2 + k
 						M = Mass(x_int(k), y+i, face)
@@ -131,7 +131,7 @@ end if
 				do i = 1, this.step
 
 					x0 = this.x0_mass(y, i);  n=this.n;  M2 = 0d0
-					if ( i == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 ) ) n = 4
+					if (n > 4 .and. ( x0 - n/2 + 1 < 1 .or. x0 + n/2 > 2*dim )) n = 4
 					do k = 1, n
 						x_int(k) = x0 - n/2 + k
 						M = Mass(x+i, x_int(k), face)
@@ -176,7 +176,7 @@ end if
 				do i = 1, this.step
 
 					x0 = this.x0_mass(x, i);  n=this.n;  M2 = 0d0
-					if ( i == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 ) ) n = 4
+					if (n > 4 .and. ( x0 - n/2 + 1 < 1 .or. x0 + n/2 > 2*dim )) n = 4
 					do k = 1, n
 						x_int(k) = x0 - n/2 + k
 						M = Mass(x_int(k), y-i, face)
@@ -221,7 +221,7 @@ end if
 				do i = 1, this.step
 
 					x0 = this.x0_mass(y, i);  n=this.n;  M2 = 0d0
-					if ( i == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 )) n = 4
+					if (n > 4 .and. ( x0 - n/2 + 1 < 1 .or. x0 + n/2 > 2*dim )) n = 4
 					do k = 1, n
 						x_int(k) = x0 - n/2 + k
 						M = Mass(x-i, x_int(k), face)
@@ -302,7 +302,7 @@ end if
 		n = this.n;  dim = this.dim; weight(:) = 1d0
 		latlon_x = metr.latlon_c(1,1-step,x,2)
 
-		if ( step == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 )) n = 4
+		if (n > 4 .and. ( x0 - n/2 + 1 < 1 .or. x0 + n/2 > 2*dim )) n = 4
 
 		do i = 1, n
 			y(i) = x0 - n/2 + i
