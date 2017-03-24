@@ -67,7 +67,7 @@ implicit none
 	call var_prev.start_conditions(metr, geom, omega_cor)
 	call diagn.init(var_prev, Tmax, id)
 	call meth.init(var_prev, space_step, Tmax)
-	call inter.init(metr, space_step*2)
+	call inter.init(metr, 4)
 	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
 
 
@@ -110,7 +110,7 @@ implicit none
 		print '(" average = ", f10.6, " sec")', sum(cycle_time)/Tmax
 		print '(" full = ", f10.2, " sec")', sum(cycle_time)
 		print '(" msg time = ", f10.6, " sec")', sum(meth.msg_time)
-		print '(" msg time average = ", f10.8, " sec")', sum(meth.msg_time)/Tmax
+		print '(" msg time average = ", f10.8, " sec")', sum(meth.msg_time)/(5*Tmax)
 		print '(" time = ", f10.2, " sec")', end_init - start_init
 	end if
 

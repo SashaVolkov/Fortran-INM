@@ -63,7 +63,7 @@ Subroutine init(this, f, step, Tmax)
 	Allocate(this.ku_con(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kv_con(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kh(f_x: l_x, f_y : l_y, 6, 0:4))
-	Allocate(this.msg_time(Tmax))
+	Allocate(this.msg_time(5*Tmax))
 
 
 End Subroutine
@@ -210,7 +210,11 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg, time)
 			var_pr.v_con(:, :, :) = this.kv_con(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
 			call var_pr.equal(var_pr, metr)
+			call MPI_Barrier(MPI_COMM_WORLD, ier)
+			this.msg_time((iteration-1)*time + iteration) = MPI_Wtime()
 			call msg.msg(var_pr.h_height, var_pr.lon_vel, var_pr.lat_vel)
+			call MPI_Barrier(MPI_COMM_WORLD, ier)
+			this.msg_time((iteration-1)*time + iteration) = MPI_Wtime() - this.msg_time((iteration-1)*time + iteration)
 			call var_pr.interpolate(inter, metr)
 			this.ku_con(:, :, :, iteration) = var_pr.u_con(:, :, :)
 			this.kv_con(:, :, :, iteration) = var_pr.v_con(:, :, :)
@@ -236,10 +240,10 @@ var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2d
 
 	call var_pr.equal(var, metr)
 	call MPI_Barrier(MPI_COMM_WORLD, ier)
-	this.msg_time(time) = MPI_Wtime()
+	this.msg_time(4*time + 5) = MPI_Wtime()
 	call msg.msg(var_pr.h_height, var_pr.lon_vel, var_pr.lat_vel)
 	call MPI_Barrier(MPI_COMM_WORLD, ier)
-	this.msg_time(time) = MPI_Wtime() - this.msg_time(time)
+	this.msg_time(4*time + 5) = MPI_Wtime() - this.msg_time(4*time + 5)
 	call var_pr.interpolate(inter, metr)
 
 End Subroutine
@@ -254,7 +258,7 @@ Subroutine FRunge(this, metr, var, i)
 
 	Integer(4), intent(in) :: i
 	Real(8) g, height, dt, grad_Fx, grad_Fy, grad_uu, grad_vv, temp1(-this.step:this.step), temp2(-this.step:this.step), coef(0:3), div, dh, vorticity
-	Real(8) :: G_inv(2,2), A(2,2), grad_Fx_con, grad_Fy_con, u0, S_c(2), S_cll(2), S_cor(2,2), S_p(2), S_pll(2), lat, lat_vel, lon_vel
+	Real(8) :: G_inv(2,2), A(2,2), grad_Fx_con, grad_Fy_con, u0, S_c(2), S_cll(2), S_cor(2,2), S_p(2), S_pll(2), lat, lat_vel, lon_vel, h
 	Integer(4) x,y, face, step, ns_x, ns_y, nf_x, nf_y
 
 	coef(0) = 0d0;  coef(1) = 5d-1;  coef(2) = 5d-1;  coef(3) = 1d0;
@@ -265,7 +269,7 @@ Subroutine FRunge(this, metr, var, i)
 	ns_x = this.ns_x;  ns_y = this.ns_y
 	nf_x = this.nf_x;  nf_y = this.nf_y
 
-	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, grad_uu, grad_vv, temp1, temp2, div, lat_vel, lon_vel)
+	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, grad_uu, grad_vv, temp1, temp2, div, lat_vel, lon_vel, h)
 	!$OMP DO
 
 	do face = 1,6
@@ -273,6 +277,7 @@ Subroutine FRunge(this, metr, var, i)
 			do x = ns_x, nf_x
 
 temp1(:) = this.kh(x-step:x+step, y, face, 0) + coef(i-1)*this.kh(x-step:x+step, y, face, i-1)
+h = temp1(0)
 grad_Fx = d.partial_c(temp1, dh, step)
 
 temp2(:) = this.kh(x, y-step:y+step, face, 0) + coef(i-1)*this.kh(x, y-step:y+step, face, i-1)
@@ -290,7 +295,7 @@ call metr.spherical_to_con(var.f(x,y,face)*lat_vel, -var.f(x,y,face)*lon_vel, S_
 
 this.ku_con(x, y, face, i) = - dt*g*S_p(1) + dt*S_c(1) ! - dt*5d-1*(grad_uu + grad_vv)
 this.kv_con(x, y, face, i) = - dt*g*S_p(2) + dt*S_c(2) ! - dt*5d-1*(grad_uu + grad_vv)
-this.kh(x, y, face, i) = - dt*(height)*div ! - this.ku_con(x, y, face, 0)*dt*g*grad_Fx - this.kv_con(x, y, face, 0)*dt*g*grad_Fy
+this.kh(x, y, face, i) = - dt*(height + h)*div ! - this.ku_con(x, y, face, 0)*dt*g*grad_Fx - this.kv_con(x, y, face, 0)*dt*g*grad_Fy
 
 			end do
 		end do
