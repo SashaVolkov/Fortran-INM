@@ -166,35 +166,25 @@ CONTAINS
 
 	Subroutine transf_matrix_equiang(this)   ! Ullrich phd thesis Appendix G.4
 		Class(metric) :: this
-		Real(8) :: x_1, x_2, g_coef, s(6), cos_theta, delta, omega_cor, f
+		Real(8) :: x_1, x_2, g_coef, s(6), cos_theta, delta, omega_cor, f, lat, A(2,2), det, pi
 		Integer(4) :: x, y, face
 		s(1) = - 1d0;  s(6) = 1d0;  omega_cor = 7292d-8
+		this.Tr_to_cube = 0d0;  this.Tr_to_sph = 0d0;  pi = 314159265358979323846d-20
 
 
 		do face = 2,5
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
+					lat = this.latlon_c(1, x, y, face)
 					x_1 = dtan(this.cube_coord_c(1, x, y))
 					x_2 = dtan(this.cube_coord_c(2, x, y))
-					delta = dsqrt(1d0 + x_1**2 + x_2**2)
-					cos_theta = dcos(this.latlon_c(1, x, y, face))
+					delta = 1d0 + x_1**2 + x_2**2
 
-					f = 2d0*omega_cor*x_2/(delta**2)
-
-					this.Tr_to_cube(1,1,x,y,face) = 1d0
-					this.Tr_to_cube(1,2,x,y,face) = 0d0
-					this.Tr_to_cube(2,1,x,y,face) = x_1*x_2/(1 + x_2**2)
-					this.Tr_to_cube(2,2,x,y,face) = (delta**2)/((1d0 + x_2**2)*dsqrt(1d0 + x_1**2))
-
-					this.Tr_to_sph(1,1,x,y,face) = 1d0
+					this.Tr_to_sph(1,1,x,y,face) = dcos(lat)
 					this.Tr_to_sph(1,2,x,y,face) = 0d0
-					this.Tr_to_sph(2,1,x,y,face) = - x_1*x_2*dsqrt(1d0 + x_1**2)/(delta**2)
-					this.Tr_to_sph(2,2,x,y,face) = ((1d0 + x_2**2)*dsqrt(1d0 + x_1**2))/(delta**2)
+					this.Tr_to_sph(2,1,x,y,face) = - x_1*x_2*dsqrt(1d0 + x_1**2)/(delta)
+					this.Tr_to_sph(2,2,x,y,face) = ((1d0 + x_2**2)*dsqrt(1d0 + x_1**2))/(delta)
 
-					this.S_cor(1,1,x,y,face) = -f*x_1*x_2
-					this.S_cor(1,2,x,y,face) = f*(1 + x_2**2)
-					this.S_cor(2,1,x,y,face) = -f*(1 + x_1**2)
-					this.S_cor(2,2,x,y,face) = f*x_1*x_2
 				end do
 			end do
 		end do
@@ -203,33 +193,40 @@ CONTAINS
 		do face = 1, 6, 5
 			do y = this.first_y, this.last_y
 				do x = this.first_x, this.last_x
+					lat = this.latlon_c(1, x, y, face)
 					x_1 = dtan(this.cube_coord_c(1, x, y))
 					x_2 = dtan(this.cube_coord_c(2, x, y))
-					delta = dsqrt(1d0 + x_1**2 + x_2**2)
-					cos_theta = dcos(this.latlon_c(1, x, y, face))
+					delta = 1d0 + x_1**2 + x_2**2
 
-					f = 2d0*omega_cor*s(face)/(delta**2)
+					this.Tr_to_sph(1,1,x,y,face) = -s(face)*x_2*(1d0 + x_1**2)*dcos(lat)/(x_2**2 + x_1**2)
+					this.Tr_to_sph(1,2,x,y,face) = s(face)*x_1*(1d0 + x_2**2)*dcos(lat)/(x_2**2 + x_1**2)
+					this.Tr_to_sph(2,1,x,y,face) = - s(face)*x_1*(1d0 + x_1**2)/((delta)*dsqrt(x_2**2 + x_1**2))
+					this.Tr_to_sph(2,2,x,y,face) = - s(face)*x_2*(1d0 + x_2**2)/((delta)*dsqrt(x_2**2 + x_1**2))
 
-					this.Tr_to_cube(1,1,x,y,face) = -s(face)*x_2/(1d0 + x_1**2)
-					this.Tr_to_cube(1,2,x,y,face) = -s(face)*(delta**2)*x_1/((1d0 + x_1**2)*dsqrt(x_2**2 + x_1**2))
-					this.Tr_to_cube(2,1,x,y,face) = s(face)*x_1/(1d0 + x_2**2)
-					this.Tr_to_cube(2,2,x,y,face) = -s(face)*(delta**2)*x_2/((1d0 + x_2**2)*dsqrt(x_2**2 + x_1**2))
+				end do
+			end do
+		end do
 
-					this.Tr_to_sph(1,1,x,y,face) = -s(face)*x_2*(1d0 + x_1**2)/(x_2**2 + x_1**2)
-					this.Tr_to_sph(1,2,x,y,face) = s(face)*x_1*(1d0 + x_2**2)/(x_2**2 + x_1**2)
-					this.Tr_to_sph(2,1,x,y,face) = - s(face)*x_1*(1d0 + x_1**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
-					this.Tr_to_sph(2,2,x,y,face) = - s(face)*x_2*(1d0 + x_2**2)/((delta**2)*dsqrt(x_2**2 + x_1**2))
 
-					this.S_cor(1,1,x,y,face) = -f*x_1*x_2
-					this.S_cor(1,2,x,y,face) = f*(1 + x_2**2)
-					this.S_cor(2,1,x,y,face) = -f*(1 + x_1**2)
-					this.S_cor(2,2,x,y,face) = f*x_1*x_2
+		do face = 1, 6
+			do y = this.first_y, this.last_y
+				do x = this.first_x, this.last_x
+
+				A = this.Tr_to_sph(:,:,x,y,face)
+				det = A(1,1)*A(2,2) - A(2,1)*A(1,2)
+
+				this.Tr_to_cube(1,1,x,y,face) = A(2,2)/det
+				this.Tr_to_cube(1,2,x,y,face) = -A(1,2)/det
+				this.Tr_to_cube(2,1,x,y,face) = -A(2,1)/det
+				this.Tr_to_cube(2,2,x,y,face) = A(1,1)/det
 
 				end do
 			end do
 		end do
 
 	end Subroutine
+
+
 
 
 

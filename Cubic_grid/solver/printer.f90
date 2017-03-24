@@ -13,7 +13,7 @@ module printer_ncdf
 
 	Type printer
 
-		Integer(4) :: Wid, Courantid, grid_id, ncid, ncid_gr, speedup, id, Lonid, Latid
+		Integer(4) :: Wid, Courantid, ncid, speedup, id, Lonid, Latid
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -34,7 +34,7 @@ module printer_ncdf
 		Integer(4), intent(out) :: time
 
 		Integer(4) status, face, xid, yid, dim, step, faceid, llid, gr_xid, gr_yid, Lonid, Latid
-		Integer(4) gr_faceid, Wid, Courantid, Precid, grid_id, ncid, ncid_gr, id, ier
+		Integer(4) gr_faceid, Wid, Courantid, Precid, ncid, id, ier
 		character(40) istring, istring1
 		character(80) path1, path2, path3
 
@@ -98,7 +98,7 @@ module printer_ncdf
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		this.Courantid = Courantid;  this.Wid = Wid; this.grid_id = grid_id; this.ncid = ncid; this.ncid_gr = ncid_gr
+		this.Courantid = Courantid;  this.Wid = Wid;  this.ncid = ncid
 		this.Lonid = Lonid;  this.Latid = Latid
 
 		if(id==0) then

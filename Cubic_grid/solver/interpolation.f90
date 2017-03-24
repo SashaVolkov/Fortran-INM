@@ -14,7 +14,7 @@ module interpolation
 	Type interp
 
 		Real(8), Allocatable :: weight(:, :, :, :)
-		Real(8) :: fantom1(2,5)
+		Real(8) :: fantom1(4,5), fantom2(4,5)
 		Integer(4), Allocatable :: x0_mass(:, :)
 		Integer(4) ns_x, ns_y, nf_x, nf_y, n, dim, step, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
@@ -71,7 +71,7 @@ module interpolation
 		Real(8), Intent(inout) :: Mass(this.first_x:this.last_x, this.first_y:this.last_y, 6)
 		Integer(4), Intent(in) :: interp_factor(1:4)
 		Real(8) :: Mass_temp(this.first_x:this.last_x, this.first_y:this.last_y, 6), M, M1, M2
-		Integer(4) k, n, x0, x, y, i, face, x_fin(4), y_fin(4), x_int(1:this.n), dim, p
+		Integer(4) k, j, n, x0, x, y, i, face, x_fin(4), y_fin(4), x_int(1:this.n), dim, p
 
 		x_fin(:) = this.last_x;  x_fin(4) = this.rcv_xy(2, 4, 1) + this.step
 		y_fin(:) = this.last_y;  y_fin(3) = this.rcv_xy(2, 3, 2) + this.step
@@ -86,26 +86,37 @@ module interpolation
 			do x = this.ns_x, this.nf_x
 				do i = 1, this.step
 
-					x0 = this.x0_mass(x, i);  n=this.n
+					x0 = this.x0_mass(x, i);  n=this.n;  M2 = 0d0;  M1 = 0d0
 					if ( i == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 ) ) n = 4
-					x_int(1) = x0 - n/2 + 1
-					do k = 2, n
-						x_int(k) = x_int(k-1)+1
-					end do
-
-					M2 = 0d0
 					do k = 1, n
+						x_int(k) = x0 - n/2 + k
 						M = Mass(x_int(k), y+i, face)
 
-						if(x_int(k) < 1) then
-							p = abs(x_int(k))
-							M = Mass(1-i,2*dim-p,face)*this.fantom1(1,i) + Mass(-i,2*dim-p,face)*this.fantom1(2,i)
-						end if
+if(x_int(k) < 1) then
+	p = abs(x_int(k))
+	M = Mass(1,2*dim,face)*this.fantom2(1,i) + Mass(1,2*dim-1,face)*this.fantom2(2,i) + Mass(1,2*dim-2,face)*this.fantom2(3,i)
+	M = M*this.fantom1(1,i) + Mass(1-i,2*dim-p,face)*this.fantom1(2,i) + Mass(-i,2*dim-p,face)*this.fantom1(3,i) + Mass(-i-1,2*dim-p,face)*this.fantom1(4,i)
+! 	M1 = M2
+! 	do j = k, n
+! 		if(j > k) M = Mass(x0 - n/2 + j, y+i, face)
+! 		M1 = M*this.weight(j, x0, x, i) + M1
+! 	end do
+! 	M = M1*this.fantom1(1,i) + Mass(2*dim,2*dim,face)*this.fantom1(2,i) + Mass(2*dim,2*dim-1,face)*this.fantom1(3,i) + Mass(2*dim,2*dim-2,face)*this.fantom1(4,i)
+! 	M = M*this.fantom1(1,i) + Mass(2*dim+i,2*dim - p,face)*this.fantom1(2,i) + Mass(2*dim+i+1,2*dim - p,face)*this.fantom1(3,i) + Mass(2*dim+i+2,2*dim - p,face)*this.fantom1(4,i)
+end if
 
-						if(x_int(k) > 2*dim) then
-							p = abs(x_int(k) - 2*dim - 1)
-							M = Mass(2*dim+i,2*dim - p,face)*this.fantom1(1,i) + Mass(2*dim+i+1,2*dim - p,face)*this.fantom1(2,i)
-						end if
+if(x_int(k) > 2*dim) then
+	p = abs(x_int(k) - 2*dim - 1)
+	M = Mass(2*dim,2*dim,face)*this.fantom2(1,i) + Mass(2*dim,2*dim-1,face)*this.fantom2(2,i) + Mass(2*dim,2*dim-2,face)*this.fantom2(3,i)
+	M = M*this.fantom1(1,i) + Mass(2*dim+i,2*dim - p,face)*this.fantom1(2,i) + Mass(2*dim+i+1,2*dim - p,face)*this.fantom1(3,i) + Mass(2*dim+i+2,2*dim - p,face)*this.fantom1(4,i)
+! 	M1 = M2
+! 	do j = k, n
+! 	if(j > k) M = Mass(x0 - n/2 + j, y+i, face)
+! 	M1 = M*this.weight(j, x0, x, i) + M1
+! 	end do
+! 	M = M1*this.fantom1(1,i) + Mass(2*dim,2*dim,face)*this.fantom1(2,i) + Mass(2*dim,2*dim-1,face)*this.fantom1(3,i) + Mass(2*dim,2*dim-2,face)*this.fantom1(4,i)
+! 	M = M*this.fantom1(1,i) + Mass(2*dim+i,2*dim - p,face)*this.fantom1(2,i) + Mass(2*dim+i+1,2*dim - p,face)*this.fantom1(3,i) + Mass(2*dim+i+2,2*dim - p,face)*this.fantom1(4,i)
+end if
 
 						M2 = M*this.weight(k, x0, x, i) + M2
 					end do
@@ -114,31 +125,42 @@ module interpolation
 			end do
 		end if
 
-
 		if(interp_factor(2) == 1) then !right
 		x = 2*this.dim
 			do y = this.ns_y, this.nf_y
 				do i = 1, this.step
 
-					x0 = this.x0_mass(y, i);  n=this.n
+					x0 = this.x0_mass(y, i);  n=this.n;  M2 = 0d0
 					if ( i == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 ) ) n = 4
-					x_int(1) = x0 - n/2 + 1
-					do k = 2, n
-						x_int(k) = x_int(k-1)+1
-					end do
-					M2 = 0d0
 					do k = 1, n
+						x_int(k) = x0 - n/2 + k
 						M = Mass(x+i, x_int(k), face)
 
-						if(x_int(k) < 1) then
-							p = abs(x_int(k) + 2*dim)
-							M = Mass(p,1-i,face)*this.fantom1(1,i) + Mass(p,-i,face)*this.fantom1(2,i)
-						end if
+if(x_int(k) < 1) then
+	p = abs(x_int(k) + 2*dim)
+	M = Mass(2*dim,1,face)*this.fantom2(1,i) + Mass(2*dim-1,1,face)*this.fantom2(2,i) + Mass(2*dim-2,1,face)*this.fantom2(3,i)
+	M = M*this.fantom1(1,i) + Mass(p,1-i,face)*this.fantom1(2,i) + Mass(p,-i,face)*this.fantom1(3,i) + Mass(p,-i-1,face)*this.fantom1(4,i)
+! 	M1 = M2
+! 	do j = k, n
+! 		if(j > k) M = Mass(x+i, x0 - n/2 + j, face)
+! 		M1 = M*this.weight(j, x0, y, i) + M1
+! 	end do
+! 	M = M1*this.fantom1(1,i) + Mass(2*dim,1,face)*this.fantom1(2,i) + Mass(2*dim-1,1,face)*this.fantom1(3,i) + Mass(2*dim-2,1,face)*this.fantom1(4,i)
+! 	M = M*this.fantom1(1,i) + Mass(p,1-i,face)*this.fantom1(2,i) + Mass(p,-i,face)*this.fantom1(3,i) + Mass(p,-i-1,face)*this.fantom1(4,i)
+end if
 
-						if(x_int(k) > 2*dim) then
-							p = abs(x_int(k) - 2*dim - 1)
-							M = Mass(2*dim - p,2*dim+i,face)*this.fantom1(1,i) + Mass(2*dim - p,2*dim+i+1,face)*this.fantom1(2,i)
-						end if
+if(x_int(k) > 2*dim) then
+	p = abs(x_int(k) - 2*dim - 1)
+	M = Mass(2*dim,2*dim,face)*this.fantom2(1,i) + Mass(2*dim-1,2*dim,face)*this.fantom2(2,i) + Mass(2*dim-2,2*dim,face)*this.fantom2(3,i)
+	M = M*this.fantom1(1,i) + Mass(2*dim - p,2*dim+i,face)*this.fantom1(2,i) + Mass(2*dim - p,2*dim+i+1,face)*this.fantom1(3,i) + Mass(2*dim - p,2*dim+i+2,face)*this.fantom1(4,i)
+! 	M1 = M2
+! 	do j = k, n
+! 	if(j > k) M = Mass(x+i, x0 - n/2 + j, face)
+! 	M1 = M*this.weight(j, x0, y, i) + M1
+! 	end do
+! 	M = M1*this.fantom1(1,i) + Mass(2*dim,2*dim,face)*this.fantom1(2,i) + Mass(2*dim-1,2*dim,face)*this.fantom1(3,i) + Mass(2*dim-2,2*dim,face)*this.fantom1(4,i)
+! 	M = M*this.fantom1(1,i) + Mass(2*dim - p,2*dim+i,face)*this.fantom1(2,i) + Mass(2*dim - p,2*dim+i+1,face)*this.fantom1(3,i) + Mass(2*dim - p,2*dim+i+2,face)*this.fantom1(4,i)
+end if
 
 						M2 = M*this.weight(k, x0, y, i) + M2
 					end do
@@ -153,26 +175,37 @@ module interpolation
 			do x = this.ns_x, this.nf_x
 				do i = 1, this.step
 
-					x0 = this.x0_mass(x, i);  n=this.n
+					x0 = this.x0_mass(x, i);  n=this.n;  M2 = 0d0
 					if ( i == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 ) ) n = 4
-					x_int(1) = x0 - n/2 + 1
-					do k = 2, n
-						x_int(k) = x_int(k-1)+1
-					end do
-
-					M2 = 0d0
 					do k = 1, n
+						x_int(k) = x0 - n/2 + k
 						M = Mass(x_int(k), y-i, face)
 
-						if(x_int(k) < 1) then
-							p = abs(x_int(k) - 1)
-							M = Mass(1-i,p,face)*this.fantom1(1,i) + Mass(-i,p,face)*this.fantom1(2,i)
-						end if
+if(x_int(k) < 1) then
+	p = abs(x_int(k) - 1)
+	M = Mass(1,1,face)*this.fantom2(1,i) + Mass(1,2,face)*this.fantom2(2,i) + Mass(1,3,face)*this.fantom2(3,i)
+	M = M*this.fantom1(1,i) + Mass(1-i,p,face)*this.fantom1(2,i) + Mass(-i,p,face)*this.fantom1(3,i) + Mass(-i-1,p,face)*this.fantom1(4,i)
+! 	M1 = M2
+! 	do j = k, n
+! 		if(j > k) M = Mass(x0 - n/2 + j, y-i, face)
+! 		M1 = M*this.weight(j, x0, x, i) + M1
+! 	end do
+! 	M = M1*this.fantom1(1,i) + Mass(1,1,face)*this.fantom1(2,i) + Mass(1,2,face)*this.fantom1(3,i) + Mass(1,3,face)*this.fantom1(4,i)
+! 	M = M*this.fantom1(1,i) + Mass(1-i,p,face)*this.fantom1(2,i) + Mass(-i,p,face)*this.fantom1(3,i) + Mass(-i-1,p,face)*this.fantom1(4,i)
+end if
 
-						if(x_int(k) > 2*dim) then
-							p = abs(x_int(k) - 2*dim)
-							M = Mass(2*dim+i,p,face)*this.fantom1(1,i) + Mass(2*dim+i+1,p,face)*this.fantom1(2,i)
-						end if
+if(x_int(k) > 2*dim) then
+	p = abs(x_int(k) - 2*dim)
+	M = Mass(2*dim,1,face)*this.fantom2(1,i) + Mass(2*dim,2,face)*this.fantom2(2,i) + Mass(2*dim,3,face)*this.fantom2(3,i)
+	M = M*this.fantom1(1,i) + Mass(2*dim+i,p,face)*this.fantom1(2,i) + Mass(2*dim+i+1,p,face)*this.fantom1(3,i) + Mass(2*dim+i+2,p,face)*this.fantom1(4,i)
+! 	M1 = M2
+! 	do j = k, n
+! 	if(j > k) M = Mass(x0 - n/2 + j, y-i, face)
+! 	M1 = M*this.weight(j, x0, x, i) + M1
+! 	end do
+! 	M = M1*this.fantom1(1,i) + Mass(2*dim,1,face)*this.fantom1(2,i) + Mass(2*dim,2,face)*this.fantom1(3,i) + Mass(2*dim,3,face)*this.fantom1(4,i)
+! 	M = M*this.fantom1(1,i) + Mass(2*dim+i,p,face)*this.fantom1(2,i) + Mass(2*dim+i+1,p,face)*this.fantom1(3,i) + Mass(2*dim+i+2,p,face)*this.fantom1(4,i)
+end if
 
 						M2 = M*this.weight(k, x0, x, i) + M2
 					end do
@@ -187,25 +220,37 @@ module interpolation
 			do y = this.ns_y, this.nf_y
 				do i = 1, this.step
 
-					x0 = this.x0_mass(y, i);  n=this.n
+					x0 = this.x0_mass(y, i);  n=this.n;  M2 = 0d0
 					if ( i == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 )) n = 4
-					x_int(1) = x0 - n/2 + 1
-					do k = 2, n
-						x_int(k) = x_int(k-1)+1
-					end do
-					M2 = 0d0
 					do k = 1, n
+						x_int(k) = x0 - n/2 + k
 						M = Mass(x-i, x_int(k), face)
 
-						if(x_int(k) < 1) then
-							p = abs(x_int(k) - 1)
-							M = Mass(p,1-i,face)*this.fantom1(1,i) + Mass(p,-i,face)*this.fantom1(2,i)
-						end if
+if(x_int(k) < 1) then
+	p = abs(x_int(k) - 1)
+	M = Mass(1,1,face)*this.fantom2(1,i) + Mass(2,1,face)*this.fantom2(2,i) + Mass(3,1,face)*this.fantom2(3,i)
+	M = M*this.fantom1(1,i) + Mass(p,1-i,face)*this.fantom1(2,i) + Mass(p,-i,face)*this.fantom1(3,i) + Mass(p,-i-1,face)*this.fantom1(4,i)
+! 	M1 = M2
+! 	do j = k, n
+! 		if(j > k) M = Mass(x-i, x0 - n/2 + j, face)
+! 		M1 = M*this.weight(j, x0, y, i) + M1
+! 	end do
+! 	M = M1*this.fantom1(1,i) + Mass(1,1,face)*this.fantom1(2,i) + Mass(2,1,face)*this.fantom1(3,i) + Mass(3,1,face)*this.fantom1(4,i)
+! 	M = M*this.fantom1(1,i) + Mass(p,1-i,face)*this.fantom1(2,i) + Mass(p,-i,face)*this.fantom1(3,i) + Mass(p,-i-1,face)*this.fantom1(4,i)
+end if
 
-						if(x_int(k) > 2*dim) then
-							p = abs(x_int(k) - 2*dim)
-							M = Mass(p,2*dim+i,face)*this.fantom1(1,i) + Mass(p,2*dim+i+1,face)*this.fantom1(2,i)
-						end if
+if(x_int(k) > 2*dim) then
+	p = abs(x_int(k) - 2*dim)
+	M = Mass(1,2*dim,face)*this.fantom2(1,i) + Mass(2,2*dim,face)*this.fantom2(2,i) + Mass(3,2*dim,face)*this.fantom2(3,i)
+	M = M*this.fantom1(1,i) + Mass(p,2*dim+i,face)*this.fantom1(2,i) + Mass(p,2*dim+i+1,face)*this.fantom1(3,i) + Mass(p,2*dim+i+2,face)*this.fantom1(4,i)
+! 	M1 = M2
+! 	do j = k, n
+! 	if(j > k) M = Mass(x-i, x0 - n/2 + j, face)
+! 	M1 = M*this.weight(j, x0, y, i) + M1
+! 	end do
+! 	M = M1*this.fantom1(1,i) + Mass(1,2*dim,face)*this.fantom1(2,i) + Mass(2,2*dim,face)*this.fantom1(3,i) + Mass(3,2*dim,face)*this.fantom1(4,i)
+! 	M = M*this.fantom1(1,i) + Mass(p,2*dim+i,face)*this.fantom1(2,i) + Mass(p,2*dim+i+1,face)*this.fantom1(3,i) + Mass(p,2*dim+i+2,face)*this.fantom1(4,i)
+end if
 
 						M2 = M*this.weight(k, x0, y, i) + M2
 					end do
@@ -233,7 +278,7 @@ module interpolation
 
 		do xk = 1, 2*this.dim
 
-			gap = (metr.latlon_c(1, 1 - step, x, 2)) - (metr.latlon_c(1, step, xk, 2))
+			gap = (metr.latlon_c(1, 1 - step, x, 2)) - (metr.latlon_c(1, 2*this.dim+1-step, xk, 5))
 			if(gap >= 0d0) then
 				x0 = xk
 			end if
@@ -259,12 +304,8 @@ module interpolation
 
 		if ( step == 1 .and. n > 4 .and. ( x0 == 1 .or. x0 == 2*dim-1 )) n = 4
 
-		y(1) = x0 - n/2 + 1
-		latlon_y(1) = metr.latlon_c(1,2*dim+1-step,y(1),5)
-		h(1) = abs(latlon_x - latlon_y(1))
-
-		do i = 2, n
-			y(i) = y(i-1)+1
+		do i = 1, n
+			y(i) = x0 - n/2 + i
 			latlon_y(i) = metr.latlon_c(1,2*dim+1-step,y(i),5)
 			h(i) = latlon_x - latlon_y(i)
 			do j = 1, n
@@ -280,22 +321,39 @@ module interpolation
 		end do
 
 
-		latlon_x = metr.latlon_c(1,2*dim+1,1,5)
+		latlon_x = metr.latlon_c(1,1-step,1,2)
 
-		do i = 1, 2
-			y(i) = i-1+step
-			latlon_y(i) = metr.latlon_c(1,1,y(i),2)
+		do i = 2, 4
+			y(i) = i-2+step
+			latlon_y(i) = metr.latlon_c(1,2*dim+1-step,y(i),5)
 			h(i) = latlon_x - latlon_y(i)
-			do j = 1, 2
+			do j = 2, 4
 				if(j /= i) k(i, j) = h(i)/(latlon_y(j) - latlon_y(i))
 				if(j /= i) k(j, i) = h(j)/(latlon_y(i) - latlon_y(j))
 			end do
 			this.fantom1(i, step) = 1d0
 		end do
 
-		do i = 1, 2
-			do j = 1, 2
+		do i = 2, 4
+			do j = 2, 4
 				if(j /= i) this.fantom1(i, step) = this.fantom1(i, step)*k(j,i)
+			end do
+		end do
+
+		do i = 1, 3
+			y(i) = i-1+step
+			latlon_y(i) = metr.latlon_c(1,2*dim+1-step,y(i),5)
+			h(i) = latlon_x - latlon_y(i)
+			do j = 1, 3
+				if(j /= i) k(i, j) = h(i)/(latlon_y(j) - latlon_y(i))
+				if(j /= i) k(j, i) = h(j)/(latlon_y(i) - latlon_y(j))
+			end do
+			this.fantom2(i, step) = 1d0
+		end do
+
+		do i = 1, 3
+			do j = 1, 3
+				if(j /= i) this.fantom2(i, step) = this.fantom2(i, step)*k(j,i)
 			end do
 		end do
 

@@ -5,9 +5,9 @@ program solver
 	use metrics, Only: metric
 	use parallel_cubic, Only: parallel
 	use func_var, Only: f_var
-! 	use printer_ncdf, Only: printer
+	use printer_ncdf, Only: printer
 	use methods, Only: method
-! 	use diagnostic_mod, Only: diagnostic
+	use diagnostic_mod, Only: diagnostic
 	use messenger, Only: message
 	use interpolation, Only: interp
 	use omp_lib
@@ -28,9 +28,9 @@ implicit none
 	Type(g_var) :: grid
 	Type(metric) :: metr
 	Type(parallel) :: paral
-! 	Type(printer) :: printer_nc
+	Type(printer) :: printer_nc
 	Type(method) :: meth
-! 	Type(diagnostic) :: diagn
+	Type(diagnostic) :: diagn
 	Type(message) :: msg
 	Type(interp) :: inter
 
@@ -65,14 +65,14 @@ implicit none
 	call var.init(metr, height, dt)
 	call var_prev.init(metr, height, dt)
 	call var_prev.start_conditions(metr, geom, omega_cor)
-! 	call diagn.init(var_prev, Tmax, id)
+	call diagn.init(var_prev, Tmax, id)
 	call meth.init(var_prev, space_step, Tmax)
-	call inter.init(metr, 6)
-! 	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
+	call inter.init(metr, space_step*2)
+	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
 
 
-! 	call printer_nc.to_print(var_prev, diagn, 0)
-! 	call printer_nc.print_grid(grid)
+	call printer_nc.to_print(var_prev, diagn, 0)
+	call printer_nc.print_grid(grid)
 
 	call MPI_Barrier(MPI_COMM_WORLD, ier)
 	start_init = MPI_Wtime()
@@ -84,11 +84,11 @@ implicit none
 		call meth.RungeKutta(var, var_prev, metr, inter, msg, time)
 		if ( id == 0 ) cycle_time(time) = MPI_Wtime() - cycle_time(time)
 			if(mod(time, speedup) == 0) then
-! 				call diagn.Courant(metr, var_prev, time)
-! 				call printer_nc.to_print(var_prev, diagn, time)
+				call diagn.Courant(metr, var_prev, time)
+				call printer_nc.to_print(var_prev, diagn, time)
 			end if
-			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				call MPI_Barrier(MPI_COMM_WORLD, ier)
+			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
 			end if
@@ -118,8 +118,8 @@ implicit none
 	call grid.deinit()
 	call var.deinit()
 	call var_prev.deinit()
-! 	call printer_nc.deinit()
-! 	call diagn.deinit()
+	call printer_nc.deinit()
+	call diagn.deinit()
 	call meth.deinit()
 	call metr.deinit()
 
