@@ -65,7 +65,7 @@ implicit none
 	call var.init(metr, height, dt)
 	call var_prev.init(metr, height, dt)
 	call var_prev.start_conditions(metr, geom, omega_cor)
-	call diagn.init(var_prev, Tmax, id)
+	call diagn.init(var_prev, grid, Tmax, id)
 	call meth.init(var_prev, space_step, Tmax)
 	call inter.init(metr, 4)
 	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
@@ -83,11 +83,11 @@ implicit none
 		if ( id == 0 ) cycle_time(time) = MPI_Wtime()
 		call meth.RungeKutta(var, var_prev, metr, inter, msg, time)
 		if ( id == 0 ) cycle_time(time) = MPI_Wtime() - cycle_time(time)
-			if(mod(time, speedup) == 0) then
 				call diagn.Courant(metr, var_prev, time)
+			if(mod(time, speedup) == 0) then
 				call printer_nc.to_print(var_prev, diagn, time)
 			end if
-				call MPI_Barrier(MPI_COMM_WORLD, ier)
+			if(mod(10*time, Tmax) == 0 ) call MPI_Barrier(MPI_COMM_WORLD, ier)
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
 				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init

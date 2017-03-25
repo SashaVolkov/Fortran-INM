@@ -74,8 +74,9 @@ module scan_print
 
 
 		status = nf90_open(path = path1, mode = NF90_WRITE, ncid = ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status), "init1", path1
 		status = nf90_inq_varids(ncid, nvars, Wid)
-		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status), "init2", path1
 
 		if(this.nc_or_dat == 0) then
 			status = nf90_create(path = path3, cmode = NF90_CLOBBER, ncid = ncid_to)
@@ -87,7 +88,7 @@ module scan_print
 			status = nf90_def_var (ncid_to, "Lat_vel", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(3))
 			status = nf90_def_var (ncid_to, "Courant", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(4))
 			status = nf90_enddef (ncid_to)
-			if(status /= nf90_NoErr) print *, nf90_strerror(status)
+			if(status /= nf90_NoErr) print *, nf90_strerror(status), "init3"
 			this.ncid_to = ncid_to;  this.Wid_to = Wid_to
 		else
 			open(15,file=path3,access="direct",recl=(2*this.lat_max+1)*(2*this.lon_max+1))
@@ -185,10 +186,10 @@ module scan_print
 
 
 
-	subroutine print_surf(this, surface_to, surface_precise, time)
+	subroutine print_surf(this, surface_to, time)
 		Class(printer) :: this
 		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 4)
-		real(4), intent(in) :: surface_precise(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
+		! real(4), intent(in) :: surface_precise(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
 		integer(4), intent(in) :: time
 		integer(4) status, Wid_to(4), ncid_to, Courantid_to
 

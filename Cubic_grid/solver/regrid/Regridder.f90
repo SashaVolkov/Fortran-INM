@@ -28,7 +28,7 @@ program regrid
 	call inter.init(dim, step, lon_max, lat_max)
 	call to_cube.init(dim, step, lon_max, lat_max)
 	call scan.init(dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max, nc_or_dat)
-	call d.init(dim, step, convert_time, grid_type, rescale, lon_max, lat_max)
+	! call d.init(dim, step, convert_time, grid_type, rescale, lon_max, lat_max)
 
 	call scan.scan_grid(inter.latlon_cubic)
 	call inter.weight_find(geom, scan)
@@ -36,18 +36,18 @@ program regrid
 	call to_cube.weight_find()
 	do time = 1, all_time
 		call scan.scan_surf(time, inter.surface_off)
-		call scan.scan_precise(time, d.surface_precise)
+		! call scan.scan_precise(time, d.surface_precise)
 		call inter.interpolate(max)
-		call to_cube.interpolate(d.surface_precise)
+		! call to_cube.interpolate(d.surface_precise)
 ! 		call d.L_norm_ll((time-1)*speedup, inter.surface_to, max)
 ! 		call d.L_norm_c((time-1)*speedup, inter.surface_off, to_cube.precise_cube, max)
-		call scan.print_surf(inter.surface_to, d.surface_precise, time)
+		call scan.print_surf(inter.surface_to, time)
 		call scan.print_surf_prec_cube(time, to_cube.precise_cube, inter.surface_off)
 	end do
 
 	call to_cube.deinit()
 	call inter.deinit()
 	call scan.deinit()
-	call d.deinit()
+	! call d.deinit()
 
 end program

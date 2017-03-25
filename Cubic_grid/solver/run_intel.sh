@@ -59,12 +59,12 @@ fi
 
 if [[ $1 == "compile" ]]; then
 mpiifort -check all -traceback -ftrapuv -openmp $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
-# mpiifort -check all -traceback -ftrapuv -openmp $Files -module mod_files 2> err.file
-# mpiifort -openmp -O3 $Files -module mod_files 2> err.file
+# mpiifort -check all -traceback -ftrapuv -openmp $Files -module mod_files -I $gg 2> err.file
+# mpiifort -openmp -O3 $Files -I $gg -o PBS/$2 -module mod_files> err.file
 # mpiifort -openmp -O3 -trace -tcollect -g $Files -module mod_files 2> err.file
 elif [[ $1 != "compile" ]] ; then
 mpiifort -openmp -O3 $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
-# mpiifort -openmp -O3 $Files -module mod_files 2> err.file
+# mpiifort -openmp -O3 $Files -module mod_files -I $gg 2> err.file
 # mpiifort -check all -traceback -ftrapuv -openmp $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # mpiifort -check all -traceback -ftrapuv -g $Files -module mod_files -I $gg -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 fi
@@ -88,7 +88,7 @@ else
 
 		echo "Regridding"
 		cd regrid
-		# ./run_intel_reg.sh
+		./run_intel_reg.sh
 
 	fi
 

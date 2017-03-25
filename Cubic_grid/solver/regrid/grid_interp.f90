@@ -229,6 +229,8 @@ CONTAINS
 		!$OMP END DO
 		!$OMP END PARALLEL
 
+		print *, "Found!"
+
 	end subroutine
 
 
