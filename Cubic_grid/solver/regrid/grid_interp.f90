@@ -58,8 +58,8 @@ CONTAINS
 		lon = this.lon_max; lat = this.lat_max
 
 		Allocate(this.latlon_cubic(2, f:l, f:l, 6))
-		Allocate(this.surface_off(f:l, f:l, 6, 4))
-		Allocate(this.surface_to(-lon:lon, -lat:lat, 4))
+		Allocate(this.surface_off(f:l, f:l, 6, 7))
+		Allocate(this.surface_to(-lon:lon, -lat:lat, 7))
 		Allocate(this.weight(4, 4, -lat:lat, -lon:lon))
 		Allocate(this.indexes_xyface(3, 4, -lat:lat, -lon:lon))
 		Allocate(this.closest_xyface(3, -lon:lon, -lat:lat))
@@ -241,10 +241,9 @@ CONTAINS
 		Real(8) :: weight(4, 4)
 
 		! surf_to = sum(w*surf_off)
-		call this.hem_of_face(this.surface_off(:,:,:,1))
-		call this.hem_of_face(this.surface_off(:,:,:,2))
-		call this.hem_of_face(this.surface_off(:,:,:,3))
-		call this.hem_of_face(this.surface_off(:,:,:,4))
+		do i = 1, 7
+			call this.hem_of_face(this.surface_off(:,:,:,i))
+		end do
 
 		!$OMP PARALLEL PRIVATE(i, lon, lat, face)
 		!$OMP DO

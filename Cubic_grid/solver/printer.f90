@@ -13,7 +13,7 @@ module printer_ncdf
 
 	Type printer
 
-		Integer(4) :: Wid, Courantid, ncid, speedup, id, Lonid, Latid
+		Integer(4) :: Wid(8), ncid, speedup, id
 
 		CONTAINS
 		Procedure, Public :: init => init
@@ -33,8 +33,8 @@ module printer_ncdf
 		Integer(4), intent(in) :: Tmax, speedup, rescale, grid_type
 		Integer(4), intent(out) :: time
 
-		Integer(4) status, face, xid, yid, dim, step, faceid, llid, gr_xid, gr_yid, Lonid, Latid
-		Integer(4) gr_faceid, Wid, Courantid, Precid, ncid, id, ier
+		Integer(4) status, face, xid, yid, dim, step, faceid, llid, gr_xid, gr_yid
+		Integer(4) gr_faceid, Wid(8), ncid, id, ier
 		character(40) istring, istring1
 		character(80) path1, path2, path3
 
@@ -73,33 +73,47 @@ module printer_ncdf
 		status = nf90_def_dim (ncid, "time", Tmax/speedup + 1, time)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "Level", NF90_FLOAT, (/ xid, yid, faceid, time/), Wid)
+		status = nf90_def_var (ncid, "Level", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid(1))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "Lon_vel", NF90_FLOAT, (/ xid, yid, faceid, time/), Lonid)
+		status = nf90_def_var (ncid, "Lon_vel", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid(2))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "Lat_vel", NF90_FLOAT, (/ xid, yid, faceid, time/), Latid)
+		status = nf90_def_var (ncid, "Lat_vel", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid(3))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "CFL", NF90_FLOAT, (/ xid, yid, faceid, time/), Courantid)
+		status = nf90_def_var (ncid, "Level_er", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid(4))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		status = nf90_def_var (ncid, "Precise", NF90_FLOAT, (/ xid, yid, faceid, time/), Precid)
+		status = nf90_def_var (ncid, "Lon_vel_er", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid(5))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		status = nf90_enddef (ncid)
 		if(status /= nf90_NoErr) print *, nf90_strerror(status)
 
-		this.Courantid = Courantid;  this.Wid = Wid;  this.ncid = ncid
-		this.Lonid = Lonid;  this.Latid = Latid
+		status = nf90_def_var (ncid, "Lat_vel_er", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid(6))
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_def_var (ncid, "CFL", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid(7))
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		status = nf90_def_var (ncid, "Precise", NF90_DOUBLE, (/ xid, yid, faceid, time/), Wid(8))
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+		status = nf90_enddef (ncid)
+		if(status /= nf90_NoErr) print *, nf90_strerror(status)
+
+		this.Wid = Wid;  this.ncid = ncid
 
 		if(id==0) then
 			open(40,file=path2)
@@ -118,9 +132,9 @@ module printer_ncdf
 		Integer(4), intent(in) :: time
 
 		Integer(4) x, y, face, ier
-		Integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize, Wid, Courantid, Lonid, Latid
+		Integer(4) status, t, ns_y, ns_x, nf_y, nf_x, Ysize, Xsize, Wid(8)
 
-		Courantid = this.Courantid;  Wid = this.Wid; Latid = this.Latid; Lonid = this.Lonid
+		Wid = this.Wid
 
 		ns_y = var.ns_y;  nf_y = var.nf_y
 		ns_x = var.ns_x;  nf_x = var.nf_x
@@ -129,19 +143,31 @@ module printer_ncdf
 		t = 1+time/this.speedup
 
 		do face = 1, 6
-			status = nf90_put_var(this.ncid, Wid, real(var.h_height(ns_x:nf_x, ns_y:nf_y, face),4),&
+			status = nf90_put_var(this.ncid, Wid(1), var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
 
-			status = nf90_put_var(this.ncid, Lonid, real(var.lon_vel(ns_x:nf_x, ns_y:nf_y, face),4),&
+			status = nf90_put_var(this.ncid, Wid(2), var.lon_vel(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
 
-			status = nf90_put_var(this.ncid, Latid, real(var.lat_vel(ns_x:nf_x, ns_y:nf_y, face),4),&
+			status = nf90_put_var(this.ncid, Wid(3), var.lat_vel(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
 
-			status = nf90_put_var(this.ncid, Courantid, real(diagn.CFL(ns_x:nf_x, ns_y:nf_y, face),4),&
+			status = nf90_put_var(this.ncid, Wid(4), var.h_height(ns_x:nf_x, ns_y:nf_y, face) - var.starter(1, ns_x:nf_x, ns_y:nf_y, face),&
+			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
+
+			status = nf90_put_var(this.ncid, Wid(5), var.lon_vel(ns_x:nf_x, ns_y:nf_y, face) - var.starter(2, ns_x:nf_x, ns_y:nf_y, face),&
+			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
+
+			status = nf90_put_var(this.ncid, Wid(6), var.lat_vel(ns_x:nf_x, ns_y:nf_y, face) - var.starter(3, ns_x:nf_x, ns_y:nf_y, face),&
+			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
+			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
+
+			status = nf90_put_var(this.ncid, Wid(7), diagn.CFL(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
 		end do

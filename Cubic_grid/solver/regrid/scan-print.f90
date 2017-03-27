@@ -10,7 +10,7 @@ module scan_print
 
 	Type printer
 
-	integer(4) :: dim, step, ncid, ncid_to, grid_id, Wid(5), Wid_to(4)
+	integer(4) :: dim, step, ncid, ncid_to, grid_id, Wid(8), Wid_to(7)
 	integer(4) :: lon_max, lat_max, nc_or_dat, point_id, ncid_point, point_find
 	real(8) :: convert_time
 		CONTAINS
@@ -34,7 +34,7 @@ module scan_print
 		Class(printer) :: this
 		integer(4), intent(in) :: dim, step, all_time, rescale, grid_type, lon_max, lat_max, nc_or_dat
 
-		integer(4) status, face, ncid, ncid_to, nvars, grid_id(1:1), Wid(5), Wid_to(4), time, Courantid_to, point_id(1:1), ncid_point, point_find
+		integer(4) status, face, ncid, ncid_to, nvars, grid_id(1:1), Wid(8), Wid_to(7), time, Courantid_to, point_id(1:1), ncid_point, point_find
 		logical file_exist
 		integer(4) latid, lonid, coord
 		real(8) convert_time
@@ -86,7 +86,10 @@ module scan_print
 			status = nf90_def_var (ncid_to, "Level", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(1))
 			status = nf90_def_var (ncid_to, "Lon_vel", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(2))
 			status = nf90_def_var (ncid_to, "Lat_vel", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(3))
-			status = nf90_def_var (ncid_to, "Courant", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(4))
+			status = nf90_def_var (ncid_to, "Level_er", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(4))
+			status = nf90_def_var (ncid_to, "Lon_vel_er", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(5))
+			status = nf90_def_var (ncid_to, "Lat_vel_er", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(6))
+			status = nf90_def_var (ncid_to, "Courant", NF90_FLOAT, (/ lonid, latid, time/), Wid_to(7))
 			status = nf90_enddef (ncid_to)
 			if(status /= nf90_NoErr) print *, nf90_strerror(status), "init3"
 			this.ncid_to = ncid_to;  this.Wid_to = Wid_to
@@ -113,8 +116,8 @@ module scan_print
 
 		Class(printer) :: this
 		integer(4), intent(in) :: time
-		real(8), intent(out) :: surface_off(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 6, 4)
-		integer(4) x, y, face, ier, status, ncid, Wid(5), dim
+		real(8), intent(out) :: surface_off(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 6, 7)
+		integer(4) x, y, face, ier, status, ncid, Wid(8), dim
 
 		dim = this.dim;  ncid = this.ncid;  Wid = this.Wid
 
@@ -129,6 +132,15 @@ module scan_print
 
 		status = nf90_get_var(ncid, Wid(4), surface_off(1:2*dim, 1:2*dim, 1:6, 4),&
 		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
+
+		status = nf90_get_var(ncid, Wid(5), surface_off(1:2*dim, 1:2*dim, 1:6, 5),&
+		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
+
+		status = nf90_get_var(ncid, Wid(6), surface_off(1:2*dim, 1:2*dim, 1:6, 6),&
+		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
+
+		status = nf90_get_var(ncid, Wid(7), surface_off(1:2*dim, 1:2*dim, 1:6, 7),&
+		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
 		if(status /= nf90_NoErr) print *, nf90_strerror(status), "scan_surf"
 	end subroutine
 
@@ -140,14 +152,14 @@ module scan_print
 		Class(printer) :: this
 		integer(4), intent(in) :: time
 		real(4), intent(in) :: precise(1:2*this.dim, 1:2*this.dim, 1:6)
-		real(8), intent(in) :: surface_to(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 6)
+		real(8), intent(in) :: surface_to(1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 7)
 		integer(4) status, ncid, dim
 
 		dim = this.dim;  ncid = this.ncid
 
-		status = nf90_put_var(ncid, this.Wid(5), precise(1:2*dim, 1:2*dim, 1:6)-real(surface_to(1:2*dim, 1:2*dim, 1:6),4),&
-		 start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
-		if(status /= nf90_NoErr) print *, nf90_strerror(status), "print_surf_cube"
+		! status = nf90_put_var(ncid, this.Wid(8), precise(1:2*dim, 1:2*dim, 1:6)-real(surface_to(1:2*dim, 1:2*dim, 1:6),4),&
+		!  start = (/1, 1, 1, time/), count = (/2*dim, 2*dim, 6, 1/))
+		! if(status /= nf90_NoErr) print *, nf90_strerror(status), "print_surf_cube"
 	end subroutine
 
 
@@ -169,7 +181,7 @@ module scan_print
 	subroutine scan_grid(this, grid)
 
 		Class(printer) :: this
-		real(8), intent(out) :: grid(2, 1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 6)
+		real(8), intent(out) :: grid(2, 1-this.step:2*this.dim+this.step, 1-this.step:2*this.dim+this.step, 7)
 
 		read(40, *), grid(1:2, 1:2*this.dim, 1:2*this.dim, 1:6)
 		close(40)
@@ -188,10 +200,10 @@ module scan_print
 
 	subroutine print_surf(this, surface_to, time)
 		Class(printer) :: this
-		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 4)
+		real(8), intent(in) :: surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 7)
 		! real(4), intent(in) :: surface_precise(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max)
 		integer(4), intent(in) :: time
-		integer(4) status, Wid_to(4), ncid_to, Courantid_to
+		integer(4) status, Wid_to(7), ncid_to, Courantid_to
 
 		ncid_to = this.ncid_to;  Wid_to = this.Wid_to
 
@@ -205,7 +217,16 @@ module scan_print
 			status = nf90_put_var(ncid_to, Wid_to(3), real(surface_to(:,:,3),4),&
 			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
 
-			status = nf90_put_var(ncid_to, Wid_to(4), real(surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 4),4),&
+			status = nf90_put_var(ncid_to, Wid_to(4), real(surface_to(:,:,4),4),&
+			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
+
+			status = nf90_put_var(ncid_to, Wid_to(5), real(surface_to(:,:,5),4),&
+			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
+
+			status = nf90_put_var(ncid_to, Wid_to(6), real(surface_to(:,:,6),4),&
+			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
+
+			status = nf90_put_var(ncid_to, Wid_to(7), real(surface_to(-this.lon_max:this.lon_max, -this.lat_max:this.lat_max, 7),4),&
 			 start = (/1, 1, time/), count = (/2*this.lon_max+1, 2*this.lat_max+1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status)
 		else
