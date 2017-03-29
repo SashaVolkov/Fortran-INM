@@ -394,9 +394,9 @@ CONTAINS
 
 
 
-	Subroutine cov_to_con(this, u_cov, v_cov, u_con, v_con, x, y, face)
+	Subroutine cov_to_con(this, u_cov, v_cov, u_con, v_con, x, y)
 		Class(metric) :: this
-		Integer(4), intent(in) :: x, y, face
+		Integer(4), intent(in) :: x, y
 		Real(8), intent(in) :: u_cov, v_cov
 		Real(8), intent(out) :: u_con, v_con
 		Real(8) :: G_inv(2,2)
@@ -409,9 +409,9 @@ v_con = G_inv(2, 2) * v_cov + G_inv(2, 1) * u_cov
 
 
 
-	Subroutine con_to_cov(this, u_con, v_con, u_cov, v_cov, x, y, face)
+	Subroutine con_to_cov(this, u_con, v_con, u_cov, v_cov, x, y)
 		Class(metric) :: this
-		Integer(4), intent(in) :: x, y, face
+		Integer(4), intent(in) :: x, y
 		Real(8), intent(in) :: u_con, v_con
 		Real(8), intent(out) :: u_cov, v_cov
 		Real(8) :: G(2,2)

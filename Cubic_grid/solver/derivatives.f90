@@ -111,13 +111,19 @@ CONTAINS
 
 
 
-	Real(8) function vorticity(this, metr, u1_cov, u2_cov, h, x, y, step)
+	Real(8) function vorticity(this, metr, u1_con, u2_con, h, x, y, step)
 		Class(der) :: this
 		Class(metric) :: metr
 		Integer(4), intent(in) :: x, y, step
-		Real(8), intent(in) :: u1_cov(-step:step), u2_cov(-step:step), h
+		Real(8), intent(in) :: u1_con(-step:step), u2_con(-step:step), h
+		Real(8) :: u1_cov(-step:step), u2_cov(-step:step)
+		Integer :: i
 
-		vorticity = ( this.partial_c(u2_cov, h, step) - this.partial_c(u1_cov, h, step))/metr.G_sqr(x, y)
+		do i = -step, step
+			call metr.con_to_cov(u1_con(i),u2_con(i),u1_cov(i),u2_cov(i),x,y)
+		end do
+
+		vorticity = ( this.partial_c(u2_cov, h, step) - this.partial_c(u1_cov, h, step))
 
 	end function
 
