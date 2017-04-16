@@ -17,6 +17,7 @@ implicit none
 		Procedure, Private :: partial_c_fg => partial_c_fg
 		Procedure, Public :: div => div
 		Procedure, Public :: vorticity => vorticity
+		Procedure, Public :: grad_uu => grad_uu
 	End Type
 
 
@@ -123,7 +124,24 @@ CONTAINS
 			call metr.con_to_cov(u1_con(i),u2_con(i),u1_cov(i),u2_cov(i),x,y)
 		end do
 
-		vorticity = ( this.partial_c(u2_cov, h, step) - this.partial_c(u1_cov, h, step))
+		vorticity = ( this.partial_c(u2_cov, h, step) - this.partial_c(u1_cov, h, step))/metr.G_sqr(x, y)
+
+	end function
+
+
+	Real(8) function grad_uu(this, metr, u1_con, u2_con, h, x, y, step)
+		Class(der) :: this
+		Class(metric) :: metr
+		Integer(4), intent(in) :: x, y, step
+		Real(8), intent(in) :: u1_con(-step:step), u2_con(-step:step), h
+		Real(8) :: u1_cov(-step:step), u2_cov(-step:step)
+		Integer :: i
+
+		do i = -step, step
+			call metr.con_to_cov(u1_con(i),u2_con(i),u1_cov(i),u2_cov(i),x,y)
+		end do
+
+		grad_uu = ( this.partial_c_fg(u1_cov, u1_con, h, step) + this.partial_c_fg(u2_cov, u2_con, h, step))
 
 	end function
 

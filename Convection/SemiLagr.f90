@@ -90,10 +90,10 @@ IMPLICIT NONE
 
 				if ( i == this.iter_stpes+1 ) then
 ! 					call this.Interpol(delta, x_wave, mass(x), prev_mass, g)
-					call interp.Lintp(x_wave, mass(x), prev_mass, g)
+					call interp.Lintp(x_wave, prev_mass, mass(x), g)
 				else
 ! 					call this.Interpol(delta, x_wave, this.mass_alpha(i), this.velocity, g)
-					call interp.Lintp(x_wave, this.mass_alpha(i), this.velocity, g)
+					call interp.Lintp(x_wave, this.velocity, this.mass_alpha(i), g)
 				end if
 
 			end do

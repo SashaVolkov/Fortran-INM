@@ -18,7 +18,7 @@ Module Interp
 
 	CONTAINS
 
-	Subroutine intp_Lintp(this, x_wave, res, Mass_in, g)
+	Subroutine intp_Lintp(this, x_wave, Mass_in, res, g)
 
 		Class(grid) :: g
 		Class(intp) :: this
