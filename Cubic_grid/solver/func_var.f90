@@ -122,6 +122,8 @@ CONTAINS
 		var_pr.h_height(x, y, face) = var.h_height(x, y, face)
 		var_pr.u_con(x, y, face) = var.u_con(x, y, face)
 		var_pr.v_con(x, y, face) = var.v_con(x, y, face)
+		var_pr.u_cov(x, y, face) = var.u_cov(x, y, face)
+		var_pr.v_cov(x, y, face) = var.v_cov(x, y, face)
 		call metr.con_to_spherical(var_pr.u_con(x, y, face), var_pr.v_con(x, y, face), var_pr.lon_vel(x, y, face), var_pr.lat_vel(x, y, face), x, y, face)
 				end do
 			end do
@@ -149,7 +151,7 @@ CONTAINS
 		this.u_cov = 0d0;  this.v_cov = 0d0;  this.lon_vel = 0d0
 		this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
 
-		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  u0 = this.u0;  alpha = -pi/4d0
+		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  u0 = this.u0;  alpha = 0d0 !-pi/4d0
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
@@ -160,8 +162,9 @@ lon = metr.latlon_c(2,x,y,face)
 
 this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
 this.lat_vel(x, y, face) = -u0*dsin(lon)*dsin(alpha)
-this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
+this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
 call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
+call metr.con_to_cov(this.u_con(x, y, face), this.v_con(x, y, face), this.u_cov(x, y, face), this.v_cov(x, y, face), x, y)
 this.f(x, y, face) = (2d0*omega_cor)*(dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))
 
 
@@ -215,6 +218,7 @@ this.f(x, y, face) = (2d0*omega_cor)*(dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon
 					do x = x_st(i), x_fin(i)
 
 call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
+call metr.con_to_cov(this.u_con(x, y, face), this.v_con(x, y, face), this.u_cov(x, y, face), this.v_cov(x, y, face), x, y)
 
 					end do
 				end do

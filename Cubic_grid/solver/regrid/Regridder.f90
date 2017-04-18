@@ -22,7 +22,7 @@ program regrid
 	close(9)
 
 	all_time = Tmax/speedup + 1
-	convert_time = dt; lon_max = 360; lat_max = 180
+	convert_time = dt; lon_max = 720; lat_max = 360
 	nc_or_dat = 0
 
 	call inter.init(dim, step, lon_max, lat_max)

@@ -206,6 +206,8 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg, time)
 			call this.FRunge(metr, var_pr, iteration)
 			var_pr.u_con(:, :, :) = this.ku_con(:, :, :, iteration)
 			var_pr.v_con(:, :, :) = this.kv_con(:, :, :, iteration)
+			var_pr.u_cov(:, :, :) = this.ku_cov(:, :, :, iteration)
+			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
 			call var_pr.equal(var_pr, metr)
 			call MPI_Barrier(MPI_COMM_WORLD, ier)
@@ -216,6 +218,8 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg, time)
 			call var_pr.interpolate(inter, metr)
 			this.ku_con(:, :, :, iteration) = var_pr.u_con(:, :, :)
 			this.kv_con(:, :, :, iteration) = var_pr.v_con(:, :, :)
+			this.ku_cov(:, :, :, iteration) = var_pr.u_cov(:, :, :)
+			this.kv_cov(:, :, :, iteration) = var_pr.v_cov(:, :, :)
 			this.kh(:, :, :, iteration) = var_pr.h_height(:, :, :)
 		end do
 
@@ -226,6 +230,7 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg, time)
 var.u_con(x, y, face) = this.ku_con(x, y, face, 0) + (this.ku_con(x, y, face, 1) + 2d0*this.ku_con(x, y, face, 2) + 2d0*this.ku_con(x, y, face, 3) + this.ku_con(x, y, face, 4))/6d0
 var.v_con(x, y, face) = this.kv_con(x, y, face, 0) + (this.kv_con(x, y, face, 1) + 2d0*this.kv_con(x, y, face, 2) + 2d0*this.kv_con(x, y, face, 3) + this.kv_con(x, y, face, 4))/6d0
 var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2d0*this.kh(x, y, face, 2) + 2d0*this.kh(x, y, face, 3) + this.kh(x, y, face, 4))/6d0
+! call metr.con_to_cov(var.u_con(x, y, face), var.v_con(x, y, face), var.u_cov(x, y, face), var.v_cov(x, y, face), x, y)
 			end do
 		end do
 	end do
@@ -250,25 +255,26 @@ Subroutine FRunge(this, metr, var, i)
 	Type(der) :: d
 
 	Integer(4), intent(in) :: i
-	Real(8) g, height, dt, grad_Fx, grad_Fy, grad_uu, grad_vv, temp1(-this.step:this.step, -this.step:this.step), temp2(-this.step:this.step, -this.step:this.step), coef(0:3), div, dh, vorticity
-	Real(8) :: G_inv(2,2), A(2,2), grad_Fx_con, grad_Fy_con, u0, S_c(2), S_cll(2), S_p(2), S_pll(2), lat, lat_vel, lon_vel, h, u_cov, v_cov
+	Real(8) :: temp1(-this.step:this.step, -this.step:this.step), temp2(-this.step:this.step, -this.step:this.step)
+	Real(8) :: temp1_cov(-this.step:this.step, -this.step:this.step), temp2_cov(-this.step:this.step, -this.step:this.step)
+	Real(8) :: g, height, dt, grad_Fx, grad_Fy, S_c(2), S_p(2), h, u_cov, v_cov, coef(0:3), div, dh, uu(2)
 	Integer(4) x,y, face, step, ns_x, ns_y, nf_x, nf_y
 
 	coef(0) = 0d0;  coef(1) = 5d-1;  coef(2) = 5d-1;  coef(3) = 1d0;
-	u0 = 2d0*314159265358979323846d-20*6371220d0/(12d0*24d0*60d0*60d0)
 
 	dt = this.dt;  g = this.g; height = this.height
 	dh = this.dh;  step = this.step
 	ns_x = this.ns_x;  ns_y = this.ns_y
 	nf_x = this.nf_x;  nf_y = this.nf_y
 
-	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, grad_uu, grad_vv, temp1, temp2, div, lat_vel, lon_vel, h, vorticity, u_cov, v_cov, lat, S_p, S_c)
+	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, temp1, temp2, temp1_cov, temp2_cov, div, h, u_cov, v_cov, uu, S_p, S_c)
 	!$OMP DO
 
 	do face = 1,6
 		do y = ns_y, nf_y
 			do x = ns_x, nf_x
 
+uu = 0d0
 temp1 = this.kh(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kh(x-step:x+step, y-step:y+step, face, i-1)
 h = temp1(0,0)
 grad_Fx = d.partial_c(temp1(:,0), dh, step)
@@ -277,17 +283,30 @@ grad_Fy = d.partial_c(temp1(0,:), dh, step)
 
 temp1 = this.ku_con(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y-step:y+step, face, i-1)
 temp2 = this.kv_con(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x-step:x+step, y-step:y+step, face, i-1)
-div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
-S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
-S_c(2) = - dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
-S_p(1) =  - dt*g*grad_Fx
-S_p(2) =  - dt*g*grad_Fy
 
-u_cov = S_c(1) + S_p(1)
-v_cov = S_c(2) + S_p(2)
+uu(1) = (temp1(0,0)**2)*metr.Christoffel_x1(1,1,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x1(2,1,x,y)
+uu(2) = (temp2(0,0)**2)*metr.Christoffel_x2(2,2,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x2(2,1,x,y)
+! print *, uu, x, y, face
+
+uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_c(temp1(0,:), dh, step) + uu(1))
+uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
+
+
+div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
+
+S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
+S_c(2) = dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
+
+S_p(1) = - dt*g*grad_Fx
+S_p(2) = - dt*g*grad_Fy
+call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
+call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
+
+this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
+this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
 this.kh(x, y, face, i) = - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
-call metr.cov_to_con(u_cov, v_cov, this.ku_con(x, y, face, i), this.kv_con(x, y, face, i), x, y)
+! call metr.cov_to_con(this.ku_cov(x, y, face, i), this.kv_cov(x, y, face, i), this.ku_con(x, y, face, i), this.kv_con(x, y, face, i), x, y)
 
 			end do
 		end do
@@ -295,6 +314,7 @@ call metr.cov_to_con(u_cov, v_cov, this.ku_con(x, y, face, i), this.kv_con(x, y,
 
 	!$OMP END DO
 	!$OMP END PARALLEL
+! print *, ""
 
 end Subroutine
 

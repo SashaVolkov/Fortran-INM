@@ -14,7 +14,7 @@ implicit none
 		Procedure, Private :: partial_c2 => partial_c2
 		Procedure, Private :: partial_c4 => partial_c4
 		Procedure, Private :: partial_c6 => partial_c6
-		Procedure, Private :: partial_c_fg => partial_c_fg
+		Procedure, Public :: partial_c_fg => partial_c_fg
 		Procedure, Public :: div => div
 		Procedure, Public :: vorticity => vorticity
 		Procedure, Public :: grad_uu => grad_uu

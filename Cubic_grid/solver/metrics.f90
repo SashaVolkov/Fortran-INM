@@ -10,6 +10,8 @@ implicit none
 	Type metric
 
 		Real(8), Allocatable :: G_sqr(:, :)
+		Real(8), Allocatable :: Christoffel_x1(:, :, :, :)
+		Real(8), Allocatable :: Christoffel_x2(:, :, :, :)
 		Real(8), Allocatable :: G_tensor(:, :, :, :)
 		Real(8), Allocatable :: G_inverse(:, :, :, :)
 		Real(8), Allocatable :: rho(:, :)
@@ -101,6 +103,8 @@ CONTAINS
 
 		Allocate(this.G_sqr(f_x:l_x , f_y:l_y))
 		Allocate(this.G_tensor(2, 2, f_x:l_x , f_y:l_y))
+		Allocate(this.Christoffel_x1(3, 3, f_x:l_x , f_y:l_y))
+		Allocate(this.Christoffel_x2(3, 3, f_x:l_x , f_y:l_y))
 		Allocate(this.G_inverse(2, 2, f_x:l_x , f_y:l_y))
 		Allocate(this.rho(f_x:l_x , f_y:l_y))
 		Allocate(this.Tr_to_sph(2, 2, f_x:l_x , f_y:l_y, 6))
@@ -118,6 +122,8 @@ CONTAINS
 
 		if (Allocated(this.G_sqr)) Deallocate(this.G_sqr)
 		if (Allocated(this.G_tensor)) Deallocate(this.G_tensor)
+		if (Allocated(this.Christoffel_x1)) Deallocate(this.Christoffel_x1)
+		if (Allocated(this.Christoffel_x2)) Deallocate(this.Christoffel_x2)
 		if (Allocated(this.G_inverse)) Deallocate(this.G_inverse)
 		if (Allocated(this.rho)) Deallocate(this.rho)
 		if (Allocated(this.Tr_to_sph)) Deallocate(this.Tr_to_sph)
@@ -131,9 +137,11 @@ CONTAINS
 
 	Subroutine metric_tensor_equiang(this)   ! Ullrich phd thesis Appendices
 		Class(metric) :: this
-		Real(8) x_1, x_2, g_coef, g_inv_coef, delta
+		Real(8) x_1, x_2, g_coef, g_inv_coef, delta, rho
 		Integer(4) x, y, face
 
+		this.Christoffel_x1 = 0d0
+		this.Christoffel_x2 = 0d0
 		call this.transf_matrix_equiang()
 
 		do y = this.first_y, this.last_y
@@ -142,10 +150,11 @@ CONTAINS
 			x_1 = dtan(this.cube_coord_c(1, x, y))
 			x_2 = dtan(this.cube_coord_c(2, x, y))
 
-			delta = dsqrt(1d0 + x_1**2 + x_2**2)
-			this.G_sqr(x, y) = (1d0 + x_1**2)*(1d0 + x_2**2)/(delta**3)
-			g_coef = (1d0 + x_1**2)*(1d0 + x_2**2)/(delta**4)
-			g_inv_coef = (delta**2)/((1d0 + x_1**2)*(1d0 + x_2**2))
+			rho = 1d0 + x_1**2 + x_2**2
+			delta = dsqrt(rho)
+			this.G_sqr(x, y) = (1d0 + x_1**2)*(1d0 + x_2**2)/(delta*rho)
+			g_coef = (1d0 + x_1**2)*(1d0 + x_2**2)/(rho**2)
+			g_inv_coef = (rho)/((1d0 + x_1**2)*(1d0 + x_2**2))
 
 			this.G_tensor(1, 1, x, y) = g_coef * (1d0 + x_1**2)
 			this.G_tensor(1, 2, x, y) = g_coef * (- x_1*x_2)
@@ -156,6 +165,15 @@ CONTAINS
 			this.G_inverse(1, 2, x, y) = g_inv_coef * (x_1*x_2)
 			this.G_inverse(2, 1, x, y) = this.G_inverse(1, 2, x, y)
 			this.G_inverse(2, 2, x, y) = g_inv_coef * (1d0 + x_1**2)
+
+			rho = rho*this.r_sphere
+			this.Christoffel_x1(1, 1, x, y) = 2d0*x_1*(x_2**2)/rho   ! Ullrich PhD thesis
+			this.Christoffel_x1(1, 2, x, y) = -x_2*(1 + x_2**2)/rho
+			this.Christoffel_x1(2, 1, x, y) = -x_2*(1 + x_2**2)/rho
+
+			this.Christoffel_x2(2, 2, x, y) = 2d0*x_2*(x_1**2)/rho
+			this.Christoffel_x2(1, 2, x, y) = -x_1*(1 + x_1**2)/rho
+			this.Christoffel_x2(2, 1, x, y) = -x_1*(1 + x_1**2)/rho
 
 			end do
 		end do
