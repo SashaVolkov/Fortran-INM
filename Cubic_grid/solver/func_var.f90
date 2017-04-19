@@ -151,7 +151,7 @@ CONTAINS
 		this.u_cov = 0d0;  this.v_cov = 0d0;  this.lon_vel = 0d0
 		this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
 
-		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  u0 = this.u0;  alpha = 0d0 !-pi/4d0
+		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  u0 = this.u0;  alpha = -pi/4d0
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y

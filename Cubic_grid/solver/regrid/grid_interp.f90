@@ -181,13 +181,13 @@ CONTAINS
 		dim = this.dim;  factor = 90d0/dble(this.lat_max)
 		! lon = this.lon_max; lat = this.lat_max
 
+
 		!$OMP PARALLEL PRIVATE(i, y, x, lon, lat, angle, latlon, min, face)
 		!$OMP DO
 
 		do lon = -this.lon_max, this.lon_max
 			do lat = -this.lat_max, this.lat_max
 			latlon(1) = factor*lat*pi/180d0;  latlon(2) = factor*lon*pi/180d0; min = 10000.0
-
 					do x = 1, 2*dim
 						do y = 1, 2*dim
 							if(lat*factor < -50)then
@@ -224,6 +224,7 @@ CONTAINS
 					end do
 				end do
 			end do
+! 			print *, lon
 		end do
 
 		!$OMP END DO

@@ -14,7 +14,8 @@ netcdf="/data4t/avolkov/util/netcdf-2016Jan-13.1"
 netcdf="/home/sasha/netcdf"
 
  # -check all -traceback -ftrapuv
-mpiifort -check all -traceback -ftrapuv -openmp $Files -module mod_files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+# mpiifort -check all -traceback -ftrapuv -openmp $Files -module mod_files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
+mpiifort -O3 -openmp $Files -module mod_files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # mpiifort -check all -traceback -ftrapuv $Files -I $netcdf/inc -L $netcdf/lib -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz -lm 2> err.file
 # /home/sasha/Fortran/Comands/./compo geometry.o conformal.o matmul.o morphism.o grid_generator.o data_analyzer.o spherical.o main.o
 	echo "compilation status" $?
