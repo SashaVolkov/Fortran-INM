@@ -19,8 +19,6 @@ module methods
 		Integer(4) first_x, first_y, last_x, last_y, step, dim, ns_x, ns_y, nf_x, nf_y
 		Real(8) :: g, dt, dh, height
 
-		Real(8), Allocatable :: ku_cov(:, :, :, :)
-		Real(8), Allocatable :: kv_cov(:, :, :, :)
 		Real(8), Allocatable :: ku_con(:, :, :, :)
 		Real(8), Allocatable :: kv_con(:, :, :, :)
 		Real(8), Allocatable :: kh(:, :, :, :)
@@ -58,8 +56,6 @@ Subroutine init(this, f, step, Tmax)
 	this.dt = f.dt;  this.g = f.g;  this.dh = f.delta_on_cube
 	this.height = f.height
 
-	Allocate(this.ku_cov(f_x: l_x, f_y : l_y, 6, 0:4))
-	Allocate(this.kv_cov(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.ku_con(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kv_con(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kh(f_x: l_x, f_y : l_y, 6, 0:4))
@@ -79,31 +75,52 @@ Subroutine Euler(this, var, var_pr, metr, inter, msg)
 	Class(message) :: msg
 	Type(der) :: d
 
-	Real(8) g, height, dt, partial, temp1(-this.step:this.step), temp2(-this.step:this.step), div, dh
-	Integer(4) face, x, y, dim, step
+	Real(8) :: temp1(-this.step:this.step, -this.step:this.step), temp2(-this.step:this.step, -this.step:this.step)
+	Real(8) :: temp1_cov(-this.step:this.step, -this.step:this.step), temp2_cov(-this.step:this.step, -this.step:this.step)
+	Real(8) :: g, height, dt, grad_Fx, grad_Fy, S_c(2), S_p(2), h, u_cov, v_cov, div, dh, uu(2)
+	Integer(4) x,y, face, step, ns_x, ns_y, nf_x, nf_y
 
-	g = this.g;  height = this.height;  dim = this.dim
+	g = this.g;  height = this.height;
 	dt = this.dt;  step = this.step;  dh = this.dh
 
-	!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
+	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, temp1, temp2, temp1_cov, temp2_cov, div, h, u_cov, v_cov, uu, S_p, S_c)
 	!$OMP DO
 
 	do face = 1, 6
 		do y = var.ns_y, var.nf_y
 			do x = var.ns_x, var.nf_x
 
-				temp1(:) = var_pr.h_height(x-step:x+step, y, face)
-				partial = d.partial_c(temp1, dh, step)
-				var.u_cov(x, y, face) = var_pr.u_cov(x, y, face) - dt*g*partial ! + dt*metr.G_sqr(x, y)*var_pr.v_con(x, y, face)*var_pr.f_cor(x, y, face)
+			uu = 0d0
+			temp1 = var_pr.h_height(x-step:x+step, y-step:y+step, face)
+			h = temp1(0,0)
+			grad_Fx = d.partial_c(temp1(:,0), dh, step)
+			grad_Fy = d.partial_c(temp1(0,:), dh, step)
 
-				temp1(:) = var_pr.h_height(x, y-step:y+step, face)
-				partial = d.partial_c(temp1, dh, step)
-				var.v_cov(x, y, face) = var_pr.v_cov(x, y, face) - dt*g*partial ! - dt*metr.G_sqr(x, y)*var_pr.u_con(x, y, face)*var_pr.f_cor(x, y, face)
+			temp1 = var_pr.u_con(x-step:x+step, y-step:y+step, face)
+			temp2 = var_pr.v_con(x-step:x+step, y-step:y+step, face)
 
-				temp1(:) = var_pr.u_con(x-step:x+step, y, face)
-				temp2(:) = var_pr.v_con(x, y-step:y+step, face)
-				div = d.div(metr, temp1, temp2, dh, x, y, step)
-				var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*height*div
+			uu(1) = (temp1(0,0)**2)*metr.Christoffel_x1(1,1,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x1(2,1,x,y)
+			uu(2) = (temp2(0,0)**2)*metr.Christoffel_x2(2,2,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x2(2,1,x,y)
+			! print *, uu, x, y, face
+
+			uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_c(temp1(0,:), dh, step) + uu(1))
+			uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
+
+
+			div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
+
+			S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
+			S_c(2) = dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
+
+			S_p(1) = - dt*g*grad_Fx
+			S_p(2) = - dt*g*grad_Fy
+			call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
+			call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
+
+			var.u_con(x, y, face) = var_pr.u_con(x, y, face) - uu(1) + S_c(1) + S_p(1)
+			var.v_con(x, y, face) = var_pr.v_con(x, y, face) - uu(2) + S_c(2) + S_p(2)
+			var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+
 			end do
 		end do
 	end do
@@ -119,7 +136,7 @@ end Subroutine
 
 
 
-Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg, time)
+Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
 
 	Class(method) :: this
 	Class(f_var) :: var, var_pr
@@ -127,43 +144,58 @@ Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg, time)
 	Class(interp) :: inter
 	Class(message) :: msg
 	Type(der) :: d
-	Integer(4), intent(in) :: time
 
-	Real(8) g, height, dt, partial, temp1(-this.step:this.step), temp2(-this.step:this.step), div, dh
-	Integer(4) face, x, y, dim, step, i
-
-	g = this.g;  height = this.height;  dim = this.dim;
+	Real(8) :: temp1(-this.step:this.step, -this.step:this.step), temp2(-this.step:this.step, -this.step:this.step)
+	Real(8) :: temp1_cov(-this.step:this.step, -this.step:this.step), temp2_cov(-this.step:this.step, -this.step:this.step)
+	Real(8) :: g, height, dt, grad_Fx, grad_Fy, S_c(2), S_p(2), h, u_cov, v_cov, div, dh, uu(2)
+	Integer(4) x,y, i, face, step, ns_x, ns_y, nf_x, nf_y
+	g = this.g;  height = this.height;
 	dt = this.dt;  step = this.step;  dh = this.dh
 
 	this.ku_con(:,:,:,0) = var_pr.u_con(:,:,:)
 	this.kv_con(:,:,:,0) = var_pr.v_con(:,:,:)
-	this.ku_cov(:,:,:,0) = var_pr.u_cov(:,:,:)
-	this.kv_cov(:,:,:,0) = var_pr.v_cov(:,:,:)
 	this.kh(:,:,:,0) = var_pr.h_height(:,:,:)
 
 	call this.Euler(var, var_pr, metr, inter, msg) ! Predictor
 
 	do i = 1, 2 ! Corrector
 
-		!$OMP PARALLEL PRIVATE(face, y, x, partial, temp1, temp2, div)
+		!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, temp1, temp2, temp1_cov, temp2_cov, div, h, u_cov, v_cov, uu, S_p, S_c)
 		!$OMP DO
 
 		do face = 1, 6
 			do y = var.ns_y, var.nf_y
 				do x = var.ns_x, var.nf_x
 
-					temp1(:) = (var_pr.h_height(x-step:x+step, y, face) + this.kh(x-step:x+step, y, face, 0))/2d0
-					partial = d.partial_c(temp1, dh, step)
-					var.u_cov(x, y, face) = this.ku_cov(x, y, face, 0) - dt*g*partial
+				uu = 0d0
+				temp1 = (var_pr.h_height(x-step:x+step, y-step:y+step, face) + this.kh(x, y, face, 0))/2d0
+				h = temp1(0,0)
+				grad_Fx = d.partial_c(temp1(:,0), dh, step)
+				grad_Fy = d.partial_c(temp1(0,:), dh, step)
 
-					temp1(:) = (var_pr.h_height(x, y-step:y+step, face) + this.kh(x, y-step:y+step, face, 0))/2d0
-					partial = d.partial_c(temp1, dh, step)
-					var.v_cov(x, y, face) = this.kv_cov(x, y, face, 0) - dt*g*partial
+				temp1 = (var_pr.u_con(x-step:x+step, y-step:y+step, face) + this.ku_con(x, y, face, 0))/2d0
+				temp2 = (var_pr.v_con(x-step:x+step, y-step:y+step, face) + this.kv_con(x, y, face, 0))/2d0
 
-					temp1(:) = (var_pr.u_con(x-step:x+step, y, face) + this.ku_con(x-step:x+step, y, face, 0))/2d0
-					temp2(:) = (var_pr.v_con(x, y-step:y+step, face) + this.kv_con(x, y-step:y+step, face, 0))/2d0
-					div = d.div(metr, temp1, temp2, dh, x, y, step)
-					var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*height*div
+				uu(1) = (temp1(0,0)**2)*metr.Christoffel_x1(1,1,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x1(2,1,x,y)
+				uu(2) = (temp2(0,0)**2)*metr.Christoffel_x2(2,2,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x2(2,1,x,y)
+				! print *, uu, x, y, face
+
+				uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_c(temp1(0,:), dh, step) + uu(1))
+				uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
+
+				div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
+
+				S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
+				S_c(2) = dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
+
+				S_p(1) = - dt*g*grad_Fx
+				S_p(2) = - dt*g*grad_Fy
+				call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
+				call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
+
+				var.u_con(x, y, face) = this.ku_con(x, y, face, 0) - uu(1) + S_c(1) + S_p(1)
+				var.v_con(x, y, face) = this.kv_con(x, y, face, 0) - uu(2) + S_c(2) + S_p(2)
+				var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 				end do
 			end do
@@ -206,8 +238,6 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg, time)
 			call this.FRunge(metr, var_pr, iteration)
 			var_pr.u_con(:, :, :) = this.ku_con(:, :, :, iteration)
 			var_pr.v_con(:, :, :) = this.kv_con(:, :, :, iteration)
-			var_pr.u_cov(:, :, :) = this.ku_cov(:, :, :, iteration)
-			var_pr.v_cov(:, :, :) = this.kv_cov(:, :, :, iteration)
 			var_pr.h_height(:, :, :) = this.kh(:, :, :, iteration)
 			call var_pr.equal(var_pr, metr)
 			call MPI_Barrier(MPI_COMM_WORLD, ier)
@@ -218,8 +248,6 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg, time)
 			call var_pr.interpolate(inter, metr)
 			this.ku_con(:, :, :, iteration) = var_pr.u_con(:, :, :)
 			this.kv_con(:, :, :, iteration) = var_pr.v_con(:, :, :)
-			this.ku_cov(:, :, :, iteration) = var_pr.u_cov(:, :, :)
-			this.kv_cov(:, :, :, iteration) = var_pr.v_cov(:, :, :)
 			this.kh(:, :, :, iteration) = var_pr.h_height(:, :, :)
 		end do
 
@@ -230,7 +258,6 @@ Subroutine RungeKutta(this, var, var_pr, metr, inter, msg, time)
 var.u_con(x, y, face) = this.ku_con(x, y, face, 0) + (this.ku_con(x, y, face, 1) + 2d0*this.ku_con(x, y, face, 2) + 2d0*this.ku_con(x, y, face, 3) + this.ku_con(x, y, face, 4))/6d0
 var.v_con(x, y, face) = this.kv_con(x, y, face, 0) + (this.kv_con(x, y, face, 1) + 2d0*this.kv_con(x, y, face, 2) + 2d0*this.kv_con(x, y, face, 3) + this.kv_con(x, y, face, 4))/6d0
 var.h_height(x, y, face) = this.kh(x, y, face, 0) + (this.kh(x, y, face, 1) + 2d0*this.kh(x, y, face, 2) + 2d0*this.kh(x, y, face, 3) + this.kh(x, y, face, 4))/6d0
-! call metr.con_to_cov(var.u_con(x, y, face), var.v_con(x, y, face), var.u_cov(x, y, face), var.v_cov(x, y, face), x, y)
 			end do
 		end do
 	end do
@@ -306,7 +333,6 @@ this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
 this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
 this.kh(x, y, face, i) = - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
-! call metr.cov_to_con(this.ku_cov(x, y, face, i), this.kv_cov(x, y, face, i), this.ku_con(x, y, face, i), this.kv_con(x, y, face, i), x, y)
 
 			end do
 		end do
@@ -324,8 +350,6 @@ end Subroutine
 Subroutine deinit(this)
 	Class(method) :: this
 
-	if (Allocated(this.ku_cov)) Deallocate(this.ku_cov)
-	if (Allocated(this.kv_cov)) Deallocate(this.kv_cov)
 	if (Allocated(this.ku_con)) Deallocate(this.ku_con)
 	if (Allocated(this.kv_con)) Deallocate(this.kv_con)
 	if (Allocated(this.kh)) Deallocate(this.kh)

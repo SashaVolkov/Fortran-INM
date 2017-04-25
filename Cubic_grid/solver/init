@@ -1,4 +1,4 @@
-45, 1200, 360.0, 120, 0, 1, 2
+45, 600, 360.0, 120, 0, 1, 2
 
 
 dim, Tmax, dt, speedup, rescale, grid_type, space_step

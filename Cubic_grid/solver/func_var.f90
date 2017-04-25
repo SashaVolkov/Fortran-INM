@@ -13,8 +13,6 @@ implicit none
 
 		Real(8), Allocatable :: h_height(:, :, :)
 		Real(8), Allocatable :: starter(:, :, :, :)
-		Real(8), Allocatable :: u_cov(:, :, :)
-		Real(8), Allocatable :: v_cov(:, :, :)
 		Real(8), Allocatable :: u_con(:, :, :)
 		Real(8), Allocatable :: v_con(:, :, :)
 		Real(8), Allocatable :: lon_vel(:, :, :)
@@ -81,8 +79,6 @@ CONTAINS
 
 		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.starter(3, this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.u_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
-		Allocate(this.v_cov(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.u_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.v_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.lon_vel(this.first_x:this.last_x, this.first_y:this.last_y, 6))
@@ -98,8 +94,6 @@ CONTAINS
 
 		if (Allocated(this.h_height)) Deallocate(this.h_height)
 		if (Allocated(this.starter)) Deallocate(this.starter)
-		if (Allocated(this.u_cov)) Deallocate(this.u_cov)
-		if (Allocated(this.v_cov)) Deallocate(this.v_cov)
 		if (Allocated(this.u_con)) Deallocate(this.u_con)
 		if (Allocated(this.v_con)) Deallocate(this.v_con)
 		if (Allocated(this.lon_vel)) Deallocate(this.lon_vel)
@@ -122,8 +116,6 @@ CONTAINS
 		var_pr.h_height(x, y, face) = var.h_height(x, y, face)
 		var_pr.u_con(x, y, face) = var.u_con(x, y, face)
 		var_pr.v_con(x, y, face) = var.v_con(x, y, face)
-		var_pr.u_cov(x, y, face) = var.u_cov(x, y, face)
-		var_pr.v_cov(x, y, face) = var.v_cov(x, y, face)
 		call metr.con_to_spherical(var_pr.u_con(x, y, face), var_pr.v_con(x, y, face), var_pr.lon_vel(x, y, face), var_pr.lat_vel(x, y, face), x, y, face)
 				end do
 			end do
@@ -147,9 +139,7 @@ CONTAINS
 
 		dim = this.dim; R_BIG = metr.r_sphere/3d0
 		zero(:) = (/0d0, 0d-1*pi/)
-		this.height = gh0/this.g
-		this.u_cov = 0d0;  this.v_cov = 0d0;  this.lon_vel = 0d0
-		this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
+		this.lon_vel = 0d0;  this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
 
 		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  u0 = this.u0;  alpha = -pi/4d0
 
@@ -164,7 +154,6 @@ this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(
 this.lat_vel(x, y, face) = -u0*dsin(lon)*dsin(alpha)
 this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
 call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
-call metr.con_to_cov(this.u_con(x, y, face), this.v_con(x, y, face), this.u_cov(x, y, face), this.v_cov(x, y, face), x, y)
 this.f(x, y, face) = (2d0*omega_cor)*(dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))
 
 
@@ -218,7 +207,6 @@ this.f(x, y, face) = (2d0*omega_cor)*(dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon
 					do x = x_st(i), x_fin(i)
 
 call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
-call metr.con_to_cov(this.u_con(x, y, face), this.v_con(x, y, face), this.u_cov(x, y, face), this.v_cov(x, y, face), x, y)
 
 					end do
 				end do
