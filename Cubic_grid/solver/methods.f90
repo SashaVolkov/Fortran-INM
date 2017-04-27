@@ -36,11 +36,12 @@ module methods
 	CONTAINS
 
 
-Subroutine init(this, f, step, Tmax)
+Subroutine init(this, f, step, Tmax, dt)
 
 	Class(f_var) :: f
 	Class(method) :: this
 	Integer(4), intent(in) :: step, Tmax
+	Real(8), intent(in) :: dt
 	Integer(4) f_x, f_y, l_x, l_y
 
 	f_x = f.first_x;  f_y = f.first_y
@@ -53,7 +54,7 @@ Subroutine init(this, f, step, Tmax)
 	this.ns_x = f.ns_x;  this.ns_y = f.ns_y
 	this.nf_x = f.nf_x;  this.nf_y = f.nf_y
 
-	this.dt = f.dt;  this.g = f.g;  this.dh = f.delta_on_cube
+	this.dt = dt;  this.g = f.g;  this.dh = f.delta_on_cube
 	this.height = f.height
 
 	Allocate(this.ku_con(f_x: l_x, f_y : l_y, 6, 0:4))
@@ -311,26 +312,26 @@ grad_Fy = d.partial_c(temp1(0,:), dh, step)
 temp1 = this.ku_con(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y-step:y+step, face, i-1)
 temp2 = this.kv_con(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x-step:x+step, y-step:y+step, face, i-1)
 
-uu(1) = (temp1(0,0)**2)*metr.Christoffel_x1(1,1,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x1(2,1,x,y)
-uu(2) = (temp2(0,0)**2)*metr.Christoffel_x2(2,2,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x2(2,1,x,y)
-! print *, uu, x, y, face
+! uu(1) = (temp1(0,0)**2)*metr.Christoffel_x1(1,1,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x1(2,1,x,y)
+! uu(2) = (temp2(0,0)**2)*metr.Christoffel_x2(2,2,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x2(2,1,x,y)
+! ! print *, uu, x, y, face
 
-uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_c(temp1(0,:), dh, step) + uu(1))
-uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
+! uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_c(temp1(0,:), dh, step) + uu(1))
+! uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
 
 
-div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
+! div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
 
-S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
-S_c(2) = dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
+! S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
+! S_c(2) = dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
 
-S_p(1) = - dt*g*grad_Fx
-S_p(2) = - dt*g*grad_Fy
-call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
-call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
+! S_p(1) = - dt*g*grad_Fx
+! S_p(2) = - dt*g*grad_Fy
+! call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
+! call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
 
-this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
-this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
+! this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
+! this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
 this.kh(x, y, face, i) = - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 
@@ -340,7 +341,6 @@ this.kh(x, y, face, i) = - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0
 
 	!$OMP END DO
 	!$OMP END PARALLEL
-! print *, ""
 
 end Subroutine
 

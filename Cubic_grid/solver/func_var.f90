@@ -38,14 +38,13 @@ CONTAINS
 
 
 
-	Subroutine init(this, metr, height, dt)
+	Subroutine init(this, metr)
 
 		Class(f_var) :: this
 		Class(metric) :: metr
-		Real(8), intent(in) :: height, dt
 		Integer(4) :: i, x, y, face
 
-		this.g = 980616d-5;  this.dt = dt
+		this.g = 980616d-5
 
 		this.ns_x = metr.ns_xy(1);  this.ns_y = metr.ns_xy(2)
 		this.nf_x = metr.nf_xy(1);  this.nf_y = metr.nf_xy(2)
@@ -53,8 +52,10 @@ CONTAINS
 		this.first_x = metr.first_x;  this.first_y = metr.first_y
 		this.last_x = metr.last_x;  this.last_y = metr.last_y
 
-		this.step = metr.step;  this.height = 294d2/this.g;  this.dim = metr.dim
+		this.step = metr.step;  this.dim = metr.dim
 		this.Neighbours_face = metr.Neighbours_face;  this.grid_type = metr.grid_type
+		! this.height = 294d2/this.g;
+		this.height = 1000d0
 
 		this.snd_xy = metr.snd_xy;  this.rcv_xy = metr.rcv_xy
 		this.interp_factor(:) = 0;  this.rescale = metr.rescale
@@ -138,7 +139,7 @@ CONTAINS
 		gh0 = 294d2
 
 		dim = this.dim; R_BIG = metr.r_sphere/3d0
-		zero(:) = (/0d0, 0d-1*pi/)
+		zero(:) = (/0d0, 3d0*pi/2d0/)
 		this.lon_vel = 0d0;  this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
 
 		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  u0 = this.u0;  alpha = -pi/4d0
@@ -152,16 +153,15 @@ lon = metr.latlon_c(2,x,y,face)
 
 this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
 this.lat_vel(x, y, face) = -u0*dsin(lon)*dsin(alpha)
-this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
-call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
+! this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
+
+
+r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
+this.h_height(x, y, face) = (this.height/2d0)*(1d0 + dcos(pi*r/R_BIG))
+if (r >= R_BIG) this.h_height(x, y, face) = 0d0
+
 this.f(x, y, face) = (2d0*omega_cor)*(dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))
-
-
-! r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
-! this.h_height(x, y, face) = 10d0*exp(-((r/R_BIG)**2)*4.0)
-
-! this.f_cor(x, y, face)= -2*omega_cor*dsin(lat) ! function of latitude
-! if ( face == 2 .and. x == dim ) print *, this.f_cor(x, y, face)
+call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)
 				end do
 			end do
 		end do

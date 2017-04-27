@@ -17,7 +17,7 @@ module diagnostic_mod
 		Real(8), Allocatable :: CFL(:,:,:)
 		Real(4), Allocatable :: square(:, :)
 		Integer(4) Tmax, dim, step, flag
-		Real(8) convert_time, L10, L20, L_inf0, dh, dt
+		Real(8) convert_time, L10, L20, L_inf0, dh, dt, center(1:2)
 
 
 		CONTAINS
@@ -34,17 +34,18 @@ CONTAINS
 
 
 
-	Subroutine init(this, func, grid, Tmax, id)
+	Subroutine init(this, func, grid, Tmax, id, dt)
 
 		Class(diagnostic) :: this
 		Class(f_var) :: func
 		Class(g_var) :: grid
 
 		Integer(4), intent(in) :: Tmax, id
+		Real(8), intent(in) :: dt
 		character(32) istring, istring1
 
 		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step-1
-		this.dt = func.dt;  this.dh = func.delta_on_cube
+		this.dt = dt;  this.dh = func.delta_on_cube
 		this.convert_time = this.dt/(60d0*60d0*24d0)
 		this.flag = 1
 
@@ -121,9 +122,22 @@ CONTAINS
 		Class(metric) :: metr
 		Integer(4), intent(in) :: time
 		Integer(4) face, x, y, dim, ier, id
-		Real(8) :: Courant_number, Courant_max, L1, L2, L1_prec, L2_prec, Linf, Linf_prec, square, F1, F1_prec, L1r, L2r, L1_precr, L2_precr, Linfr, Linf_precr
+		Real(8) :: Courant_number, Courant_max, L1, L2, L1_prec, L2_prec, Linf, Linf_prec, square, F1, F1_prec, L1r, L2r, L1_precr, L2_precr, Linfr, Linf_precr, latlon1(1:2), r, pi, h, u0, alpha
 
 		dim = this.dim;  Linf = 0d0;  Linf_prec = 0d0
+		pi = 314159265358979323846d-20;  u0 = 2d0*pi/(12d0*24d0*60d0*60d0);  alpha = -pi/4d0
+
+		if(time == 1) then
+			this.center = (/0d0, 3d0*pi/2d0/)
+		else
+			latlon1(2) = u0*(dcos(this.center(1))*dcos(alpha) + dcos(this.center(2))*dsin(this.center(1))*dsin(alpha))*this.dt
+			latlon1(1) = -u0*dsin(this.center(2))*dsin(alpha)*this.dt
+		end if
+		this.center(1) = latlon1(1) + this.center(1)
+		this.center(2) = latlon1(2) + this.center(2)
+
+		if(time == this.Tmax) this.center = (/0d0, 3d0*pi/2d0/)
+		! if(mod(time, 10) == 0 )print *, this.center
 
 		!$OMP PARALLEL PRIVATE(y, x, face)
 		!$OMP DO
@@ -134,9 +148,19 @@ CONTAINS
 
 					this.CFL(x, y, face) = dsqrt((func.u_con(x, y, face)*metr.G_sqr(x,y)*this.dt/(this.dh))**2 + (func.v_con(x, y, face)*metr.G_sqr(x,y)*this.dt/(this.dh))**2)
 
+					r = dacos(dsin(this.center(1))*dsin(metr.latlon_c(1, x, y, face)) + dcos(this.center(1))*dcos(metr.latlon_c(1, x, y, face))*dcos(this.center(2) - metr.latlon_c(2, x, y, face)))
+					func.starter(1, x, y, face) = (func.height/2d0)*(1d0 + dcos(3d0*pi*r))
+					if (r >= 1d0/3d0) func.starter(1, x, y, face) = 0d0
+
 					square = this.square(x, y)
-					F1 = dsqrt((func.lon_vel(x, y, face) - func.starter(2, x, y, face))**2 + (func.lat_vel(x, y, face) - func.starter(3, x, y, face))**2)
-					F1_prec = dsqrt((func.starter(2, x, y, face))**2 + (func.starter(3, x, y, face))**2)
+					! F1 = dsqrt((func.lon_vel(x, y, face) - func.starter(2, x, y, face))**2 + (func.lat_vel(x, y, face) - func.starter(3, x, y, face))**2)
+					! F1_prec = dsqrt((func.starter(2, x, y, face))**2 + (func.starter(3, x, y, face))**2)
+
+					F1 = dsqrt((func.h_height(x, y, face) - func.starter(1, x, y, face))**2)
+					F1_prec = dsqrt((func.starter(1, x, y, face))**2)
+
+					! F1 = dsqrt((func.h_height(x, y, face) - h)**2)
+					! F1_prec = dsqrt((h)**2)
 
 					L1 = abs(F1)*square + L1
 					L2 = F1*F1*square + L2
