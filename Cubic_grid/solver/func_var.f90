@@ -145,7 +145,7 @@ CONTAINS
 		Real(8), intent(in) :: omega_cor
 		Integer(4) dim, x, y, face, test
 		Real(8) :: gh0, r, R_BIG, center(2), pi, u0, alpha, lon, lat, f, f_con_y, f_con_x, A_inv(2,2), G(2,2), h_s, h_s0
-		Real(8) :: a, A_t, B_t, C_t, K, cos_lat2, p
+		Real(8) :: a, A_t, B_t, C_t, K, cos_lat, cos_lat2, p
 
 		pi = 314159265358979323846d-20
 		gh0 = 294d2
@@ -159,6 +159,8 @@ CONTAINS
 		if ( test == 4 ) then
 			center(:) = (/pi/6d0, 3d0*pi/2d0/);  alpha = 0d0
 			this.u0 = 20d0;  R_BIG = pi/9d0;  h_s0 = 2000d0
+		else if ( test == 6 ) then
+			alpha = 0d0
 		end if
 
 		u0 = this.u0
@@ -185,15 +187,18 @@ else if ( test == 5 ) then
 	this.h_depth(x, y, face) = h_s0 - h_s
 	this.h_height(x, y, face) = this.height - h_s0
 else if ( test == 6 ) then
-	a = metr.r_sphere**2;  K = 789d-9;  cos_lat2 = dcos(lat)**2;  p = (R_BIG + 1d0)*cos_lat2
+	a = metr.r_sphere;  K = 789d-9;  cos_lat = dcos(lat);  cos_lat2 = cos_lat**2;  R_BIG = 4;  p = (R_BIG + 1d0)*cos_lat2
 
 	A_t = (K/2d0)*(2d0*omega_cor + K)*cos_lat2 + 	25d-2 * (K**2) * (dcos(lat*(p + (2*R_BIG**2 - R_BIG - 2d0) - (2*R_BIG**2)/cos_lat2)))**(2d0*R_BIG)
-	B_t = 
-	C_t = 
 
-	this.h_height(x, y, face) = this.height + a*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
-	this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
-	this.lat_vel(x, y, face) = -u0*dsin(lon)*dsin(alpha)
+	B_t = (2d0*(omega_cor + K)*K/((R_BIG+1)*(R_BIG+2)))*(cos_lat**R_BIG)*&
+	((R_BIG**2 + 2*R_BIG + 2) - ((R_BIG+1)**2)*cos_lat2)
+
+	C_t = 25d-2*(K**2)*(cos_lat2**R_BIG)*((R_BIG+1)*cos_lat2 - (R_BIG+2))
+
+	this.h_height(x, y, face) = this.height + (a**2)*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
+	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1))*(R_BIG*(1-cos_lat2) - cos_lat2)*dcos(R_BIG*lon)
+	this.lat_vel(x, y, face) = -a*K*R_BIG*(cos_lat**(R_BIG-1))*dsin(lat)*dsin(R_BIG*lon)
 end if
 
 
