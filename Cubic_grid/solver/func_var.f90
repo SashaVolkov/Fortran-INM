@@ -12,6 +12,7 @@ implicit none
 	Type f_var
 
 		Real(8), Allocatable :: h_height(:, :, :)
+		Real(8), Allocatable :: h_depth(:, :, :)
 		Real(8), Allocatable :: starter(:, :, :, :)
 		Real(8), Allocatable :: u_con(:, :, :)
 		Real(8), Allocatable :: v_con(:, :, :)
@@ -19,7 +20,7 @@ implicit none
 		Real(8), Allocatable :: lat_vel(:, :, :)
 		Real(8), Allocatable :: f(:, :, :)
 		Real(8) height,  g, dt, delta_on_cube, u0
-		Integer(4) step, dim, interp_factor(1:4), Neighbours_face(6, 4), grid_type, rescale
+		Integer(4) step, dim, interp_factor(1:4), Neighbours_face(6, 4), grid_type, rescale, test
 		Integer(4) ns_x, ns_y, nf_x, nf_y, first_x, first_y, last_x, last_y, snd_xy(6, 4, 2), rcv_xy(6, 4, 2)
 
 		CONTAINS
@@ -38,13 +39,14 @@ CONTAINS
 
 
 
-	Subroutine init(this, metr)
+	Subroutine init(this, metr, test)
 
 		Class(f_var) :: this
 		Class(metric) :: metr
+		Integer(4), intent(in) :: test
 		Integer(4) :: i, x, y, face
 
-		this.g = 980616d-5
+		this.g = 980616d-5;  this.test = test
 
 		this.ns_x = metr.ns_xy(1);  this.ns_y = metr.ns_xy(2)
 		this.nf_x = metr.nf_xy(1);  this.nf_y = metr.nf_xy(2)
@@ -54,8 +56,15 @@ CONTAINS
 
 		this.step = metr.step;  this.dim = metr.dim
 		this.Neighbours_face = metr.Neighbours_face;  this.grid_type = metr.grid_type
-		! this.height = 294d2/this.g;
-		this.height = 1000d0
+		if ( test == 1 ) then
+			this.height = 1000d0
+		elseif ( test == 2 ) then
+			this.height = 294d2/this.g;
+		elseif ( test == 5 ) then
+			this.height = 5960d0
+		elseif ( test == 6 ) then
+			this.height = 8d3
+		end if
 
 		this.snd_xy = metr.snd_xy;  this.rcv_xy = metr.rcv_xy
 		this.interp_factor(:) = 0;  this.rescale = metr.rescale
@@ -79,6 +88,7 @@ CONTAINS
 		Class(f_var) :: this
 
 		Allocate(this.h_height(this.first_x:this.last_x, this.first_y:this.last_y, 6))
+		Allocate(this.h_depth(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.starter(3, this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.u_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
 		Allocate(this.v_con(this.first_x:this.last_x, this.first_y:this.last_y, 6))
@@ -94,6 +104,7 @@ CONTAINS
 		Class(f_var) :: this
 
 		if (Allocated(this.h_height)) Deallocate(this.h_height)
+		if (Allocated(this.h_depth)) Deallocate(this.h_depth)
 		if (Allocated(this.starter)) Deallocate(this.starter)
 		if (Allocated(this.u_con)) Deallocate(this.u_con)
 		if (Allocated(this.v_con)) Deallocate(this.v_con)
@@ -132,17 +143,25 @@ CONTAINS
 		Class(metric) :: metr
 		Class(geometry) :: geom
 		Real(8), intent(in) :: omega_cor
-		Integer(4) dim, x, y, face
-		Real(8) gh0, r, R_BIG, zero(2), pi, u0, alpha, lon, lat, f, f_con_y, f_con_x, A_inv(2,2), G(2,2)
+		Integer(4) dim, x, y, face, test
+		Real(8) :: gh0, r, R_BIG, center(2), pi, u0, alpha, lon, lat, f, f_con_y, f_con_x, A_inv(2,2), G(2,2), h_s, h_s0
+		Real(8) :: a, A_t, B_t, C_t, K, cos_lat2, p
 
 		pi = 314159265358979323846d-20
 		gh0 = 294d2
 
-		dim = this.dim; R_BIG = metr.r_sphere/3d0
-		zero(:) = (/0d0, 3d0*pi/2d0/)
+		dim = this.dim;  test = this.test
 		this.lon_vel = 0d0;  this.u_con = 0d0;  this.v_con = 0d0;  this.lat_vel = 0d0
 
-		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  u0 = this.u0;  alpha = -pi/4d0
+		center(:) = (/0d0, 3d0*pi/2d0/);  alpha = -pi/4d0
+		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  R_BIG = metr.r_sphere/3d0
+
+		if ( test == 4 ) then
+			center(:) = (/pi/6d0, 3d0*pi/2d0/);  alpha = 0d0
+			this.u0 = 20d0;  R_BIG = pi/9d0;  h_s0 = 2000d0
+		end if
+
+		u0 = this.u0
 
 		do face = 1, 6
 			do y = this.first_y, this.last_y
@@ -153,12 +172,31 @@ lon = metr.latlon_c(2,x,y,face)
 
 this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
 this.lat_vel(x, y, face) = -u0*dsin(lon)*dsin(alpha)
-! this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
+
+if ( test == 1 ) then
+	r = geom.dist(center(:),metr.latlon_c(1:2,x,y,face))  ! cosine bell
+	this.h_height(x, y, face) = (this.height/2d0)*(1d0 + dcos(pi*r/R_BIG))
+	if (r >= R_BIG) this.h_height(x, y, face) = 0d0
+else if ( test == 2 ) then
+	this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
+else if ( test == 5 ) then
+	r = sqrt(min( R_BIG**2, (center(2) - lon)**2 + (center(1) + lat)**2))
+	h_s = h_s0*(1d0 - r/R_BIG)
+	this.h_depth(x, y, face) = h_s0 - h_s
+	this.h_height(x, y, face) = this.height - h_s0
+else if ( test == 6 ) then
+	a = metr.r_sphere**2;  K = 789d-9;  cos_lat2 = dcos(lat)**2;  p = (R_BIG + 1d0)*cos_lat2
+
+	A_t = (K/2d0)*(2d0*omega_cor + K)*cos_lat2 + 	25d-2 * (K**2) * (dcos(lat*(p + (2*R_BIG**2 - R_BIG - 2d0) - (2*R_BIG**2)/cos_lat2)))**(2d0*R_BIG)
+	B_t = 
+	C_t = 
+
+	this.h_height(x, y, face) = this.height + a*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
+	this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
+	this.lat_vel(x, y, face) = -u0*dsin(lon)*dsin(alpha)
+end if
 
 
-r = geom.dist(zero(:),metr.latlon_c(1:2,x,y,face))
-this.h_height(x, y, face) = (this.height/2d0)*(1d0 + dcos(pi*r/R_BIG))
-if (r >= R_BIG) this.h_height(x, y, face) = 0d0
 
 this.f(x, y, face) = (2d0*omega_cor)*(dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))
 call metr.spherical_to_con(this.lon_vel(x, y, face), this.lat_vel(x, y, face), this.u_con(x, y, face), this.v_con(x, y, face), x, y, face)

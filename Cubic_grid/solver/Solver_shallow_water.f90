@@ -18,7 +18,7 @@ implicit none
 
 !variables
 	Real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	Integer(4) dim, space_step, Tmax, time, speedup, rescale, face, grid_type, x, y, flag
+	Integer(4) dim, space_step, Tmax, time, speedup, rescale, face, grid_type, x, y, flag, test
 	Real(8), Allocatable :: cycle_time(:)
 
 	Integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
@@ -51,7 +51,7 @@ implicit none
 !subroutines calls
 
 	open(9,file='init')
-		read(9, *) dim, Tmax, dt, speedup, rescale, grid_type, space_step
+		read(9, *) dim, Tmax, dt, speedup, rescale, grid_type, space_step, test
 	close(9)
 
 	if ( id == 0 ) Allocate(cycle_time(1:Tmax))
@@ -62,8 +62,8 @@ implicit none
 	call geom.init(r_sphere, pi)
 	call grid.init(geom, paral, rescale, grid_type)
 	call metr.init(grid)
-	call var.init(metr)
-	call var_prev.init(metr)
+	call var.init(metr, test)
+	call var_prev.init(metr, test)
 	call var_prev.start_conditions(metr, geom, omega_cor)
 	call diagn.init(var_prev, grid, Tmax, id, dt)
 	call meth.init(var_prev, space_step, Tmax, dt)

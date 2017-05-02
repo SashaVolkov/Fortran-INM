@@ -1,7 +1,7 @@
-20, 2880, 360.0, 120, 0, 1, 2
+20, 1800, 720.0, 120, 0, 1, 2, 5
 
 
-dim, Tmax, dt, speedup, rescale, grid_type, space_step
+dim, Tmax, dt, speedup, rescale, grid_type, space_step, test
 80, 32000, 805.0, 64
 50, 20000, 1288.0, 40
 40, 16000, 1610.0, 32

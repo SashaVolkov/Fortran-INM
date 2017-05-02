@@ -127,16 +127,17 @@ CONTAINS
 		dim = this.dim;  Linf = 0d0;  Linf_prec = 0d0
 		pi = 314159265358979323846d-20;  u0 = 2d0*pi/(12d0*24d0*60d0*60d0);  alpha = -pi/4d0
 
-		if(time == 1) then
-			this.center = (/0d0, 3d0*pi/2d0/)
-		else
-			latlon1(2) = u0*(dcos(this.center(1))*dcos(alpha) + dcos(this.center(2))*dsin(this.center(1))*dsin(alpha))*this.dt
-			latlon1(1) = -u0*dsin(this.center(2))*dsin(alpha)*this.dt
-		end if
-		this.center(1) = latlon1(1) + this.center(1)
-		this.center(2) = latlon1(2) + this.center(2)
+! 		if(time == 1) then
+! 			this.center = (/0d0, 3d0*pi/2d0/)
+! 		else
+! 			latlon1(2) = u0*(dcos(this.center(1))*dcos(alpha) + dcos(this.center(2))*dsin(this.center(1))*dsin(alpha))*this.dt
+! 			latlon1(1) = -u0*dsin(this.center(2))*dsin(alpha)*this.dt
+! 		end if
+! 		this.center(1) = latlon1(1) + this.center(1)
+! 		this.center(2) = latlon1(2) + this.center(2)
 
-		if(time == this.Tmax) this.center = (/0d0, 3d0*pi/2d0/)
+! 		if(time == this.Tmax) this.center = (/0d0, 3d0*pi/2d0/)
+! 		if(time == this.Tmax/2) this.center = (/0d0, pi/2d0/)
 		! if(mod(time, 10) == 0 )print *, this.center
 
 		!$OMP PARALLEL PRIVATE(y, x, face)
@@ -148,16 +149,16 @@ CONTAINS
 
 					this.CFL(x, y, face) = dsqrt((func.u_con(x, y, face)*metr.G_sqr(x,y)*this.dt/(this.dh))**2 + (func.v_con(x, y, face)*metr.G_sqr(x,y)*this.dt/(this.dh))**2)
 
-					r = dacos(dsin(this.center(1))*dsin(metr.latlon_c(1, x, y, face)) + dcos(this.center(1))*dcos(metr.latlon_c(1, x, y, face))*dcos(this.center(2) - metr.latlon_c(2, x, y, face)))
-					func.starter(1, x, y, face) = (func.height/2d0)*(1d0 + dcos(3d0*pi*r))
-					if (r >= 1d0/3d0) func.starter(1, x, y, face) = 0d0
+! 					r = dacos(dsin(this.center(1))*dsin(metr.latlon_c(1, x, y, face)) + dcos(this.center(1))*dcos(metr.latlon_c(1, x, y, face))*dcos(this.center(2) - metr.latlon_c(2, x, y, face)))
+! 					func.starter(1, x, y, face) = (func.height/2d0)*(1d0 + dcos(3d0*pi*r))
+! 					if (r >= 1d0/3d0) func.starter(1, x, y, face) = 0d0
 
 					square = this.square(x, y)
-					! F1 = dsqrt((func.lon_vel(x, y, face) - func.starter(2, x, y, face))**2 + (func.lat_vel(x, y, face) - func.starter(3, x, y, face))**2)
-					! F1_prec = dsqrt((func.starter(2, x, y, face))**2 + (func.starter(3, x, y, face))**2)
+					F1 = dsqrt((func.lon_vel(x, y, face) - func.starter(2, x, y, face))**2 + (func.lat_vel(x, y, face) - func.starter(3, x, y, face))**2)
+					F1_prec = dsqrt((func.starter(2, x, y, face))**2 + (func.starter(3, x, y, face))**2)
 
-					F1 = dsqrt((func.h_height(x, y, face) - func.starter(1, x, y, face))**2)
-					F1_prec = dsqrt((func.starter(1, x, y, face))**2)
+! 					F1 = dsqrt((func.h_height(x, y, face) - func.starter(1, x, y, face))**2)
+! 					F1_prec = dsqrt((func.starter(1, x, y, face))**2)
 
 					! F1 = dsqrt((func.h_height(x, y, face) - h)**2)
 					! F1_prec = dsqrt((h)**2)

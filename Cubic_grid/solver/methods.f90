@@ -305,6 +305,7 @@ Subroutine FRunge(this, metr, var, i)
 uu = 0d0
 temp1 = this.kh(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kh(x-step:x+step, y-step:y+step, face, i-1)
 h = temp1(0,0)
+height = var.h_depth(x, y, face)
 grad_Fx = d.partial_c(temp1(:,0), dh, step)
 grad_Fy = d.partial_c(temp1(0,:), dh, step)
 
@@ -312,26 +313,26 @@ grad_Fy = d.partial_c(temp1(0,:), dh, step)
 temp1 = this.ku_con(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y-step:y+step, face, i-1)
 temp2 = this.kv_con(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x-step:x+step, y-step:y+step, face, i-1)
 
-! uu(1) = (temp1(0,0)**2)*metr.Christoffel_x1(1,1,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x1(2,1,x,y)
-! uu(2) = (temp2(0,0)**2)*metr.Christoffel_x2(2,2,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x2(2,1,x,y)
-! ! print *, uu, x, y, face
+uu(1) = (temp1(0,0)**2)*metr.Christoffel_x1(1,1,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x1(2,1,x,y)
+uu(2) = (temp2(0,0)**2)*metr.Christoffel_x2(2,2,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x2(2,1,x,y)
+! print *, uu, x, y, face
 
-! uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_c(temp1(0,:), dh, step) + uu(1))
-! uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
+uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_c(temp1(0,:), dh, step) + uu(1))
+uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
 
 
-! div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
+div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
 
-! S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
-! S_c(2) = dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
+S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
+S_c(2) = dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
 
-! S_p(1) = - dt*g*grad_Fx
-! S_p(2) = - dt*g*grad_Fy
-! call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
-! call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
+S_p(1) = - dt*g*grad_Fx
+S_p(2) = - dt*g*grad_Fy
+call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
+call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
 
-! this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
-! this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
+this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
+this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
 this.kh(x, y, face, i) = - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 
