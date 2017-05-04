@@ -15,7 +15,7 @@ elif [ $grid_type == 0 ] && [ $rescale == 1 ]; then
 	grid="tan"
 fi
 
-cd datFiles/"$(( 2*$dim ))"/"$(( 2*$step ))"th/"$grid"/test"$test_number"
+cd datFiles/"$(( 2*$dim ))"/"$(( 2*$step ))"th/"$grid"/'test'"$test_number"
 pwd
 
 gnuplot <<EOF
