@@ -156,7 +156,7 @@ CONTAINS
 		center(:) = (/0d0, 3d0*pi/2d0/);  alpha = -pi/4d0
 		this.u0 = 2d0*pi*metr.r_sphere/(12d0*24d0*60d0*60d0);  R_BIG = metr.r_sphere/3d0
 
-		if ( test == 4 ) then
+		if ( test == 5 ) then
 			center(:) = (/pi/6d0, 3d0*pi/2d0/);  alpha = 0d0
 			this.u0 = 20d0;  R_BIG = pi/9d0;  h_s0 = 2000d0
 		else if ( test == 6 ) then

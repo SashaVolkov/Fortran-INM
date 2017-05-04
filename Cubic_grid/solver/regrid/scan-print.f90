@@ -29,16 +29,16 @@ module scan_print
 
 
 
-	subroutine init(this, dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max, nc_or_dat)
+	subroutine init(this, dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max, nc_or_dat, test)
 
 		Class(printer) :: this
-		integer(4), intent(in) :: dim, step, all_time, rescale, grid_type, lon_max, lat_max, nc_or_dat
+		integer(4), intent(in) :: dim, step, all_time, rescale, grid_type, lon_max, lat_max, nc_or_dat, test
 
 		integer(4) status, face, ncid, ncid_to, nvars, grid_id(1:1), Wid(8), Wid_to(7), time, Courantid_to, point_id(1:1), ncid_point, point_find
 		logical file_exist
 		integer(4) latid, lonid, coord
 		real(8) convert_time
-		character(80) istring, istring1
+		character(80) istring, istring1, istring2
 		character(80) path1, path2, path3, path4
 
 		this.dim = dim;  this.lon_max = lon_max;  this.lat_max = lat_max;  this.convert_time = convert_time
@@ -46,18 +46,19 @@ module scan_print
 
 		write(istring, *) 2*dim
 		write(istring1, *) 2*step
+		write(istring2, *) test
 
 		istring = '../datFiles/'//trim(adjustl(istring))//'/'//trim(adjustl(istring1))//'th'
 
 		if (grid_type == 1) then
-			istring = trim(adjustl(istring))//'/equiang/'
+			istring = trim(adjustl(istring))//'/equiang/test'//trim(adjustl(istring2))//'/'
 		else if (grid_type == 0) then
 			if (rescale == 1) then
-				istring = trim(adjustl(istring))//'/tan/'
+				istring = trim(adjustl(istring))//'/tan/test'//trim(adjustl(istring2))//'/'
 			else if (rescale == 0) then
-				istring = trim(adjustl(istring))//'/simple/'
+				istring = trim(adjustl(istring))//'/simple/test'//trim(adjustl(istring2))//'/'
 			else if (rescale == 2) then
-				istring = trim(adjustl(istring))//'/exp/'
+				istring = trim(adjustl(istring))//'/exp/test'//trim(adjustl(istring2))//'/'
 			end if
 		end if
 

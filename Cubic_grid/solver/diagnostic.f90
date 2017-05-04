@@ -42,7 +42,7 @@ CONTAINS
 
 		Integer(4), intent(in) :: Tmax, id
 		Real(8), intent(in) :: dt
-		character(32) istring, istring1
+		character(32) istring, istring1, istring2
 
 		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step-1
 		this.dt = dt;  this.dh = func.delta_on_cube
@@ -51,20 +51,21 @@ CONTAINS
 
 		write(istring, *) 2*this.dim
 		write(istring1, *) 2*this.step
+		write(istring2, *) func.test
 
 		istring = trim(adjustl(istring))//'/'//trim(adjustl(istring1))//'th'
 
 		call this.alloc(func)
 
 		if (func.grid_type == 1) then
-			istring = trim(adjustl(istring))//'/equiang/'
+			istring = trim(adjustl(istring))//'/equiang/test'//trim(adjustl(istring2))//'/'
 		else if (func.grid_type == 0) then
 			if (func.rescale == 1) then
-				istring = trim(adjustl(istring))//'/tan/'
+				istring = trim(adjustl(istring))//'/tan/test'//trim(adjustl(istring2))//'/'
 			else if (func.rescale == 0) then
-				istring = trim(adjustl(istring))//'/simple/'
+				istring = trim(adjustl(istring))//'/simple/test'//trim(adjustl(istring2))//'/'
 			else if (func.rescale == 2) then
-				istring = trim(adjustl(istring))//'/exp/'
+				istring = trim(adjustl(istring))//'/exp/test'//trim(adjustl(istring2))//'/'
 			end if
 		end if
 

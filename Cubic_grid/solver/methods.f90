@@ -16,7 +16,7 @@ module methods
 
 	Type method
 
-		Integer(4) first_x, first_y, last_x, last_y, step, dim, ns_x, ns_y, nf_x, nf_y
+		Integer(4) first_x, first_y, last_x, last_y, step, dim, ns_x, ns_y, nf_x, nf_y, test
 		Real(8) :: g, dt, dh, height
 
 		Real(8), Allocatable :: ku_con(:, :, :, :)
@@ -55,7 +55,7 @@ Subroutine init(this, f, step, Tmax, dt)
 	this.nf_x = f.nf_x;  this.nf_y = f.nf_y
 
 	this.dt = dt;  this.g = f.g;  this.dh = f.delta_on_cube
-	this.height = f.height
+	this.height = f.height;  this.test = f.test
 
 	Allocate(this.ku_con(f_x: l_x, f_y : l_y, 6, 0:4))
 	Allocate(this.kv_con(f_x: l_x, f_y : l_y, 6, 0:4))
@@ -312,14 +312,12 @@ grad_Fy = d.partial_c(temp1(0,:), dh, step)
 
 temp1 = this.ku_con(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.ku_con(x-step:x+step, y-step:y+step, face, i-1)
 temp2 = this.kv_con(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kv_con(x-step:x+step, y-step:y+step, face, i-1)
-
+if (this.test /= 1) then
 uu(1) = (temp1(0,0)**2)*metr.Christoffel_x1(1,1,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x1(2,1,x,y)
 uu(2) = (temp2(0,0)**2)*metr.Christoffel_x2(2,2,x,y) + 2d0*temp1(0,0)*temp2(0,0)*metr.Christoffel_x2(2,1,x,y)
-! print *, uu, x, y, face
 
 uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_c(temp1(0,:), dh, step) + uu(1))
 uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
-
 
 div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
 
@@ -333,6 +331,7 @@ call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
 
 this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
 this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
+end if
 this.kh(x, y, face, i) = - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 

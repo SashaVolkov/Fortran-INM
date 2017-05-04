@@ -26,16 +26,16 @@ module printer_ncdf
 
 
 
-	Subroutine init(this, grid, Tmax, speedup, time, rescale, grid_type)
+	Subroutine init(this, grid, Tmax, speedup, time, rescale, grid_type, test)
 
 		Class(printer) :: this
 		Class(g_var) :: grid
-		Integer(4), intent(in) :: Tmax, speedup, rescale, grid_type
+		Integer(4), intent(in) :: Tmax, speedup, rescale, grid_type, test
 		Integer(4), intent(out) :: time
 
 		Integer(4) status, face, xid, yid, dim, step, faceid, llid, gr_xid, gr_yid
 		Integer(4) gr_faceid, Wid(8), ncid, id, ier
-		character(40) istring, istring1
+		character(80) istring, istring1, istring2
 		character(80) path1, path2, path3
 
 		this.speedup = speedup;  dim = grid.dim;  step = grid.step - 1
@@ -44,17 +44,18 @@ module printer_ncdf
 
 		write(istring, *) 2*dim
 		write(istring1, *) 2*step
+		write(istring2, *) test
 
 		istring = trim(adjustl(istring))//'/'//trim(adjustl(istring1))//'th'
 		if (grid_type == 1) then
-			istring = trim(adjustl(istring))//'/equiang/'
+			istring = trim(adjustl(istring))//'/equiang/test'//trim(adjustl(istring2))//'/'
 		else if (grid_type == 0) then
 			if (rescale == 1) then
-				istring = trim(adjustl(istring))//'/tan/'
+				istring = trim(adjustl(istring))//'/tan/test'//trim(adjustl(istring2))//'/'
 			else if (rescale == 0) then
-				istring = trim(adjustl(istring))//'/simple/'
+				istring = trim(adjustl(istring))//'/simple/test'//trim(adjustl(istring2))//'/'
 			else if (rescale == 2) then
-				istring = trim(adjustl(istring))//'/exp/'
+				istring = trim(adjustl(istring))//'/exp/test'//trim(adjustl(istring2))//'/'
 			end if
 		end if
 

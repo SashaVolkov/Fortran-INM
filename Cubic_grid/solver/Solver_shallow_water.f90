@@ -68,7 +68,7 @@ implicit none
 	call diagn.init(var_prev, grid, Tmax, id, dt)
 	call meth.init(var_prev, space_step, Tmax, dt)
 	call inter.init(metr, 4)
-	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type)
+	call printer_nc.init(grid, Tmax, speedup, time, rescale, grid_type, test)
 
 
 	call printer_nc.to_print(var_prev, diagn, 0)

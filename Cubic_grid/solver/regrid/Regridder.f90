@@ -8,7 +8,7 @@ program regrid
 
 	implicit none
 
-	integer(4) dim, Tmax, speedup, rescale, grid_type, all_time, time, step, lon_max, lat_max, nc_or_dat
+	integer(4) dim, Tmax, speedup, rescale, grid_type, all_time, time, step, lon_max, lat_max, nc_or_dat, test
 	real(8) dt, convert_time, max
 	Type(printer) :: scan
 	Type(interp) :: inter
@@ -18,7 +18,7 @@ program regrid
 
 
 	open(9,file='../init')
-		read(9, *) dim, Tmax, dt, speedup, rescale, grid_type, step
+		read(9, *) dim, Tmax, dt, speedup, rescale, grid_type, step, test
 	close(9)
 
 	all_time = Tmax/speedup + 1
@@ -27,7 +27,7 @@ program regrid
 
 	call inter.init(dim, step, lon_max, lat_max)
 	call to_cube.init(dim, step, lon_max, lat_max)
-	call scan.init(dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max, nc_or_dat)
+	call scan.init(dim, step, all_time, convert_time, rescale, grid_type, lon_max, lat_max, nc_or_dat, test)
 	! call d.init(dim, step, convert_time, grid_type, rescale, lon_max, lat_max)
 
 	call scan.scan_grid(inter.latlon_cubic)

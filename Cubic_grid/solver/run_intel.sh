@@ -6,6 +6,7 @@ dim="${args[0]}"
 rescale="${args[4]}"
 grid_type="${args[5]}"
 step="${args[6]}"
+test_number="${args[7]}"
 
 if [ ! -d mod_files ]; then
 	mkdir mod_files
@@ -36,6 +37,7 @@ fi
 DIRECTORY="datFiles/$(( 2*$dim ))"
 SubDIRECTORY="datFiles/$(( 2*$dim ))/$(( 2*$step ))th"
 SSubDIRECTORY="datFiles/$(( 2*$dim ))/$(( 2*$step ))th/$grid"
+SSSubDIRECTORY="datFiles/$(( 2*$dim ))/$(( 2*$step ))th/$grid/test$test_number"
 PIC="datFiles/pic/$(( 2*$step ))th"
 
 if [ ! -d datFiles ]; then
@@ -50,11 +52,14 @@ fi
 if [ ! -d "$SSubDIRECTORY" ]; then
 	mkdir $SSubDIRECTORY
 fi
+if [ ! -d "$SSSubDIRECTORY" ]; then
+	mkdir $SSSubDIRECTORY
+fi
 if [ ! -d "$PIC" ]; then
 	mkdir $PIC
 fi
-if [ -d "$SubDIRECTORY" ]; then
-	echo $SSubDIRECTORY
+if [ -d "$SSSubDIRECTORY" ]; then
+	echo $SSSubDIRECTORY
 fi
 
 if [[ $1 == "compile" ]]; then
