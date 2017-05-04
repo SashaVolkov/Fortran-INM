@@ -7,6 +7,7 @@ grid_type="${args[5]}"
 step="${args[6]}"
 test_number="${args[7]}"
 
+
 if [[ $grid_type == 1 ]]; then
 	grid="equiang"
 elif [ $grid_type == 0 ]&&[ $rescale == 0 ]; then
@@ -18,9 +19,25 @@ fi
 cd datFiles/"$(( 2*$dim ))"/"$(( 2*$step ))"th/"$grid"/'test'"$test_number"
 pwd
 
+PIC="../../../../pic"
+PIC_ord="../../../../pic/$(( 2*$step ))th"
+PATH_PIC="$PIC/$(( 2*$step ))th/test$test_number"
+
+if [ ! -d "$PIC" ]; then
+	mkdir "$PIC"
+fi
+if [ ! -d "$PIC_ord" ]; then
+	mkdir "$PIC_ord"
+fi
+if [ ! -d "$PATH_PIC" ]; then
+	mkdir "$PATH_PIC"
+fi
+
+if [[ $test_number == 6 ]]; then
+
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/CFL_$(( 2*$dim )).png"
+set output "$PATH_PIC/energy_$(( 2*$dim )).png"
 set xlabel "Days"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -29,12 +46,45 @@ set mxtics 5
 set mytics 5
 set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
 set grid mytics lt 0 lw 1 lc rgb "#bbbbbb"
-plot "CFL.dat" w l ti "CFL_{$grid_type}"
+plot "energy.dat" w l ti "Energy"
 EOF
+
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/L_equiang_$(( 2*$dim ))_h.png"
+set output "$PATH_PIC/geopotential_$(( 2*$dim )).png"
+set xlabel "Days"
+set key inside left top vertical Right noreverse
+set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
+set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
+set mxtics 5
+set mytics 5
+set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
+set grid mytics lt 0 lw 1 lc rgb "#bbbbbb"
+plot "geopotential.dat" w l ti "Geopotential"
+EOF
+
+
+gnuplot <<EOF
+set term png size 800, 800
+set output "$PATH_PIC/enstrophy_$(( 2*$dim )).png"
+set key inside right top vertical Right noreverse
+set xlabel "Days"
+set ylabel "Normalized error"
+set mxtics 5
+set mytics 5
+set grid ytics lt 2 lw 2 lc rgb "#bbbbbb"
+set grid xtics lt 2 lw 2 lc rgb "#bbbbbb"
+set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
+set grid mytics lt 0 lw 1 lc rgb "#bbbbbb"
+plot "enstrophy.dat" w l lw 1 ti "Enstrophy"
+EOF
+
+else
+
+gnuplot <<EOF
+set term png size 800, 800
+set output "$PATH_PIC/L_equiang_$(( 2*$dim ))_h.png"
 set xlabel "Days"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -49,7 +99,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/L_equiang_$(( 2*$dim ))_v.png"
+set output "$PATH_PIC/L_equiang_$(( 2*$dim ))_v.png"
 set xlabel "Days"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -64,7 +114,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/L1_$(( 2*$dim ))_v.png"
+set output "$PATH_PIC/L1_$(( 2*$dim ))_v.png"
 set xlabel "Days"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -79,7 +129,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/L1_$(( 2*$dim ))_h.png"
+set output "$PATH_PIC/L1_$(( 2*$dim ))_h.png"
 set xlabel "Days"
 set key inside left top vertical Right noreverse
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -94,7 +144,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/L2_$(( 2*$dim ))_h.png"
+set output "$PATH_PIC/L2_$(( 2*$dim ))_h.png"
 set key inside right top vertical Right noreverse
 set xlabel "Days"
 set ylabel "Normalized error"
@@ -110,7 +160,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/L2_$(( 2*$dim ))_v.png"
+set output "$PATH_PIC/L2_$(( 2*$dim ))_v.png"
 set key inside right top vertical Right noreverse
 set xlabel "Days"
 set ylabel "Normalized error"
@@ -126,7 +176,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/L_inf_$(( 2*$dim ))_h.png"
+set output "$PATH_PIC/L_inf_$(( 2*$dim ))_h.png"
 set key inside left top vertical Right noreverse
 set xlabel "Days"
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -140,7 +190,7 @@ EOF
 
 gnuplot <<EOF
 set term png size 800, 800
-set output "../../../../pic/$(( 2*$step ))th/L_inf_$(( 2*$dim ))_v.png"
+set output "$PATH_PIC/L_inf_$(( 2*$dim ))_v.png"
 set key inside left top vertical Right noreverse
 set xlabel "Days"
 set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
@@ -149,6 +199,43 @@ set mxtics 5
 set mytics 5
 plot "C_v.dat" w l ti "C_{equiang}"
 EOF
+
+back="../../../.."
+
+gnuplot <<EOF
+set term png size 800, 800
+set output "$PATH_PIC/L2_equiang_v.png"
+set key inside left top vertical Right noreverse
+set xlabel "Days"
+set mxtics 5
+set mytics 5
+set grid ytics lt 2 lw 2 lc rgb "#bbbbbb"
+set grid xtics lt 2 lw 2 lc rgb "#bbbbbb"
+set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
+set grid mytics lt 0 lw 1 lc rgb "#bbbbbb"
+plot "$back/40/$(( 2*$step ))th/equiang/test$test_number/L2_v.dat" w l ti " L_2 40", "$back/60/$(( 2*$step ))th/equiang/test$test_number/L2_v.dat" w l ti " L_2 60", "$back/80/$(( 2*$step ))th/equiang/test$test_number/L2_v.dat" w l ti " L_2 80"
+EOF
+
+
+fi
+
+
+
+gnuplot <<EOF
+set term png size 800, 800
+set output "$PIC/$(( 2*$step ))th/CFL_$(( 2*$dim )).png"
+set xlabel "Days"
+set key inside left top vertical Right noreverse
+set grid ytics lt 0 lw 1 lc rgb "#bbbbbb"
+set grid xtics lt 0 lw 1 lc rgb "#bbbbbb"
+set mxtics 5
+set mytics 5
+set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
+set grid mytics lt 0 lw 1 lc rgb "#bbbbbb"
+plot "CFL.dat" w l ti "CFL_{$grid_type}"
+EOF
+
+
 
 
 # cd ../..
@@ -168,19 +255,6 @@ EOF
 # EOF
 
 
-gnuplot <<EOF
-set term png size 800, 800
-set output "pic/$(( 2*$step ))th/L2_equiang_v.png"
-set key inside left top vertical Right noreverse
-set xlabel "Days"
-set mxtics 5
-set mytics 5
-set grid ytics lt 2 lw 2 lc rgb "#bbbbbb"
-set grid xtics lt 2 lw 2 lc rgb "#bbbbbb"
-set grid mxtics lt 0 lw 1 lc rgb "#bbbbbb"
-set grid mytics lt 0 lw 1 lc rgb "#bbbbbb"
-plot "40/$(( 2*$step ))th/equiang/L2_v.dat" w l ti " L_2 40", "60/$(( 2*$step ))th/equiang/L2_v.dat" w l ti " L_2 60", "80/$(( 2*$step ))th/equiang/L2_v.dat" w l ti " L_2 80"
-EOF
 
 # gnuplot <<EOF
 # set term png

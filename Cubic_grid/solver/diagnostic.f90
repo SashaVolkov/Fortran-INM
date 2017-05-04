@@ -156,29 +156,31 @@ CONTAINS
 					
 						square = this.square(x, y)
 					if (func.test /= 6) then
-						F1(1) = dsqrt((func.h_height(x, y, face) - func.starter(1, x, y, face))**2)
-						F1_prec(1) = dsqrt((func.starter(1, x, y, face))**2)
+						F1(1) = abs((func.h_height(x, y, face) - func.starter(1, x, y, face)))
+						F1_prec(1) = abs((func.starter(1, x, y, face)))
 
 						F1(2) = dsqrt((func.lon_vel(x, y, face) - func.starter(2, x, y, face))**2 + (func.lat_vel(x, y, face) - func.starter(3, x, y, face))**2)
-						F1_prec(2) = dsqrt((func.starter(2, x, y, face))**2 + (func.starter(3, x, y, face))**2)
+						F1_prec(2) = dsqrt(func.starter(2, x, y, face)**2 + func.starter(3, x, y, face)**2)
+						if (isnan(F1(2))) print *, x, y, face
+						if (isnan(F1_prec(2))) print *, x, y, face
 
 						do i = 1, 2
-							L1(i) = abs(F1(i))*square + L1(i)
+							L1(i) = F1(i)*square + L1(i)
 							L2(i) = F1(i)*F1(i)*square + L2(i)
-							L1_prec(i) = abs(F1_prec(i))*square + L1_prec(i)
+							L1_prec(i) = F1_prec(i)*square + L1_prec(i)
 							L2_prec(i) = F1_prec(i)*F1_prec(i)*square + L2_prec(i)
 							if (Linf(i) < F1(i)) Linf(i) = F1(i)
 							if (Linf_prec(i) < F1_prec(i)) Linf_prec(i) = F1_prec(i)
 						end do
 					else
-					L1(1) = (func.h_height(x, y, face))*func.g*square + L1(1)
-					L1_prec(1) = func.starter(1, x, y, face)*func.g*square + L1_prec(1)
+						L1(1) = (func.h_height(x, y, face))*func.g*square + L1(1)
+						L1_prec(1) = func.starter(1, x, y, face)*func.g*square + L1_prec(1)
 
-					L2(1) = (func.h_height(x, y, face))*((func.h_height(x, y, face))*func.g + 5d-1*(func.lon_vel(x, y, face)**2 + func.lat_vel(x, y, face)**2))*square + L2(1)
-					L2_prec(1) = func.starter(1, x, y, face)*(func.starter(1, x, y, face)*func.g + 5d-1*((func.starter(2, x, y, face))**2 + (func.starter(3, x, y, face))**2))*square + L2_prec(1)
+						L2(1) = (func.h_height(x, y, face))*((func.h_height(x, y, face))*func.g + 5d-1*(func.lon_vel(x, y, face)**2 + func.lat_vel(x, y, face)**2))*square + L2(1)
+						L2_prec(1) = func.starter(1, x, y, face)*(func.starter(1, x, y, face)*func.g + 5d-1*((func.starter(2, x, y, face))**2 + (func.starter(3, x, y, face))**2))*square + L2_prec(1)
 
-					Linf(1) = (func.h_height(x, y, face))*func.g*square + Linf(1)
-					Linf_prec(1) = func.starter(1, x, y, face)*func.g*square + Linf_prec(1)
+						Linf(1) = (func.h_height(x, y, face))*func.g*square + Linf(1)
+						Linf_prec(1) = func.starter(1, x, y, face)*func.g*square + Linf_prec(1)
 					end if
 
 				end do
@@ -201,19 +203,19 @@ CONTAINS
 
 		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 
-		if (id == 0) write(9, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, Courant_max
+		if (id == 0) write(9, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, Courant_max
 		if (func.test /= 6) then
-			if (id == 0) write(11, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, L1r(1)/L1_precr(1)
-			if (id == 0) write(12, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, dsqrt(L2r(1)/L2_precr(1))
-			if (id == 0) write(13, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, Linfr(1)/Linf_precr(1)
+			if (id == 0) write(11, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, L1r(1)/L1_precr(1)
+			if (id == 0) write(12, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, dsqrt(L2r(1)/L2_precr(1))
+			if (id == 0) write(13, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, Linfr(1)/Linf_precr(1)
 
-			if (id == 0) write(14, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, L1r(2)/L1_precr(2)
-			if (id == 0) write(15, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, dsqrt(L2r(2)/L2_precr(2))
-			if (id == 0) write(16, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, Linfr(2)/Linf_precr(2)
+			if (id == 0) write(14, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, L1r(2)/L1_precr(2)
+			if (id == 0) write(15, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, dsqrt(L2r(2)/L2_precr(2))
+			if (id == 0) write(16, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, Linfr(2)/Linf_precr(2)
 		else
-			if (id == 0) write(11, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, (L1r(1) - L1_precr(1))/L1_precr(1)
-			if (id == 0) write(12, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, (L2r(1) - L2_precr(1))/L2_precr(1)
-			if (id == 0) write(13, FMT = "(f40.10, f40.10)"),dble(time)*this.convert_time, Linfr(1)/Linf_precr(1)
+			if (id == 0) write(11, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, (L1r(1) - L1_precr(1))/L1_precr(1)
+			if (id == 0) write(12, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, (L2r(1) - L2_precr(1))/L2_precr(1)
+			if (id == 0) write(13, FMT = "(f40.20, f40.20)"),dble(time)*this.convert_time, Linfr(1)/Linf_precr(1)
 		end if
 
 	end Subroutine

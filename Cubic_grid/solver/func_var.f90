@@ -185,7 +185,7 @@ else if ( test == 2 ) then
 else if ( test == 5 ) then
 	r = sqrt(min( R_BIG**2, (center(2) - lon)**2 + (center(1) + lat)**2))
 	h_s = h_s0*(1d0 - r/R_BIG)
-	this.h_depth(x, y, face) = h_s0 - h_s
+	this.h_depth(x, y, face) = - h_s
 	this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
 else if ( test == 6 ) then
 	cos_lat = dcos(lat);  cos_lat2 = cos_lat**2;  p = (R_BIG + 1d0)*cos_lat2
