@@ -161,7 +161,7 @@ CONTAINS
 			center(:) = (/pi/6d0, 3d0*pi/2d0/);  alpha = 0d0
 			this.u0 = 20d0;  R_BIG = pi/9d0;  h_s0 = 2000d0
 		else if ( test == 6 ) then
-			alpha = 0d0;  a = metr.r_sphere;  K = 789d-9;  R_BIG = 4
+			alpha = 0d0;  a = metr.r_sphere;  K = 7848d-9;  R_BIG = 4
 		end if
 
 		u0 = this.u0
@@ -190,13 +190,15 @@ else if ( test == 5 ) then
 else if ( test == 6 ) then
 	cos_lat = dcos(lat);  cos_lat2 = cos_lat**2;  p = (R_BIG + 1d0)*cos_lat2
 
-	A_t = (K/2d0)*(2d0*omega_cor + K)*cos_lat2 + 	25d-2 * (K**2) * (dcos(lat*(p + (2*R_BIG**2 - R_BIG - 2d0) - (2*R_BIG**2)/cos_lat2)))**(2d0*R_BIG)
-	B_t = (2d0*(omega_cor + K)*K/((R_BIG+1)*(R_BIG+2)))*(cos_lat**R_BIG)*((R_BIG**2 + 2*R_BIG + 2) - ((R_BIG+1)**2)*cos_lat2)
-	C_t = 25d-2*(K**2)*(cos_lat2**R_BIG)*((R_BIG+1)*cos_lat2 - (R_BIG+2))
+	A_t = (K*5d-1)*(2d0*omega_cor + K)*cos_lat2 + 25d-2*(K**2d0)*(cos_lat2**R_BIG)*(p + (2d0*(R_BIG**2d0) - R_BIG - 2d0) - 2d0*(R_BIG**2d0)/cos_lat2)
+
+	B_t = (2d0*(omega_cor + K)*K/((R_BIG+1d0)*(R_BIG+2d0)))*(cos_lat**R_BIG)*((R_BIG**2d0 + 2d0*R_BIG + 2d0) - (R_BIG+1d0)*p)
+
+	C_t = 25d-2*(K**2d0)*(cos_lat2**R_BIG)*(p - (R_BIG+2d0))
 
 	this.h_height(x, y, face) = this.height + (a**2)*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
-	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1))*(R_BIG*(1-cos_lat2) - cos_lat2)*dcos(R_BIG*lon)
-	this.lat_vel(x, y, face) = -a*K*R_BIG*(cos_lat**(R_BIG-1))*dsin(lat)*dsin(R_BIG*lon)
+	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1d0))*(R_BIG*(1d0-cos_lat2) - cos_lat2)*dcos(R_BIG*lon)
+	this.lat_vel(x, y, face) = -a*K*R_BIG*(cos_lat**(R_BIG-1d0))*dsin(lat)*dsin(R_BIG*lon)
 end if
 
 
