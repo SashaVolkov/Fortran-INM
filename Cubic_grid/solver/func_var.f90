@@ -63,7 +63,7 @@ CONTAINS
 		elseif ( test == 5 ) then
 			this.height = 5960d0
 		elseif ( test == 6 ) then
-			this.height = 8d3
+			this.height = 8000d0
 		end if
 
 		this.snd_xy = metr.snd_xy;  this.rcv_xy = metr.rcv_xy
@@ -144,7 +144,7 @@ CONTAINS
 		Class(geometry) :: geom
 		Real(8), intent(in) :: omega_cor
 		Integer(4) dim, x, y, face, test
-		Real(8) :: gh0, r, R_BIG, center(2), pi, u0, alpha, lon, lat, f, f_con_y, f_con_x, A_inv(2,2), G(2,2), h_s, h_s0
+		Real(8) :: gh0, r, R_BIG, center(2), pi, u0, alpha, lon, lat, h_s, h_s0
 		Real(8) :: a, A_t, B_t, C_t, K, cos_lat, cos_lat2, p
 
 		pi = 314159265358979323846d-20
@@ -188,7 +188,7 @@ else if ( test == 5 ) then
 	this.h_depth(x, y, face) = - h_s
 	this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
 else if ( test == 6 ) then
-	cos_lat = dcos(lat);  cos_lat2 = cos_lat**2;  p = (R_BIG + 1d0)*cos_lat2
+	cos_lat = dcos(lat);  cos_lat2 = cos_lat**2d0;  p = (R_BIG + 1d0)*cos_lat2
 
 	A_t = (K*5d-1)*(2d0*omega_cor + K)*cos_lat2 + 25d-2*(K**2d0)*(cos_lat2**R_BIG)*(p + (2d0*(R_BIG**2d0) - R_BIG - 2d0) - 2d0*(R_BIG**2d0)/cos_lat2)
 
@@ -197,7 +197,7 @@ else if ( test == 6 ) then
 	C_t = 25d-2*(K**2d0)*(cos_lat2**R_BIG)*(p - (R_BIG+2d0))
 
 	this.h_height(x, y, face) = this.height + (a**2)*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
-	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1d0))*(R_BIG*(1d0-cos_lat2) - cos_lat2)*dcos(R_BIG*lon)
+	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1d0))*(R_BIG*(dsin(lat)**2) - cos_lat2)*dcos(R_BIG*lon)
 	this.lat_vel(x, y, face) = -a*K*R_BIG*(cos_lat**(R_BIG-1d0))*dsin(lat)*dsin(R_BIG*lon)
 end if
 
