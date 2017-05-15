@@ -176,6 +176,8 @@ lon = metr.latlon_c(2,x,y,face)
 this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
 this.lat_vel(x, y, face) = -u0*dsin(lon)*dsin(alpha)
 
+this.h_depth(x, y, face) = 0d0
+
 if ( test == 1 ) then
 	r = geom.dist(center(:),metr.latlon_c(1:2,x,y,face))  ! cosine bell
 	this.h_height(x, y, face) = (this.height/2d0)*(1d0 + dcos(pi*r/R_BIG))
@@ -185,7 +187,7 @@ else if ( test == 2 ) then
 else if ( test == 5 ) then
 	r = sqrt(min( R_BIG**2, (center(2) - lon)**2 + (center(1) + lat)**2))
 	h_s = h_s0*(1d0 - r/R_BIG)
-! 	this.h_depth(x, y, face) = - h_s
+	this.h_depth(x, y, face) = - h_s
 	this.h_height(x, y, face) = this.height - h_s - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
 else if ( test == 6 ) then
 	cos_lat = dcos(lat);  cos_lat2 = cos_lat**2d0;  p = (R_BIG + 1d0)*cos_lat2
