@@ -120,7 +120,7 @@ Subroutine Euler(this, var, var_pr, metr, inter, msg)
 
 			var.u_con(x, y, face) = var_pr.u_con(x, y, face) - uu(1) + S_c(1) + S_p(1)
 			var.v_con(x, y, face) = var_pr.v_con(x, y, face) - uu(2) + S_c(2) + S_p(2)
-			var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+			var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*h*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 			end do
 		end do
@@ -196,7 +196,7 @@ Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
 
 				var.u_con(x, y, face) = this.ku_con(x, y, face, 0) - uu(1) + S_c(1) + S_p(1)
 				var.v_con(x, y, face) = this.kv_con(x, y, face, 0) - uu(2) + S_c(2) + S_p(2)
-				var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+				var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*h*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 				end do
 			end do
@@ -305,7 +305,7 @@ Subroutine FRunge(this, metr, var, i)
 uu = 0d0
 temp1 = this.kh(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kh(x-step:x+step, y-step:y+step, face, i-1)
 h = temp1(0,0)
-height = var.h_depth(x, y, face)
+! height = var.h_depth(x, y, face)
 grad_Fx = d.partial_c(temp1(:,0), dh, step)
 grad_Fy = d.partial_c(temp1(0,:), dh, step)
 
@@ -332,7 +332,7 @@ call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
 this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
 this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
 end if
-this.kh(x, y, face, i) = - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+this.kh(x, y, face, i) = - dt*h*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 
 			end do

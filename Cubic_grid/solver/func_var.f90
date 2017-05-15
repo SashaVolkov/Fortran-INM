@@ -185,8 +185,8 @@ else if ( test == 2 ) then
 else if ( test == 5 ) then
 	r = sqrt(min( R_BIG**2, (center(2) - lon)**2 + (center(1) + lat)**2))
 	h_s = h_s0*(1d0 - r/R_BIG)
-	this.h_depth(x, y, face) = - h_s
-	this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
+! 	this.h_depth(x, y, face) = - h_s
+	this.h_height(x, y, face) = this.height - h_s - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
 else if ( test == 6 ) then
 	cos_lat = dcos(lat);  cos_lat2 = cos_lat**2d0;  p = (R_BIG + 1d0)*cos_lat2
 
@@ -196,8 +196,8 @@ else if ( test == 6 ) then
 
 	C_t = 25d-2*(K**2d0)*(cos_lat2**R_BIG)*(p - (R_BIG+2d0))
 
-	this.h_height(x, y, face) = this.height + (a**2)*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
-	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1d0))*(R_BIG*(dsin(lat)**2) - cos_lat2)*dcos(R_BIG*lon)
+	this.h_height(x, y, face) = this.height + (a**2d0)*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
+	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1d0))*(R_BIG*(dsin(lat)**2d0) - cos_lat2)*dcos(R_BIG*lon)
 	this.lat_vel(x, y, face) = -a*K*R_BIG*(cos_lat**(R_BIG-1d0))*dsin(lat)*dsin(R_BIG*lon)
 end if
 
