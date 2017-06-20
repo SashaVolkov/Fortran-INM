@@ -18,6 +18,7 @@ implicit none
 		Procedure, Public :: div => div
 		Procedure, Public :: vorticity => vorticity
 		Procedure, Public :: grad_uu => grad_uu
+		Procedure, Public :: laplace => laplace
 	End Type
 
 
@@ -142,6 +143,33 @@ CONTAINS
 		end do
 
 		grad_uu = ( this.partial_c_fg(u1_cov, u1_con, h, step) + this.partial_c_fg(u2_cov, u2_con, h, step))
+
+	end function
+
+
+	Real(8) function laplace(this, metr, f, h, x, y, step)
+		Class(der) :: this
+		Class(metric) :: metr
+		Integer(4), intent(in) :: x, y, step
+		Real(8), intent(in) :: f(-step:step, -step:step), h
+		Real(8) :: f_x(-step:step), f_y(-step:step), sum_x(-step:step), sum_y(-step:step)
+		Real(8) J_1(-step:step), J_2(-step:step)
+		Integer :: i
+
+		div = ( this.partial_c_fg(u1_con, J_1, h, step) + this.partial_c_fg(u2_con, J_2, h, step))/J_1(0)
+
+		do i = -step, step
+			f_x = f(-step:step, i)
+			f_y = f(i, -step:step)
+
+			J_1(i) = metr.G_sqr(x+i, y)
+			J_2(i) = metr.G_sqr(x, y+i)
+
+			sum_x(i) = ( metr.G_tensor(1, 1, x, y+i)*this.partial_c(f_x, h, step) + metr.G_tensor(1, 2, x+i, y)*this.partial_c(f_y, h, step))
+			sum_y(i) = ( metr.G_tensor(2, 1, x, y+i)*this.partial_c(f_x, h, step) + metr.G_tensor(2, 2, x+i, y)*this.partial_c(f_y, h, step))
+		end do
+
+		laplace = ( this.partial_c_fg(sum_x, J_1, h, step) + this.partial_c_fg(sum_y, J_2, h, step))/J_1(0)
 
 	end function
 

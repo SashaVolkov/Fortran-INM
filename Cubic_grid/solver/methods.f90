@@ -332,7 +332,7 @@ call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
 this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
 this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
 end if
-this.kh(x, y, face, i) = - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+this.kh(x, y, face, i) = - dt*(h*div - temp1(0,0)*grad_Fx - temp2(0,0)*grad_Fy)
 
 
 			end do
