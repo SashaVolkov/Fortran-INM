@@ -123,6 +123,7 @@ CONTAINS
 	end function
 
 
+
 	Subroutine grad_div_vec(this, metr, u_con, v_con, u, v, h, x, y, step)
 		Class(der) :: this
 		Class(metric) :: metr
@@ -148,6 +149,7 @@ CONTAINS
 	end Subroutine
 
 
+
 	Real(8) function laplace(this, metr, f, h, x, y, step)
 		Class(der) :: this
 		Class(metric) :: metr
@@ -171,6 +173,7 @@ CONTAINS
 		laplace = ( this.partial_c(sum_x, h, step) + this.partial_c(sum_y, h, step))/J_1(0)
 
 	end function
+
 
 
 end module
