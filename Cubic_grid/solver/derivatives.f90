@@ -143,7 +143,7 @@ CONTAINS
 		div = this.div(metr, u_con, v_con, h, x, y, step)
 
 		u = div*this.partial_c(1d0/J_1, h, step) + this.partial_c2(J_1*u_con(:, 0), h, step)/J_1(0) + this.partial_c(temp_u, h, step)/J_1(0)
-		v = div*this.partial_c(1d0/J_2, h, step) + this.partial_c2(J_1*v_con(0, :), h, step)/J_1(0) + this.partial_c(temp_v, h, step)/J_1(0)
+		v = div*this.partial_c(1d0/J_2, h, step) + this.partial_c2(J_2*v_con(0, :), h, step)/J_1(0) + this.partial_c(temp_v, h, step)/J_1(0)
 
 	end Subroutine
 
