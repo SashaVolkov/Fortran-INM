@@ -120,7 +120,7 @@ Subroutine Euler(this, var, var_pr, metr, inter, msg)
 
 			var.u_con(x, y, face) = var_pr.u_con(x, y, face) - uu(1) + S_c(1) + S_p(1)
 			var.v_con(x, y, face) = var_pr.v_con(x, y, face) - uu(2) + S_c(2) + S_p(2)
-			var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+			var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*(h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 			end do
 		end do
@@ -196,7 +196,7 @@ Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
 
 				var.u_con(x, y, face) = this.ku_con(x, y, face, 0) - uu(1) + S_c(1) + S_p(1)
 				var.v_con(x, y, face) = this.kv_con(x, y, face, 0) - uu(2) + S_c(2) + S_p(2)
-				var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*(height + h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+				var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*(h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
 
 				end do
 			end do
@@ -285,7 +285,7 @@ Subroutine FRunge(this, metr, var, i)
 	Integer(4), intent(in) :: i
 	Real(8) :: temp1(-this.step:this.step, -this.step:this.step), temp2(-this.step:this.step, -this.step:this.step)
 	Real(8) :: temp1_cov(-this.step:this.step, -this.step:this.step), temp2_cov(-this.step:this.step, -this.step:this.step)
-	Real(8) :: g, height, dt, grad_Fx, grad_Fy, S_c(2), S_p(2), h, u_cov, v_cov, coef(0:3), div, dh, uu(2)
+	Real(8) :: g, height, dt, grad_Fx, grad_Fy, S_c(2), S_p(2), h, u_cov, v_cov, coef(0:3), div, dh, uu(2), laplace
 	Integer(4) x,y, face, step, ns_x, ns_y, nf_x, nf_y
 
 	coef(0) = 0d0;  coef(1) = 5d-1;  coef(2) = 5d-1;  coef(3) = 1d0;
@@ -295,7 +295,7 @@ Subroutine FRunge(this, metr, var, i)
 	ns_x = this.ns_x;  ns_y = this.ns_y
 	nf_x = this.nf_x;  nf_y = this.nf_y
 
-	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, temp1, temp2, temp1_cov, temp2_cov, div, h, u_cov, v_cov, uu, S_p, S_c)
+	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, temp1, temp2, temp1_cov, temp2_cov, div, h, u_cov, v_cov, uu, S_p, S_c, laplace)
 	!$OMP DO
 
 	do face = 1,6
@@ -304,6 +304,7 @@ Subroutine FRunge(this, metr, var, i)
 
 uu = 0d0
 temp1 = this.kh(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kh(x-step:x+step, y-step:y+step, face, i-1)
+laplace = d.laplace(metr, temp1, dh, x, y, step)
 h = temp1(0,0)
 height = var.h_depth(x, y, face)
 grad_Fx = d.partial_c(temp1(:,0), dh, step)
