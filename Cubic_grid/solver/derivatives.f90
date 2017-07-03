@@ -18,6 +18,7 @@ implicit none
 		Procedure, Public :: grad_div_vec => grad_div_vec
 		Procedure, Public :: curl_curl_vec => curl_curl_vec
 		Procedure, Public :: laplace => laplace
+		Procedure, Public :: laplace_vec => laplace_vec
 	End Type
 
 
@@ -131,19 +132,23 @@ CONTAINS
 		Integer(4), intent(in) :: x, y, step
 		Real(8), intent(in) :: u_con(-step:step, -step:step), v_con(-step:step, -step:step), h
 		Real(8), intent(out) :: u, v
-		Real(8) J_1(-step:step), J_2(-step:step), div, temp_u(-step:step), temp_v(-step:step)
-		Integer :: i
+		Real(8) J(-step:step, -step:step), div, temp_u(-step:step), temp_v(-step:step)
+		Integer :: i, j
 
 		do i = -step, step
-			J_1(i) = metr.G_sqr(x+i, y)
-			J_2(i) = metr.G_sqr(x, y+i)
-			temp_u(i) = this.partial_c(metr.G_sqr(x-step:x+step, y+i)*v_con(:,i), h, step)
-			temp_v(i) = this.partial_c(metr.G_sqr(x-step:x+step, y+i)*u_con(:,i), h, step)
+			do j = -step, step
+				J(i, j) = metr.G_sqr(x+i, y+j)
+			end do
+		end do
+
+		do i = -step, step
+			temp_u(i) = this.partial_c(J(:, i)*v_con(:,i), h, step)
+			temp_v(i) = this.partial_c(J(:, i)*u_con(:,i), h, step)
 		end do
 		div = this.div(metr, u_con(:, 0), v_con(0, :), h, x, y, step)
 
-		u = div*this.partial_c(1d0/J_1, h, step) + this.partial_c2(J_1*u_con(:, 0), h, step)/J_1(0) + this.partial_c(temp_u, h, step)/J_1(0)
-		v = div*this.partial_c(1d0/J_2, h, step) + this.partial_c2(J_2*v_con(0, :), h, step)/J_1(0) + this.partial_c(temp_v, h, step)/J_1(0)
+		u = div*this.partial_c(1d0/J(:,0), h, step) + this.partial_c2(J(:, 0)*u_con(:, 0), h, step)/J(0,0) + this.partial_c(temp_u, h, step)/J(0,0)
+		v = div*this.partial_c(1d0/J(0,:), h, step) + this.partial_c2(J(0, :)*v_con(0, :), h, step)/J(0,0) + this.partial_c(temp_v, h, step)/J(0,0)
 
 	end Subroutine
 
@@ -153,7 +158,7 @@ CONTAINS
 		Class(der) :: this
 		Class(metric) :: metr
 		Integer(4), intent(in) :: x, y, step
-		Real(8), intent(in) :: u_con(-step:step, -step:step), v_con(-step:step, -step:step), h
+		Real(8), intent(in) :: u_con(-step:step), v_con(-step:step), h
 		Real(8), intent(out) :: u, v
 		Real(8) J_1(-step:step), J_2(-step:step), div
 		Integer :: i
@@ -164,8 +169,8 @@ CONTAINS
 		end do
 		div = this.div(metr, u_con(:, 0), v_con(0, :), h, x, y, step)
 
-		u = (this.partial_c(1d0/J_1, h, step)*this.partial_c(u_con(0, :), h, step) + this.partial_c2(u_con(0, :), h, step)/J_1(0))/J_1(0)
-		v = (this.partial_c(1d0/J_2, h, step)*this.partial_c(v_con(:, 0), h, step) + this.partial_c2(v_con(0, :), h, step)/J_1(0))/J_1(0)
+		u = (this.partial_c(1d0/J_2, h, step)*this.partial_c(u_con, h, step) + this.partial_c2(u_con, h, step)/J_2(0))/J_2(0)
+		v = (this.partial_c(1d0/J_1, h, step)*this.partial_c(v_con, h, step) + this.partial_c2(v_con, h, step)/J_1(0))/J_1(0)
 
 	end Subroutine
 
@@ -194,6 +199,22 @@ CONTAINS
 		laplace = ( this.partial_c(sum_x, h, step) + this.partial_c(sum_y, h, step))/J_1(0)
 
 	end function
+
+
+
+
+	Subroutine laplace_vec(this, metr, u_con, v_con, u, v, h, x, y, step)
+		Class(der) :: this
+		Class(metric) :: metr
+		Integer(4), intent(in) :: x, y, step
+		Real(8), intent(in) :: u_con(-step:step, -step:step), v_con(-step:step, -step:step), h
+		Real(4), intent(out) :: u, v
+		Integer :: i
+
+		u = 0d0
+		v = 0d0
+
+	end Subroutine
 
 
 

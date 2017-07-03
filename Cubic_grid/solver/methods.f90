@@ -304,7 +304,7 @@ Subroutine FRunge(this, metr, var, i)
 
 uu = 0d0
 temp1 = this.kh(x-step:x+step, y-step:y+step, face, 0) + coef(i-1)*this.kh(x-step:x+step, y-step:y+step, face, i-1)
-laplace = d.laplace(metr, temp1, dh, x, y, step)
+! laplace = d.laplace(metr, temp1, dh, x, y, step)
 h = temp1(0,0)
 height = var.h_depth(x, y, face)
 grad_Fx = d.partial_c(temp1(:,0), dh, step)
