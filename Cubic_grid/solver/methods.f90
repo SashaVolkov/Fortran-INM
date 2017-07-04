@@ -330,7 +330,7 @@ S_p(2) = - dt*g*grad_Fy
 call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
 call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
 
-laplace_u = laplace_u*dt;  laplace_v = laplace_v*dt
+laplace_u = laplace_u*dt*4d-1;  laplace_v = laplace_v*dt*4d-1
 
 this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1) + laplace_u
 this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2) + laplace_v
