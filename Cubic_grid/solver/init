@@ -1,4 +1,4 @@
-20, 5400, 480.0, 180, 0, 1, 2, 6
+20, 4400, 990.0, 220, 0, 1, 2, 2
 
 
 dim, Tmax, dt, speedup, rescale, grid_type, space_step, test

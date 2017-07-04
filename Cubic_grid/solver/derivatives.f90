@@ -94,7 +94,7 @@ CONTAINS
 		Class(metric) :: metr
 		Integer(4), intent(in) :: x, y, step
 		Real(8), intent(in) :: u1_con(-step:step), u2_con(-step:step), h
-		Integer(4) i, j
+		Integer(4) i
 		Real(8) J_1(-step:step), J_2(-step:step), G(2,2)
 
 		do i = -step, step
@@ -133,11 +133,11 @@ CONTAINS
 		Real(8), intent(in) :: u_con(-step:step, -step:step), v_con(-step:step, -step:step), h
 		Real(8), intent(out) :: u, v
 		Real(8) J(-step:step, -step:step), div, temp_u(-step:step), temp_v(-step:step)
-		Integer :: i, j
+		Integer :: i, k
 
 		do i = -step, step
-			do j = -step, step
-				J(i, j) = metr.G_sqr(x+i, y+j)
+			do k = -step, step
+				J(i, k) = metr.G_sqr(x+i, y+k)
 			end do
 		end do
 
@@ -147,8 +147,8 @@ CONTAINS
 		end do
 		div = this.div(metr, u_con(:, 0), v_con(0, :), h, x, y, step)
 
-		u = div*this.partial_c(1d0/J(:,0), h, step) + this.partial_c2(J(:, 0)*u_con(:, 0), h, step)/J(0,0) + this.partial_c(temp_u, h, step)/J(0,0)
-		v = div*this.partial_c(1d0/J(0,:), h, step) + this.partial_c2(J(0, :)*v_con(0, :), h, step)/J(0,0) + this.partial_c(temp_v, h, step)/J(0,0)
+		u = div*this.partial_c(1d0/J(:,0), h, step) + (this.partial_c2(J(:, 0)*u_con(:, 0), h, step) + this.partial_c(temp_u, h, step))/J(0,0)
+		v = div*this.partial_c(1d0/J(0,:), h, step) + (this.partial_c2(J(0, :)*v_con(0, :), h, step) + this.partial_c(temp_v, h, step))/J(0,0)
 
 	end Subroutine
 
@@ -158,19 +158,24 @@ CONTAINS
 		Class(der) :: this
 		Class(metric) :: metr
 		Integer(4), intent(in) :: x, y, step
-		Real(8), intent(in) :: u_con(-step:step), v_con(-step:step), h
+		Real(8), intent(in) :: u_con(-step:step, -step:step), v_con(-step:step, -step:step), h
 		Real(8), intent(out) :: u, v
-		Real(8) J_1(-step:step), J_2(-step:step), div
-		Integer :: i
+		Real(8) J(-step:step, -step:step), div, temp_u(-step:step), temp_v(-step:step), rot, u_cov(-step:step, -step:step), v_cov(-step:step, -step:step)
+		Integer :: i, k
 
 		do i = -step, step
-			J_1(i) = metr.G_sqr(x+i, y)
-			J_2(i) = metr.G_sqr(x, y+i)
+			do k = -step, step
+				J(i, k) = metr.G_sqr(x+i, y+k)
+				call metr.con_to_cov(u_con(i, k),v_con(i, k),u_cov(i, k),v_cov(i, k),x,y)
+			end do
+			temp_u(i) = this.partial_c(v_con(:,i), h, step)
+			temp_v(i) = this.partial_c(u_con(:,i), h, step)
 		end do
-		div = this.div(metr, u_con(:, 0), v_con(0, :), h, x, y, step)
 
-		u = (this.partial_c(1d0/J_2, h, step)*this.partial_c(u_con, h, step) + this.partial_c2(u_con, h, step)/J_2(0))/J_2(0)
-		v = (this.partial_c(1d0/J_1, h, step)*this.partial_c(v_con, h, step) + this.partial_c2(v_con, h, step)/J_1(0))/J_1(0)
+		rot = ( this.partial_c(v_cov(:,0), h, step) - this.partial_c(u_cov(0,:), h, step))
+
+		u = (this.partial_c(1d0/J(0,:), h, step)*rot + (this.partial_c(temp_u, h, step) - this.partial_c2(u_cov(0,:), h, step))/J(0,0))/J(0,0)
+		v = - (this.partial_c(1d0/J(0,:), h, step)*rot + (this.partial_c2(v_cov(:,0), h, step) - this.partial_c(temp_v, h, step))/J(0,0))/J(0,0)
 
 	end Subroutine
 
@@ -208,11 +213,15 @@ CONTAINS
 		Class(metric) :: metr
 		Integer(4), intent(in) :: x, y, step
 		Real(8), intent(in) :: u_con(-step:step, -step:step), v_con(-step:step, -step:step), h
-		Real(4), intent(out) :: u, v
-		Integer :: i
+		Real(8), intent(out) :: u, v
+		Real(8) :: curl_curl_u, curl_curl_v, grad_div_u, grad_div_v
 
-		u = 0d0
-		v = 0d0
+		call this.grad_div_vec(metr, u_con, v_con, grad_div_u, grad_div_v, h, x, y, step)
+		call this.curl_curl_vec(metr, u_con, v_con, curl_curl_u, curl_curl_v, h, x, y, step)
+		call metr.cov_to_con(curl_curl_u, curl_curl_v, curl_curl_u, curl_curl_v, x, y)
+
+		u = grad_div_u - curl_curl_u
+		v = grad_div_v - curl_curl_v
 
 	end Subroutine
 
