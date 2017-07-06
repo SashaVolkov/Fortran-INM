@@ -120,7 +120,11 @@ Subroutine Euler(this, var, var_pr, metr, inter, msg)
 
 			var.u_con(x, y, face) = var_pr.u_con(x, y, face) - uu(1) + S_c(1) + S_p(1)
 			var.v_con(x, y, face) = var_pr.v_con(x, y, face) - uu(2) + S_c(2) + S_p(2)
+<<<<<<< HEAD
 			var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*h*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+=======
+			var.h_height(x, y, face) = var_pr.h_height(x, y, face) - dt*(h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+>>>>>>> 3c110865c2fb724c6a76487063f0c49f5a1a9c80
 
 			end do
 		end do
@@ -196,7 +200,11 @@ Subroutine Predictor_corrector(this, var, var_pr, metr, inter, msg)
 
 				var.u_con(x, y, face) = this.ku_con(x, y, face, 0) - uu(1) + S_c(1) + S_p(1)
 				var.v_con(x, y, face) = this.kv_con(x, y, face, 0) - uu(2) + S_c(2) + S_p(2)
+<<<<<<< HEAD
 				var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*h*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+=======
+				var.h_height(x, y, face) = this.kh(x, y, face, 0) - dt*(h)*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+>>>>>>> 3c110865c2fb724c6a76487063f0c49f5a1a9c80
 
 				end do
 			end do
@@ -285,8 +293,12 @@ Subroutine FRunge(this, metr, var, i)
 	Integer(4), intent(in) :: i
 	Real(8) :: temp1(-this.step:this.step, -this.step:this.step), temp2(-this.step:this.step, -this.step:this.step)
 	Real(8) :: temp1_cov(-this.step:this.step, -this.step:this.step), temp2_cov(-this.step:this.step, -this.step:this.step)
+<<<<<<< HEAD
 	Real(8) :: height(-this.step:this.step, -this.step:this.step)
 	Real(8) :: g, dt, grad_Fx, grad_Fy, S_c(2), S_p(2), h, u_cov, v_cov, coef(0:3), div, dh, uu(2)
+=======
+	Real(8) :: g, height, dt, grad_Fx, grad_Fy, S_c(2), S_p(2), h, u_cov, v_cov, coef(0:3), div, dh, uu(2), laplace_u, laplace_v
+>>>>>>> 3c110865c2fb724c6a76487063f0c49f5a1a9c80
 	Integer(4) x,y, face, step, ns_x, ns_y, nf_x, nf_y
 
 	coef(0) = 0d0;  coef(1) = 5d-1;  coef(2) = 5d-1;  coef(3) = 1d0;
@@ -296,7 +308,7 @@ Subroutine FRunge(this, metr, var, i)
 	ns_x = this.ns_x;  ns_y = this.ns_y
 	nf_x = this.nf_x;  nf_y = this.nf_y
 
-	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, temp1, temp2, temp1_cov, temp2_cov, div, h, u_cov, v_cov, uu, S_p, S_c)
+	!$OMP PARALLEL PRIVATE(face, y, x, grad_Fy, grad_Fx, temp1, temp2, temp1_cov, temp2_cov, div, h, u_cov, v_cov, uu, S_p, S_c, laplace_u, laplace_v)
 	!$OMP DO
 
 	do face = 1,6
@@ -321,6 +333,7 @@ uu(1) = dt*(temp1(0,0)*d.partial_c(temp1(:,0), dh, step) + temp2(0,0)*d.partial_
 uu(2) = dt*(temp1(0,0)*d.partial_c(temp2(:,0), dh, step) + temp2(0,0)*d.partial_c(temp2(0,:), dh, step) + uu(2))
 
 div = d.div(metr, temp1(:,0), temp2(0,:), dh, x, y, step)
+call d.laplace_vec(metr, temp1, temp2, laplace_u, laplace_v, dh, x, y, step)
 
 S_c(1) = dt*metr.G_sqr(x, y)*temp2(0,0)*(var.f(x, y, face))
 S_c(2) = dt*metr.G_sqr(x, y)*temp1(0,0)*(var.f(x, y, face))
@@ -330,10 +343,16 @@ S_p(2) = - dt*g*grad_Fy
 ! call metr.cov_to_con(S_p(1), S_p(2), S_p(1), S_p(2), x, y)
 call metr.cov_to_con(S_c(1), - S_c(2), S_c(1), S_c(2), x, y)
 
-this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1)
-this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2)
+laplace_u = laplace_u*dt*4d-1;  laplace_v = laplace_v*dt*4d-1
+
+this.ku_con(x, y, face, i) = - uu(1) + S_c(1) + S_p(1) + laplace_u
+this.kv_con(x, y, face, i) = - uu(2) + S_c(2) + S_p(2) + laplace_v
 end if
+<<<<<<< HEAD
 this.kh(x, y, face, i) = - dt*h*div - temp1(0,0)*dt*grad_Fx - temp2(0,0)*dt*grad_Fy
+=======
+this.kh(x, y, face, i) = - dt*(h*div - temp1(0,0)*grad_Fx - temp2(0,0)*grad_Fy)
+>>>>>>> 3c110865c2fb724c6a76487063f0c49f5a1a9c80
 
 
 			end do

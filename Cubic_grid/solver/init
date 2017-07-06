@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 40, 6400, 240.0, 36, 0, 1, 2, 6
+=======
+20, 10800, 480.0, 180, 0, 1, 2, 6
+>>>>>>> 3c110865c2fb724c6a76487063f0c49f5a1a9c80
 
 
 dim, Tmax, dt, speedup, rescale, grid_type, space_step, test
