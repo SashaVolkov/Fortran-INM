@@ -159,7 +159,7 @@ CONTAINS
 		if ( test == 3 ) then
 		else if ( test == 5 ) then
 			center(:) = (/pi/6d0, 3d0*pi/2d0/);  alpha = 0d0
-			this.u0 = 20d0;  R_BIG = pi/9d0;  h_s0 = 2000d0
+			this.u0 = 20d0;  R_BIG = metr.r_sphere*pi/9d0;  h_s0 = 2d3
 		else if ( test == 6 ) then
 			alpha = 0d0;  a = metr.r_sphere;  K = 7848d-9;  R_BIG = 4
 		end if
@@ -176,8 +176,6 @@ lon = metr.latlon_c(2,x,y,face)
 this.lon_vel(x, y, face) = u0*(dcos(lat)*dcos(alpha) + dcos(lon)*dsin(lat)*dsin(alpha))
 this.lat_vel(x, y, face) = -u0*dsin(lon)*dsin(alpha)
 
-this.h_depth(x, y, face) = 0d0
-
 if ( test == 1 ) then
 	r = geom.dist(center(:),metr.latlon_c(1:2,x,y,face))  ! cosine bell
 	this.h_height(x, y, face) = (this.height/2d0)*(1d0 + dcos(pi*r/R_BIG))
@@ -185,9 +183,11 @@ if ( test == 1 ) then
 else if ( test == 2 ) then
 	this.h_height(x, y, face) = this.height - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
 else if ( test == 5 ) then
-	r = sqrt(min( R_BIG**2, (center(2) - lon)**2 + (center(1) + lat)**2))
+	r = geom.dist(center(:),metr.latlon_c(1:2,x,y,face))
+	if (r >= R_BIG) r = R_BIG
 	h_s = h_s0*(1d0 - r/R_BIG)
-	this.h_depth(x, y, face) = - h_s
+! 	if ( h_s /= 0d0 ) print *, h_s
+	this.h_depth(x, y, face) = h_s
 	this.h_height(x, y, face) = this.height - h_s - (metr.r_sphere*omega_cor*u0 + 5d-1*u0*u0)*((dsin(lat)*dcos(alpha) - dcos(lat)*dcos(lon)*dsin(alpha))**2)/this.g
 else if ( test == 6 ) then
 	cos_lat = dcos(lat);  cos_lat2 = cos_lat**2d0;  p = (R_BIG + 1d0)*cos_lat2
@@ -198,8 +198,8 @@ else if ( test == 6 ) then
 
 	C_t = 25d-2*(K**2d0)*(cos_lat2**R_BIG)*(p - (R_BIG+2d0))
 
-	this.h_height(x, y, face) = this.height + (a**2d0)*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
-	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1d0))*(R_BIG*(dsin(lat)**2d0) - cos_lat2)*dcos(R_BIG*lon)
+	this.h_height(x, y, face) = this.height + (a**2)*(A_t + B_t*dcos(R_BIG*lon) + C_t*dcos(2d0*R_BIG*lon))/this.g
+	this.lon_vel(x, y, face) = a*K*cos_lat + a*K*(cos_lat**(R_BIG-1d0))*(R_BIG*(dsin(lat)**2) - cos_lat2)*dcos(R_BIG*lon)
 	this.lat_vel(x, y, face) = -a*K*R_BIG*(cos_lat**(R_BIG-1d0))*dsin(lat)*dsin(R_BIG*lon)
 end if
 

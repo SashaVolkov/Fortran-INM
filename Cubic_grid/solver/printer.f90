@@ -38,7 +38,7 @@ module printer_ncdf
 		character(80) istring, istring1, istring2
 		character(80) path1, path2, path3
 
-		this.speedup = speedup;  dim = grid.dim;  step = grid.step - 1
+		this.speedup = speedup;  dim = grid.dim;  step = grid.step/2
 		call MPI_Comm_rank(MPI_COMM_WORLD,id,ier)
 		this.id = id
 
@@ -144,7 +144,7 @@ module printer_ncdf
 		t = 1+time/this.speedup
 
 		do face = 1, 6
-			status = nf90_put_var(this.ncid, Wid(1), var.h_height(ns_x:nf_x, ns_y:nf_y, face),&
+			status = nf90_put_var(this.ncid, Wid(1), var.h_height(ns_x:nf_x, ns_y:nf_y, face) + var.h_depth(ns_x:nf_x, ns_y:nf_y, face),&
 			 start = (/ ns_x, ns_y, face, t/), count = (/ Xsize, Ysize, 1, 1/))
 			if(status /= nf90_NoErr) print *, nf90_strerror(status) , this.id
 

@@ -18,7 +18,7 @@ implicit none
 
 !variables
 	Real(8) r_sphere, g, pi, step, omega_cor, height, dt, start_init, end_init
-	Integer(4) dim, space_step, Tmax, time, speedup, rescale, face, grid_type, x, y, flag, test
+	Integer(4) dim, space_step, Tmax, time, speedup, rescale, face, grid_type, x, y, flag, test, exit_flag, i
 	Real(8), Allocatable :: cycle_time(:)
 
 	Integer(4) status(MPI_STATUS_SIZE), ier, id, np, numthreads
@@ -57,7 +57,7 @@ implicit none
 	if ( id == 0 ) Allocate(cycle_time(1:Tmax))
 
 
-	call paral.init(dim, space_step+1, np, id) ! Yep, that's right step+1 is correct, interpolation and transformation matrix need more than step points
+	call paral.init(dim, 2*space_step, np, id) ! Yep, that's right step+1 is correct, interpolation and transformation matrix need more than step points
 	call msg.init(grid_type, paral)
 	call geom.init(r_sphere, pi)
 	call grid.init(geom, paral, rescale, grid_type)
@@ -75,21 +75,29 @@ implicit none
 	call printer_nc.print_grid(grid)
 
 	call MPI_Barrier(MPI_COMM_WORLD, ier)
-	start_init = MPI_Wtime()
+	start_init = MPI_Wtime();  cycle_time = 0d0
 
 	do time = 1, Tmax
 ! 		call meth.Euler(var, var_prev, metr, inter, msg)
 ! 		call meth.Predictor_corrector(var, var_prev, metr, inter, msg)
 		if ( id == 0 ) cycle_time(time) = MPI_Wtime()
 		call meth.RungeKutta(var, var_prev, metr, inter, msg, time)
+
+		do i = 0, np-1
+			if ( isnan(var.h_height(var.ns_x,var.ns_y,1)) ) exit_flag = 1
+			call MPI_Bcast(exit_flag, 1, MPI_INT, i, MPI_COMM_WORLD)
+		end do
+		if ( exit_flag == 1  .and. id == 0 ) print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
+		if ( exit_flag == 1 ) exit
+
 		if ( id == 0 ) cycle_time(time) = MPI_Wtime() - cycle_time(time)
 				call diagn.Courant(metr, var_prev, time)
 			if(mod(time, speedup) == 0) then
 				call printer_nc.to_print(var_prev, diagn, time)
 			end if
+		end_init = MPI_Wtime()
 			if(mod(10*time, Tmax) == 0 ) call MPI_Barrier(MPI_COMM_WORLD, ier)
 			if(mod(10*time, Tmax) == 0 .and. id == 0) then
-				end_init = MPI_Wtime()
 				print '(I3, "% Done time = ", f7.2, " sec")', time*100/Tmax, end_init - start_init
 			end if
 	end do
@@ -107,7 +115,7 @@ implicit none
 		print '(" threads = ", I5)', OMP_GET_NUM_THREADS()
 		print '(" max = ", f10.6, " sec")', maxval(cycle_time)
 		print '(" min = ", f10.6, " sec")', minval(cycle_time)
-		print '(" average = ", f10.6, " sec")', sum(cycle_time)/Tmax
+		print '(" average = ", f10.6, " sec")', sum(cycle_time)/time
 		print '(" full = ", f10.2, " sec")', sum(cycle_time)
 		print '(" msg time = ", f10.6, " sec")', sum(meth.msg_time)
 		print '(" msg time average = ", f10.8, " sec")', sum(meth.msg_time)/(5*Tmax)

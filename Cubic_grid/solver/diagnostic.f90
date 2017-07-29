@@ -44,7 +44,7 @@ CONTAINS
 		Real(8), intent(in) :: dt
 		character(32) istring, istring1, istring2
 
-		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step-1
+		this.Tmax = Tmax;  this.dim = func.dim;  this.step = func.step/2
 		this.dt = dt;  this.dh = func.delta_on_cube
 		this.convert_time = this.dt/(60d0*60d0*24d0)
 		this.flag = 1
@@ -161,8 +161,8 @@ CONTAINS
 
 						F1(2) = dsqrt((func.lon_vel(x, y, face) - func.starter(2, x, y, face))**2 + (func.lat_vel(x, y, face) - func.starter(3, x, y, face))**2)
 						F1_prec(2) = dsqrt(func.starter(2, x, y, face)**2 + func.starter(3, x, y, face)**2)
-						if (isnan(F1(2))) print *, x, y, face
-						if (isnan(F1_prec(2))) print *, x, y, face
+						if (isnan(F1(2))) exit
+						if (isnan(F1_prec(2))) exit
 
 						do i = 1, 2
 							L1(i) = F1(i)*square + L1(i)
